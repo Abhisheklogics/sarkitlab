@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/register",       "destination": "/src/pages/register.html" },
+    { "source": "/login",          "destination": "/src/pages/login.html" },
+    { "source": "/user-dashboard", "destination": "/src/pages/dashboard.html" },
+    { "source": "/create-circuit", "destination": "/src/pages/circuit.html" },
+    { "source": "/onboarding",     "destination": "/src/pages/onboarding.html" },
+    { "source": "/edit",           "destination": "/src/pages/edit.html" },
+    { "source": "/codes",          "destination": "/src/pages/codes.html" }
+  ]
+}
