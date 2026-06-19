@@ -17,13 +17,11 @@ import Battery9VModel from "./src/models/digital/Battery9VModel.js";
 import Battery3VModel from "./src/models/digital/Battery3VModel.js";
 import LogicICModel   from "./src/models/digital/logicic.js";
 
-// ── ComponentLoader — universal auto-loader ────────────────────────
 import {
   buildSidebar,
   makeLoaderSpawner,
   LOADER_IDS,
 } from "./ComponentLoader.js";
-// ──────────────────────────────────────────────────────────────────
 
 const workspace     = document.querySelector("#svg1");
 const mainBox       = document.querySelector(".mainBox");
@@ -42,7 +40,7 @@ let   projectSaved   = false;
 
 const aceEditor = new ArduinoEditor("codeInput", {
   initialValue: ``,
-  onChange: () => { projectSaved = false; _setSaveStatus(false); }
+  onChange: () => { projectSaved = false; setSaveStatus(false); }
 });
 
 const wireSys      = new WireSystem(workspace, connections, () => tCheck?.checkAllConnections());
@@ -51,8 +49,8 @@ const deleteSystem = new DeleteSystem(workspace, registry, wireSys, []);
 wireSys._onWireFinished = wire => {
   deleteSystem.registerWire(wire);
   projectSaved = false;
-  _setSaveStatus(false);
-  _updateCompCount();
+  setSaveStatus(false);
+  updateCompCount();
   const conn = wireSys.connections.find(c => c.wire === wire);
   if (conn && window.undoRedo) window.undoRedo.recordWireDraw(conn);
 };
@@ -67,34 +65,45 @@ const spawner = new ComponentSpawner(
   deleteSystem, null, openResistorEditor, null
 );
 
-// ── undoRedoRef — loader ko live undoRedo milega ───────────────────
-const _undoRedoRef = { current: null };
-
-// ── Loader spawner banao ───────────────────────────────────────────
-const _loaderSpawn = makeLoaderSpawner(
+const loaderSpawn = makeLoaderSpawner(
   workspace,
   wireSys,
   pinsArray,
   deleteSystem,
-  spawner._startDrag,
-  _undoRedoRef,      // ref object — baad mein .current set hoga
+  spawner.getDragHandlers().startDrag,
+  openResistorEditor,
   digitalInputs,
   digitalOutputs
 );
 
-// ── window.spawnComponent — pehle loader, phir purana system ──────
+const GATE_MAP = {
+  gate1: "74HC86",
+  gate2: "74HC32",
+  gate3: "74HC08",
+  gate4: "74HC00",
+  gate5: "74HC02",
+  gate6: "74HC83",
+  gate7: "74HC148",
+  gate8: "74HC153",
+  gate9: "74HC04",
+  driver: "L293D",
+  npn: "npn",
+};
+
 window.spawnComponent = async (type, x, y, forcedId, skipUndo) => {
-  // Loader try karo
-  const handled = await _loaderSpawn(type, x, y, forcedId, skipUndo);
+  if (type === "breadboard") type = "breadboard30";
+  if (GATE_MAP[type]) type = GATE_MAP[type];
+
+  const handled = await loaderSpawn(type, x, y, forcedId, skipUndo);
   if (handled) {
-    _updateCompCount();
-    _setSaveStatus(false);
+    updateCompCount();
+    setSaveStatus(false);
     return;
   }
-  // Loader ko pata nahi — purana ComponentSpawner
+
   projectSaved = false;
-  _setSaveStatus(false);
-  _updateCompCount();
+  setSaveStatus(false);
+  updateCompCount();
   return spawner.spawnComponent(type, x, y, forcedId, skipUndo);
 };
 
@@ -104,18 +113,14 @@ const wsCtrl  = new WorkspaceController(workspace, registry, wireSys);
 const parser  = new ArduinoParserEngine();
 
 wsCtrl.mount();
-
-// ── Sidebar auto-build ────────────────────────────────────────────
 buildSidebar();
 
-// ── UndoRedo setup ────────────────────────────────────────────────
 const undoRedo = new UndoRedoManager(registry, wireSys, spawner, workspace);
 undoRedo.mount();
 window.undoRedo = undoRedo;
 
-spawner.undoRedo       = undoRedo;
-_undoRedoRef.current   = undoRedo;   // ← loader ko live reference milega
-deleteSystem.undoRedo  = undoRedo;
+spawner.undoRedo      = undoRedo;
+deleteSystem.undoRedo = undoRedo;
 
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
@@ -123,23 +128,11 @@ undoRedo.setButtons(undoBtn, redoBtn);
 undoBtn?.addEventListener("click", () => undoRedo.undo());
 redoBtn?.addEventListener("click", () => undoRedo.redo());
 
-// ── ALLOWED_IDS — loader ke IDs auto merge ────────────────────────
-const ALLOWED_IDS = new Set([
-  "led","arduino","buzzer","rgb","7-segment","pir",
-  "resistor","push","oled","keypad","servo","esp","battery",
-  "dcmotor","gear","lcd","digital","vibration","npn","coin",
-  "multimeter","toggle","tilt","touch","diode","breadboard",
-  "gate1","gate2","gate3","gate4","gate5","gate6","gate7","gate8","gate9",
-  "voltage","driver",
-  "MQ-2","MQ-3","MQ-4","MQ-135","MQ-5","MQ-6","MQ-7","MQ-8","MQ-9","MQ-131",
-  "potentiometer","polorizedcapacitor","inductor","ldr","zener","bulb","capacitor",
-  "sound-sensor","flame-sensor","ir-sensor",
-]);
-LOADER_IDS.forEach(id => ALLOWED_IDS.add(id)); // ← loader IDs auto merge
+const ALLOWED_IDS = new Set(["led", "arduino", "breadboard"]);
+LOADER_IDS.forEach(id => ALLOWED_IDS.add(id));
+Object.keys(GATE_MAP).forEach(id => ALLOWED_IDS.add(id));
 
-// ─────────────────────────────────────────────────────────────────
-
-function _updateCompCount() {
+function updateCompCount() {
   const badge = document.getElementById("compCount");
   if (badge) badge.textContent = registry.getAll().length;
 }
@@ -155,7 +148,7 @@ document.getElementById("applyRes").onclick = () => {
   const newOhms = Number(val);
 
   if (activeResistor) {
-    const oldOhms    = activeResistor.ohms ?? activeResistor.instance?.ohms ?? 1000;
+    const oldOhms     = activeResistor.ohms ?? activeResistor.instance?.ohms ?? 1000;
     const resistorRef = activeResistor;
     undoRedo.recordPropChange(
       activeResistor.id ?? activeResistor.svg?.dataset?.id ?? "resistor",
@@ -167,11 +160,11 @@ document.getElementById("applyRes").onclick = () => {
 
   document.getElementById("resistorEditor").style.display = "none";
   projectSaved = false;
-  _setSaveStatus(false);
+  setSaveStatus(false);
 };
 
-window.openCapacitorEditor = function(_instance) {};
-window.openInductorEditor  = function(_instance) {};
+window.openCapacitorEditor = function() {};
+window.openInductorEditor  = function() {};
 
 document.addEventListener("DOMContentLoaded", () => {
   const iframeWrapper   = document.getElementById("iframeWrapper");
@@ -179,9 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleCompBtn   = document.getElementById("toggleCompBtn");
   const resizer         = document.querySelector(".resizer-diagonal");
 
-  toggleCompBtn?.addEventListener("click", () => {
-    mainBox.classList.toggle("hidden");
-  });
+  toggleCompBtn?.addEventListener("click", () => mainBox.classList.toggle("hidden"));
 
   toggleIframeBtn?.addEventListener("click", () => {
     const show = iframeWrapper.style.display === "none" || !iframeWrapper.style.display;
@@ -230,14 +221,11 @@ document.getElementById("clear-serial")?.addEventListener("click", () => {
 async function doSave() {
   if (!localStorage.getItem("currentUser")) { alert("Pehle login karein!"); return false; }
   const id = await storage.saveProject();
-  if (id) {
-    projectSaved = true;
-    _setSaveStatus(true);
-  }
+  if (id) { projectSaved = true; setSaveStatus(true); }
   return !!id;
 }
 
-function _setSaveStatus(saved) {
+function setSaveStatus(saved) {
   const el = document.getElementById("saveStatus");
   if (!el) return;
   el.className = "save-status-pill " + (saved ? "saved" : "unsaved");
@@ -251,8 +239,8 @@ window.addEventListener("load", () => {
   if (projectId) {
     storage.loadProject(projectId).then(() => {
       projectSaved = true;
-      _setSaveStatus(true);
-      _updateCompCount();
+      setSaveStatus(true);
+      updateCompCount();
     });
   }
 });
@@ -285,7 +273,6 @@ document.getElementById("compSearch")?.addEventListener("input", function() {
   });
 });
 
-// ── Ghost drag from sidebar ───────────────────────────────────────
 let ghost        = null;
 let draggingType = null;
 
@@ -316,8 +303,6 @@ function dropComponent(e) {
     }
     const x = (e.clientX - rect.left) * sx + ox;
     const y = (e.clientY - rect.top)  * sy + oy;
-
-    // ✅ window.spawnComponent use karo — loader + purana system dono handle
     window.spawnComponent(draggingType, x, y);
   }
   draggingType = null;
@@ -342,9 +327,7 @@ document.querySelector(".mainBox")?.addEventListener("mousedown", e => {
   document.addEventListener("mouseup",   dropComponent);
 });
 
-// ─────────────────────────────────────────────────────────────────
-
-function _stripComments(code) {
+function stripComments(code) {
   code = code.replace(/\/\*[\s\S]*?\*\//g, "");
   return code.split("\n").map(line => {
     let inStr = false, out = "";
@@ -358,12 +341,12 @@ function _stripComments(code) {
   }).join("\n");
 }
 
-function _lockEditor(lock) {
+function lockEditor(lock) {
   const el = aceEditor._textareaEl
           ?? aceEditor.editor?.container
           ?? document.getElementById("codeInput");
   if (!el) return;
-  if ('disabled' in el) {
+  if ("disabled" in el) {
     el.disabled      = lock;
     el.style.opacity = lock ? "0.6" : "1";
   } else {
@@ -372,37 +355,34 @@ function _lockEditor(lock) {
   }
 }
 
-
-
-function _stopSimulation() {
+function stopSimulation() {
   engine?.stop();
 
-  // Solver state clear karo — REF null karne se PEHLE
-  const _solver = window._simEngineRef?._circuitSolver
-               ?? window._simEngineRef?.circuitSolver;
+  const solver = window._simEngineRef?._circuitSolver
+              ?? window._simEngineRef?.circuitSolver;
 
-  if (_solver) {
-    _solver._prevNetV.clear();
-    _solver._prevBranchI.clear();
-    _solver._lastCircuits  = [];
-    _solver._branchMap     = new Map();
-    _solver._netCache      = null;
-    _solver._cachedNetlist = null;
-    _solver._sourceScale   = 1.0;
-    _solver._capState      = new Map();
-    _solver._indState      = new Map();
+  if (solver) {
+    solver._prevNetV.clear();
+    solver._prevBranchI.clear();
+    solver._lastCircuits  = [];
+    solver._branchMap     = new Map();
+    solver._netCache      = null;
+    solver._cachedNetlist = null;
+    solver._sourceScale   = 1.0;
+    solver._capState      = new Map();
+    solver._indState      = new Map();
   }
 
   window._simEngineRef = null;
   on = false;
-  _lockEditor(false);
+  lockEditor(false);
   workspace.classList.remove("workspace-locked");
   aceEditor.onSimulationStop();
-  _resetAllComponents();
-  _setRunState(false);
+  resetAllComponents();
+  setRunState(false);
 }
 
-function _setRunState(running) {
+function setRunState(running) {
   const runIcon  = document.getElementById("runIcon");
   const runLabel = document.getElementById("runLabel");
   if (running) {
@@ -416,200 +396,138 @@ function _setRunState(running) {
   }
 }
 
-
-
-function _resetAllComponents() {
+function resetAllComponents() {
   registry.getAll().forEach(comp => {
     const inst = comp.instance ?? comp.__instance;
     if (!inst) return;
 
     if (comp.type === "led")               inst.setOff?.();
-    if (comp.type === "rgb-led")           inst.turnOff?.();
+    if (comp.type === "rgb")               inst.turnOff?.();
     if (comp.type === "buzzer")            inst.stopTone?.();
     if (comp.type === "dcmotor")           inst.setOff?.();
     if (comp.type === "gearmotor")         inst.setOff?.();
     if (comp.type === "servo")             inst.stop?.(0);
-    if (comp.type === "lcd-16x2-i2c")      inst.reset?.();
+    if (comp.type === "lcd")               inst.reset?.();
     if (comp.type === "7-segment")         inst.clear?.();
     if (comp.type === "4-digit-7-segment") { inst.clear?.(); inst.setColon?.(false); }
     if (comp.type === "potentiometer")     inst.onChange = null;
     if (comp.type === "bulb")              inst.setOff?.();
 
     if (comp.type === "polorizedcapacitor") {
-      inst._Vprev       = 0;
-      inst.Vprev        = 0;
-      inst.Icurrent     = 0;
-      inst.Vcurrent     = 0;
-      inst.energyStored = 0;
-      inst.chargeStored = 0;
-      inst.power        = 0;
-      inst._isReversed  = false;
-      inst._nets        = null;
+      inst._Vprev = inst.Vprev = inst.Icurrent = inst.Vcurrent = 0;
+      inst.energyStored = inst.chargeStored = inst.power = 0;
+      inst._isReversed = false;
+      inst._nets = null;
       inst.updateVoltage?.(0);
     }
 
     if (comp.type === "capacitor") {
-      inst._Vprev       = 0;
-      inst.Vprev        = 0;
-      inst.Icurrent     = 0;
-      inst.Vcurrent     = 0;
-      inst.voltage      = 0;
-      inst.current      = 0;
-      inst.energyStored = 0;
-      inst.chargeStored = 0;
-      inst.power        = 0;
-      inst._nets        = null;
+      inst._Vprev = inst.Vprev = inst.Icurrent = inst.Vcurrent = 0;
+      inst.voltage = inst.current = inst.energyStored = inst.chargeStored = inst.power = 0;
+      inst._nets = null;
       inst.updateVoltage?.(0);
     }
 
     if (comp.type === "inductor") {
-      inst.Iprev        = 0;
-      inst.Icurrent     = 0;
-      inst.Vcurrent     = 0;
-      inst.energyStored = 0;
-      inst.power        = 0;
-      inst.isSaturated  = false;
+      inst.Iprev = inst.Icurrent = inst.Vcurrent = inst.energyStored = inst.power = 0;
+      inst.isSaturated = false;
       inst.updateCurrent?.(0);
     }
 
     if (comp.type === "oled") {
-      comp._powered  = false;
-      comp._wasOn    = false;
-      comp._vcc      = 0;
-      comp._sleeping = false;
-      inst.initialized    = false;
-      inst.displayOn      = true;
-      inst.commandMode    = false;
-      inst.dataMode       = false;
-      inst._renderPending = false;
+      comp._powered = comp._wasOn = false;
+      comp._vcc = 0; comp._sleeping = false;
+      inst.initialized = false; inst.displayOn = true;
+      inst.commandMode = inst.dataMode = inst._renderPending = false;
       inst.clear?.();
     }
 
     if (comp.type === "keypad") {
-  inst.pressedKey = null;
-  inst.codeParsed = false;   // SimEngine getKey() call par true karega
-  if (inst.colPins && inst.digitalInputs) {
-    for (const pin of inst.colPins) {
-      if (pin != null) inst.digitalInputs[pin] = 1;
+      inst.pressedKey = null;
+      inst.codeParsed = false;
+      if (inst.colPins && inst.digitalInputs) {
+        for (const pin of inst.colPins) {
+          if (pin != null) inst.digitalInputs[pin] = 1;
+        }
+      }
     }
-  }
-}
 
     if (comp.type === "dht11") {
-      inst.powered     = false;
-      inst._heatActive = false;
-      inst._wasOn      = false;
+      inst.powered = inst._heatActive = inst._wasOn = false;
       inst.stopHeatWaves?.();
       inst.controlsGroup?.setAttribute("visibility", "hidden");
     }
 
-  
-if (comp.type === "ultrasonic") {
-  inst.simEngine = engine;
-  inst.powered   = false;
-  inst.triggered = false;
-}
+    if (comp.type === "ultrasonic") {
+      inst.simEngine = engine;
+      inst.powered   = false;
+      inst.triggered = false;
+    }
 
     if (comp.type === "soilMoisture") {
-      comp._powered    = false;
-      comp._vcc        = 0;
-      comp._sigNet     = null;
-      comp._sigVoltage = 0;
-      inst.powered     = false;
+      comp._powered = false; comp._vcc = 0;
+      comp._sigNet = null; comp._sigVoltage = 0;
+      inst.powered = false;
       inst.controlsGroup?.setAttribute("visibility", "hidden");
     }
 
     if (comp.type === "sound-sensor") {
-      inst.reset?.();
-      inst._simEngine    = null;
-      inst.digitalInputs = {};
+      inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {};
     }
-
     if (comp.type === "flame-sensor") {
-      inst.reset?.();
-      inst._simEngine    = null;
-      inst.digitalInputs = {};
+      inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {};
     }
-
     if (comp.type === "vibrationSensor") {
-      inst.reset?.();
-      inst._simEngine = null;
+      inst.reset?.(); inst._simEngine = null;
     }
-
     if (comp.type === "pir-sensor") {
-      inst.reset?.();
-      inst._simEngine = null;
-      inst.pinOUT     = null;
-      inst._powered   = false;
-      inst._nets      = null;
+      inst.reset?.(); inst._simEngine = null;
+      inst.pinOUT = null; inst._powered = false; inst._nets = null;
     }
 
-if (comp.type === "battery9v" || comp.type === "battery-9v") {
-  Battery9VModel.reset(comp);
-  comp.instance?.updatePhysics?.({
-    soc: 1.0, voc: 9.4, rint: 1.5, current: 0,
-    vterminal: 9.4, dead: false, overload: false,
-  });
-}
+    if (comp.type === "battery9v" || comp.type === "battery-9v") {
+      Battery9VModel.reset(comp);
+      comp.instance?.updatePhysics?.({ soc: 1.0, voc: 9.4, rint: 1.5, current: 0, vterminal: 9.4, dead: false, overload: false });
+    }
 
-if (
-  comp.type === "battery3v"  ||
-  comp.type === "battery-3v" ||
-  comp.type === "coinbattery" ||
-  comp.type === "coinBattery"
-) {
-  Battery3VModel.reset(comp);
-  comp.instance?.updatePhysics?.({
-    soc: 1.0, voc: 3.0, rint: 15, current: 0,
-    vterminal: 3.0, dead: false, overload: false,
-  });
-}
+    if (comp.type === "battery3v" || comp.type === "battery-3v" || comp.type === "coinbattery" || comp.type === "coinBattery") {
+      Battery3VModel.reset(comp);
+      comp.instance?.updatePhysics?.({ soc: 1.0, voc: 3.0, rint: 15, current: 0, vterminal: 3.0, dead: false, overload: false });
+    }
 
-const LOGIC_MODELS = new Set([
-  "74HC08","74HC32","74HC00","74HC86","74HC02",
-  "74HC83","74HC148","74HC153","74HC04","74HC14",
-  "74HC74","74HC73","74HC76","74HC266","74HC7266",
-]);
-if (LOGIC_MODELS.has(comp.model) || comp.type === "logic-ic") {
-  LogicICModel.reset(comp);
-  inst.reset?.();
-}
-
-
- if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
-  if (typeof inst.reset === "function") {
-    inst.reset();
-  } else {
-    inst.gasIntensity  = 0;
-    inst.currentAnalog = inst.config?.baseline ?? 0;
-    inst.outputVoltage = 0;
-    inst._doTriggered  = false;
-    inst.isTriggered   = false;
-    inst._powered      = false;
-    inst._updateVisuals?.(false);
-    inst.simEngine     = null;
-  }
-  
-  
- 
-}
- 
-
-    
-    const SWITCH_TYPES = new Set([
-      "pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor",
+    const LOGIC_MODELS = new Set([
+      "74HC08","74HC32","74HC00","74HC86","74HC02",
+      "74HC83","74HC148","74HC153","74HC04","74HC14",
+      "74HC74","74HC73","74HC76","74HC266","74HC7266",
     ]);
+    if (LOGIC_MODELS.has(comp.model) || comp.type === "logic-ic") {
+      LogicICModel.reset(comp);
+      inst.reset?.();
+    }
+
+    if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
+      if (typeof inst.reset === "function") {
+        inst.reset();
+      } else {
+        inst.gasIntensity  = 0;
+        inst.currentAnalog = inst.config?.baseline ?? 0;
+        inst.outputVoltage = 0;
+        inst._doTriggered  = false;
+        inst.isTriggered   = false;
+        inst._powered      = false;
+        inst._updateVisuals?.(false);
+        inst.simEngine     = null;
+      }
+    }
+
+    const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
     if (SWITCH_TYPES.has(comp.type)) {
       if (comp.instance._engineLinked) {
         const curActive = comp.instance.active;
         const curTilted = comp.instance.tilted;
-        Object.defineProperty(comp.instance, "active", {
-          value: curActive, writable: true, configurable: true,
-        });
+        Object.defineProperty(comp.instance, "active", { value: curActive, writable: true, configurable: true });
         if ("tilted" in comp.instance) {
-          Object.defineProperty(comp.instance, "tilted", {
-            value: curTilted, writable: true, configurable: true,
-          });
+          Object.defineProperty(comp.instance, "tilted", { value: curTilted, writable: true, configurable: true });
         }
         comp.instance._engineLinked = false;
       }
@@ -621,9 +539,6 @@ if (LOGIC_MODELS.has(comp.model) || comp.type === "logic-ic") {
   digitalOutputs = {};
   pinStates      = {};
 }
-
-
-// ─── simulationBtn click handler ─────────────────────────────────────────────
 
 simulationBtn?.addEventListener("click", async () => {
   if (!on) {
@@ -643,24 +558,20 @@ simulationBtn?.addEventListener("click", async () => {
 
     if (!emptyCode) {
       try {
-        const cleanCode = _stripComments(rawCode);
+        const cleanCode = stripComments(rawCode);
         parsed = parser.arduinoToJSON(cleanCode);
         aceEditor.setDiagnostics(parsed.errors, parsed.warnings);
       } catch (parseErr) {
         console.error("[Parse Error]", parseErr);
-        aceEditor.setDiagnostics(
-          [{ message: parseErr.message || "Unknown parse error", line: null }],
-          []
-        );
+        aceEditor.setDiagnostics([{ message: parseErr.message || "Unknown parse error", line: null }], []);
         return;
       }
-
       if (!parsed.canRun) return;
     }
 
     try {
       on = true;
-      _lockEditor(true);
+      lockEditor(true);
       tCheck.checkAllConnections();
 
       engine = new SimulationEngine(parsed, {
@@ -675,16 +586,13 @@ simulationBtn?.addEventListener("click", async () => {
 
       engine.onError = (err) => {
         console.error("[Simulation Error]", err);
-        _stopSimulation();
-
+        stopSimulation();
         const errorParts = [
           err.message || "Simulation error",
-          err.hint  ? `Hint: ${err.hint}` : null,
-          err.line  ? `Line: ${err.line}` : null,
+          err.hint ? `Hint: ${err.hint}` : null,
+          err.line ? `Line: ${err.line}` : null,
         ].filter(Boolean);
-
         window.Serial?.writeError?.(errorParts.join(" | "));
-
         if (err.line) {
           aceEditor.setDiagnostics(
             [{ message: err.message, line: err.line, col: err.col, fix: err.hint }],
@@ -693,25 +601,22 @@ simulationBtn?.addEventListener("click", async () => {
         }
       };
 
-      const SWITCH_TYPES = new Set([
-        "pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor",
-      ]);
+      const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
 
       registry.getAll().forEach(comp => {
         if (!comp.instance) return;
         const inst = comp.instance;
 
-       if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
-  inst.simEngine     = engine;
-  inst.startTime     = Date.now();
-  inst.gasIntensity  = 0;        // ← ye 0 set ho raha hai — sahi
-  inst._currentPPM   = inst.config?.ppmMin ?? 200;
-  inst._powered      = false;
-  inst._warmupDone   = false;
-  inst.userThreshold ??= inst.config?.threshold ?? 400;
-  
-  
-}
+        if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
+          inst.simEngine     = engine;
+          inst.startTime     = Date.now();
+          inst.gasIntensity  = 0;
+          inst._currentPPM   = inst.config?.ppmMin ?? 200;
+          inst._powered      = false;
+          inst._warmupDone   = false;
+          inst.userThreshold ??= inst.config?.threshold ?? 400;
+        }
+
         if (comp.type === "pir-sensor") {
           inst.digitalInputs = digitalInputs;
           inst._simEngine    = engine;
@@ -721,9 +626,7 @@ simulationBtn?.addEventListener("click", async () => {
         }
 
         if (comp.type === "dht11") {
-          inst.powered     = false;
-          inst._heatActive = false;
-          inst._wasOn      = false;
+          inst.powered = inst._heatActive = inst._wasOn = false;
         }
 
         if (comp.type === "sound-sensor" || comp.type === "flame-sensor") {
@@ -740,7 +643,7 @@ simulationBtn?.addEventListener("click", async () => {
           inst._powered      = false;
         }
 
-        if (comp.type === "lcd-16x2-i2c") {
+        if (comp.type === "lcd") {
           inst.initialized = false;
           inst.validated   = false;
         }
@@ -756,16 +659,12 @@ simulationBtn?.addEventListener("click", async () => {
           const rp = engine.globalVars["rowPins"]
                   ?? engine.globalVars["rowpins"]
                   ?? Object.values(engine.globalVars).find(v =>
-                       Array.isArray(v) && v.length === 4 &&
-                       v.every(x => typeof x === "number" && x >= 0 && x <= 53)
+                       Array.isArray(v) && v.length === 4 && v.every(x => typeof x === "number" && x >= 0 && x <= 53)
                      );
-
           const cp = engine.globalVars["colPins"]
                   ?? engine.globalVars["colpins"]
                   ?? Object.values(engine.globalVars).find(v =>
-                       Array.isArray(v) && v.length === 4 &&
-                       v.every(x => typeof x === "number" && x >= 0 && x <= 53) &&
-                       v !== rp
+                       Array.isArray(v) && v.length === 4 && v.every(x => typeof x === "number" && x >= 0 && x <= 53) && v !== rp
                      );
 
           if (Array.isArray(rp) && Array.isArray(cp)) {
@@ -782,28 +681,28 @@ simulationBtn?.addEventListener("click", async () => {
 
           if (!inst._engineLinked) {
             inst._engineLinked = true;
-            let _active = inst.active ?? false;
+            let active = inst.active ?? false;
             const ad = Object.getOwnPropertyDescriptor(inst, "active");
             if (!ad?.set) {
               Object.defineProperty(inst, "active", {
-                get: () => _active,
+                get: () => active,
                 set: val => {
-                  const changed = val !== _active;
-                  _active = val;
+                  const changed = val !== active;
+                  active = val;
                   if (changed) queueMicrotask(() => engine.resolveElectrical?.());
                 },
                 configurable: true,
               });
             }
             if ("tilted" in inst) {
-              let _tilted = inst.tilted ?? false;
+              let tilted = inst.tilted ?? false;
               const td = Object.getOwnPropertyDescriptor(inst, "tilted");
               if (!td?.set) {
                 Object.defineProperty(inst, "tilted", {
-                  get: () => _tilted,
+                  get: () => tilted,
                   set: val => {
-                    const changed = val !== _tilted;
-                    _tilted = val;
+                    const changed = val !== tilted;
+                    tilted = val;
                     if (changed) queueMicrotask(() => engine.resolveElectrical?.());
                   },
                   configurable: true,
@@ -814,40 +713,35 @@ simulationBtn?.addEventListener("click", async () => {
         }
       });
 
-      // Empty code mein sirf electrical solve karo — loop nahi chalao
       if (emptyCode) {
-        engine.netlist = wireSys?.buildNetlist() ?? null;
-        engine.startTime = performance.now();
+        engine.netlist     = wireSys?.buildNetlist() ?? null;
+        engine.startTime   = performance.now();
         engine.loopRunning = true;
         engine._loadParserInstancesToRegistry(parsed);
-
-        // Continuous electrical tick — ruk jaayega jab stop hoga
-        const _elecTick = () => {
+        const elecTick = () => {
           if (!engine.loopRunning) return;
           engine.resolveElectrical();
-          requestAnimationFrame(_elecTick);
+          requestAnimationFrame(elecTick);
         };
-        requestAnimationFrame(_elecTick);
-
+        requestAnimationFrame(elecTick);
         engine.onStop = () => {};
       } else {
         engine.run(parsed);
       }
 
       aceEditor.onSimulationStart();
-      _setRunState(true);
-
+      setRunState(true);
       window.addEventListener("click", () => AudioEngine.ensure(), { once: true });
 
     } catch (err) {
       console.error("[Simulation] Start error:", err);
       on = false;
-      _lockEditor(false);
-      _resetAllComponents();
-      _setRunState(false);
+      lockEditor(false);
+      resetAllComponents();
+      setRunState(false);
     }
 
   } else {
-    _stopSimulation();
+    stopSimulation();
   }
 });
