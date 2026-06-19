@@ -4,12 +4,12 @@ import { MODEL_REGISTRY } from "../src/models/index.js";
 
 const GMIN         = 1e-12;
 const G_GND        = 1e6;
-const MAX_ITER     = 100;
-const CONV_TOL     = 1e-5;
+const MAX_ITER     = 150;
+const CONV_TOL     = 1e-6;
 const STALL_RATIO  = 0.9995;
 const MAX_VOLTAGE  = 1e4;
 const DEFAULT_DT   = 1e-4;
-const SOURCE_STEPS = [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0];
+const SOURCE_STEPS = [0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0];
 
 const VT          = 0.02585;
 const IS_DEFAULT  = 1e-14;
@@ -19,36 +19,36 @@ const MAX_EXP_ARG = 40;
 const HISTORY_TYPES = new Set(["CAPACITOR", "INDUCTOR", "SENSOR_OUT"]);
 
 const R_FLOOR = {
-WIRE          : 1e-6,
-  RESISTOR      : 1e-9,
-  CAPACITOR     : 1e-6,
-  INDUCTOR      : 1e-6,
-  DIODE         : 0.5,
-  LED           : 8.0,
-  LED_SEGMENT   : 8.0,
-  SCHOTTKY      : 0.1,
-  ZENER         : 0.5,
-  TRANSISTOR_BE : 0.05,
-  TRANSISTOR_CE : 0.02,
-  MOSFET_DS     : 0.005,
-  JFET          : 0.01,
-  BATTERY       : 1e-3,
-  VOLTAGE_SOURCE: 1e-4,
-  CURRENT_SOURCE: 1e12,
-  REGULATOR     : 1e-3,
-  IC_OUTPUT     : 10,
-  SWITCH        : 1e-4,
-  TRANSFORMER   : 1e-3,
-  HEATER        : 33,
-  PULLUP        : 1000,
-  PULLDOWN      : 1000,
-  DO_DRIVER     : 50,
-  SENSOR_RS     : 50,
-  SENSOR_RL     : 50,
-  SENSOR_LOAD   : 100,
-  DEFAULT       : 1e-9,
+  WIRE             : 1e-6,
+  RESISTOR         : 1e-9,
+  CAPACITOR        : 1e-6,
+  INDUCTOR         : 1e-6,
+  DIODE            : 0.5,
+  LED              : 8.0,
+  LED_SEGMENT      : 8.0,
+  SCHOTTKY         : 0.1,
+  ZENER            : 0.5,
+  TRANSISTOR_BE    : 0.05,
+  TRANSISTOR_CE    : 0.02,
+  MOSFET_DS        : 0.005,
+  JFET             : 0.01,
+  BATTERY          : 1e-3,
+  VOLTAGE_SOURCE   : 1e-4,
+  CURRENT_SOURCE   : 1e12,
+  REGULATOR        : 1e-3,
+  IC_OUTPUT        : 10,
+  SWITCH           : 1e-4,
+  TRANSFORMER      : 1e-3,
+  HEATER           : 33,
+  PULLUP           : 1000,
+  PULLDOWN         : 1000,
+  DO_DRIVER        : 50,
+  SENSOR_RS        : 50,
+  SENSOR_RL        : 50,
+  SENSOR_LOAD      : 100,
+  DEFAULT          : 1e-9,
   BREADBOARD_SHORT : 1e-4,
-INTERNAL_SHORT   : 1e-3
+  INTERNAL_SHORT   : 1e-3,
 };
 
 const RECTIFYING = new Set([
@@ -108,7 +108,6 @@ class SparseMatrix {
     const perm    = new Int32Array(n);
     const pinv    = new Int32Array(n).fill(-1);
     const maxFill = Math.min(Math.max(nnz * 20 + n * 10, n * 4), n * n);
- 
 
     const Lp = new Int32Array(n + 1);
     const Up = new Int32Array(n + 1);
@@ -240,21 +239,13 @@ function _sparseGet(Cp, Ci, Cx, col, row) {
 }
 
 
-// ---------------------------------------------------------------------
-// SPICE-style Newton-Raphson voltage limiting for exponential junctions.
-// This is the classic "pnjlim" algorithm used by SPICE/ngspice to stop
-// the exponential from blowing up between NR iterations. ANY model that
-// has an exp(V/nVt)-type nonlinearity (diode, BJT base-emitter junction,
-// etc.) should run its junction voltage through this before evaluating
-// exp(). Exported so model files can reuse it.
-// ---------------------------------------------------------------------
 export function junctionVcrit(Is, N) {
   const nVt = N * VT;
   return nVt * Math.log(nVt / (Math.SQRT2 * Math.max(Is, 1e-30)));
 }
 
 export function limitJunctionVoltage(Vnew, Vold, N, Is) {
-  const nVt  = N * VT;
+  const nVt   = N * VT;
   const Vcrit = junctionVcrit(Is, N);
 
   if (Vnew > Vcrit && Math.abs(Vnew - Vold) > 2 * nVt) {
@@ -269,15 +260,6 @@ export function limitJunctionVoltage(Vnew, Vold, N, Is) {
 }
 
 
-// ---------------------------------------------------------------------
-// _diodeLinearize now takes an optional Vold (the junction voltage from
-// the PREVIOUS NR iteration, not the previous timestep) and applies
-// voltage limiting before computing exp(). This makes any exponential
-// junction model converge the way real SPICE does, even for steep
-// diodes/LEDs/BJT junctions that previously needed heavy damping.
-// ---------------------------------------------------------------------
-// diode.js mein _diodeLinearize() replace karo:
-
 function _diodeLinearize(Vd, Is, N, Vold) {
   const nVt = N * VT;
 
@@ -286,30 +268,16 @@ function _diodeLinearize(Vd, Is, N, Vold) {
     Vd_lim = limitJunctionVoltage(Vd, Vold, N, Is);
   }
 
-  const Vd_c = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd_lim));
-
-  // FIX: forward aur reverse dono mein same formula — continuity ensure hogi
+  const Vd_c   = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd_lim));
   const expVal = Math.exp(Vd_c / nVt);
   const Id     = Is * (expVal - 1.0);
   const Gd     = (Is * expVal) / nVt + GMIN;
   const Ieq    = Id - Gd * Vd_c;
 
-  // Deep reverse mein expVal ~ 0, Id ~ -Is, Gd ~ GMIN — mathematically correct
   return { Gd, Ieq, Vlim: Vd_c };
-} 
+}
 
-// ---------------------------------------------------------------------
-// Trapezoidal-rule companion models (replaces backward-Euler).
-//
-// Capacitor:  i(t) = (2C/dt)*(V(t)-Vprev) - Iprev
-//   => Geq = 2C/dt,  Ieq = Geq*Vprev + Iprev
-//
-// Inductor:   i(t) = (1/Req)*v(t) + Iprev + Vprev/Req,  Req = 2L/dt
-//   => stamped as a resistor Req with series source Veq = Req*Iprev + Vprev
-//
-// On the very first step (no history), Iprev/Vprev default to 0, which
-// degenerates gracefully to a pure backward-Euler-like start.
-// ---------------------------------------------------------------------
+
 function _capacitorCompanion(C, Vprev, Iprev, dt) {
   const Geq = 2 * C / dt;
   const Ieq = Geq * Vprev + Iprev;
@@ -322,28 +290,105 @@ function _inductorCompanion(L, Iprev, Vprev, dt) {
   return { Req, Veq };
 }
 
+
 function _zenerLinearize(Vd, Is, N, Vz, Rz, Vold) {
   if (Vd >= 0) {
     return _diodeLinearize(Vd, Is, N, Vold);
   }
- 
-  const Vrev = -Vd;
+
+  const Vrev   = -Vd;
   const Rz_eff = Math.max(Rz, 0.1);
- 
-  if (Vrev < Vz * 0.95) {
-    return { Gd: GMIN, Ieq: 0, Vlim: Vd };
+  const Vknee  = Vz * 0.8;
+
+  if (Vrev < Vknee) {
+    const Gleak = GMIN + (GMIN * 100) * (Vrev / Math.max(Vknee, 1e-9));
+    return { Gd: Gleak, Ieq: 0, Vlim: Vd };
   }
- 
+
   if (Vrev < Vz) {
-    const knee = (Vrev - Vz * 0.95) / (Vz * 0.05);
-    const Gd_k = (knee / Rz_eff);
-    const Ieq_k = Gd_k * Vz;
+    const t      = (Vrev - Vknee) / Math.max(Vz - Vknee, 1e-9);
+    const tSmooth = t * t * (3 - 2 * t);
+    const Gd_k   = tSmooth / Rz_eff;
+    const Ieq_k  = Gd_k * Vz * tSmooth;
     return { Gd: Gd_k + GMIN, Ieq: Ieq_k, Vlim: Vd };
   }
- 
+
   const Gd  = 1.0 / Rz_eff;
   const Ieq = Gd * Vz;
   return { Gd, Ieq, Vlim: Vd };
+}
+
+
+function _bjtEbersMoll(Vbe, Vbc, Is, Bf, Br, Vold_be, Vold_bc) {
+  const nVt = VT;
+
+  const Vbe_lim = limitJunctionVoltage(
+    Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vbe)),
+    Vold_be ?? 0, 1.0, Is
+  );
+  const Vbc_lim = limitJunctionVoltage(
+    Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vbc)),
+    Vold_bc ?? 0, 1.0, Is
+  );
+
+  const expBE = Math.exp(Vbe_lim / nVt);
+  const expBC = Math.exp(Vbc_lim / nVt);
+
+  const Is_f  = Is;
+  const Is_r  = Is / Math.max(Br, 1e-3);
+
+  const If_   = Is_f * (expBE - 1.0);
+  const Ir_   = Is_r * (expBC - 1.0);
+
+  const Ic = If_ - Ir_ * (1.0 + 1.0 / Math.max(Br, 1e-3));
+  const Ib = If_ / Math.max(Bf, 1e-3) + Ir_;
+  const Ie = -(If_ * (1.0 + 1.0 / Math.max(Bf, 1e-3)) - Ir_);
+
+  const Gbe  = Is_f * expBE / nVt + GMIN;
+  const Gbc  = Is_r * expBC / nVt + GMIN;
+
+  const Gm   = Is_f * expBE / nVt;
+
+  const Ieq_be = If_ - Gbe * Vbe_lim;
+  const Ieq_bc = Ir_ - Gbc * Vbc_lim;
+
+  return {
+    Ic, Ib, Ie,
+    Gbe, Gbc, Gm,
+    Ieq_be, Ieq_bc,
+    Vbe_lim, Vbc_lim,
+  };
+}
+
+
+function _mosfetIds(Vgs, Vds, Vth, Kp, Lambda) {
+  const Vov = Vgs - Vth;
+
+  if (Vov <= 0) {
+    return { Ids: 0, Gds: GMIN, Gm: 0 };
+  }
+
+  const lam = Lambda ?? 0.01;
+
+  if (Vds < 0) {
+    const VovR = -Vgs - Vth;
+    if (VovR <= 0) return { Ids: 0, Gds: GMIN, Gm: 0 };
+    const IdsR = -Kp * (VovR * (-Vds) - 0.5 * Vds * Vds) * (1 + lam * (-Vds));
+    const GdsR = Kp * (VovR + Vds) * (1 + lam * (-Vds));
+    return { Ids: IdsR, Gds: Math.max(GdsR, GMIN), Gm: 0 };
+  }
+
+  if (Vds >= Vov) {
+    const Ids = 0.5 * Kp * Vov * Vov * (1 + lam * Vds);
+    const Gds = 0.5 * Kp * Vov * Vov * lam + GMIN;
+    const Gm  = Kp * Vov * (1 + lam * Vds);
+    return { Ids, Gds, Gm };
+  }
+
+  const Ids = Kp * (Vov * Vds - 0.5 * Vds * Vds) * (1 + lam * Vds);
+  const Gds = Kp * (Vov - Vds) * (1 + lam * Vds) + GMIN;
+  const Gm  = Kp * Vds * (1 + lam * Vds);
+  return { Ids, Gds, Gm };
 }
 
 
@@ -368,14 +413,10 @@ export default class CircuitSolver {
     this._branchMap     = new Map();
     this._sourceScale   = 1.0;
 
-    // Timestep-history state (capacitor V & I, inductor I & V) for
-    // trapezoidal companion models.
-    this._capState      = new Map(); // id -> { V, I }
-    this._indState      = new Map(); // id -> { I, V }
-
-    // Per-NR-iteration junction voltage memory, used for voltage
-    // limiting. Reset at the start of every _runNR() call.
-    this._junctionV     = new Map(); // branch.id -> Vd from last iter
+    this._capState      = new Map();
+    this._indState      = new Map();
+    this._junctionV     = new Map();
+    this._gminOverride  = null;
   }
 
   setTimestep(dt) { this._dt = Math.max(1e-15, dt); }
@@ -423,34 +464,32 @@ export default class CircuitSolver {
     this._finalize(electrical);
   }
 
- _solveWithSourceStepping(electrical, nets, netToIdx, n, wireBranches) {
-  const ok = this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
-  if (ok) { this._sourceScale = 1.0; return true; }
- 
-  const GMIN_STEPS = [1e-3, 1e-5, 1e-8, 1e-10];
-  for (const gmin of GMIN_STEPS) {
-    this._gminOverride = gmin;
-    const okG = this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
-    if (okG) { this._gminOverride = null; this._sourceScale = 1.0; return true; }
+  _solveWithSourceStepping(electrical, nets, netToIdx, n, wireBranches) {
+    const ok = this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
+    if (ok) { this._sourceScale = 1.0; return true; }
+
+    const GMIN_STEPS = [1e-3, 1e-5, 1e-8, 1e-10];
+    for (const gmin of GMIN_STEPS) {
+      this._gminOverride = gmin;
+      const okG = this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
+      if (okG) { this._gminOverride = null; this._sourceScale = 1.0; return true; }
+    }
+    this._gminOverride = null;
+
+    const steps = this._sourceScale < 1.0 ? SOURCE_STEPS : SOURCE_STEPS;
+    for (const scale of steps) {
+      this._sourceScale = scale;
+      const okS = this._runNR(electrical, nets, netToIdx, n, wireBranches, scale);
+      if (okS) { this._sourceScale = 1.0; return true; }
+    }
+
+    this._sourceScale = 1.0;
+    return this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
   }
-  this._gminOverride = null;
- 
-  const steps = this._sourceScale < 1.0 ? SOURCE_STEPS : [1.0];
-  for (const scale of steps) {
-    this._sourceScale = scale;
-    const okS = this._runNR(electrical, nets, netToIdx, n, wireBranches, scale);
-    if (okS) { this._sourceScale = 1.0; return true; }
-  }
- 
-  this._sourceScale = 1.0;
-  return this._runNR(electrical, nets, netToIdx, n, wireBranches, 1.0);
-}
 
   _runNR(electrical, nets, netToIdx, n, wireBranches, sourceScale) {
     let prevMaxDelta = Infinity;
-this._junctionV.clear();
-    // Fresh junction-voltage memory for this NR run (used for limiting).
-  
+    this._junctionV.clear();
 
     for (let iter = 0; iter < MAX_ITER; iter++) {
       electrical.circuits = [];
@@ -476,6 +515,7 @@ this._junctionV.clear();
       this._stampBJTs(electrical);
       this._stampMOSFETs(electrical);
 
+      const gminEff = this._gminOverride ?? GMIN;
       const mat = new SparseMatrix(n);
       const B   = new Float64Array(n);
 
@@ -483,23 +523,6 @@ this._junctionV.clear();
         const ia = netToIdx.get(branch.a);
         const ib = netToIdx.get(branch.b);
 
-        // -------------------------------------------------------------
-        // Generic multi-terminal stamping. Any model.solve() can push a
-        // "virtual branch" with a `_stamps` array onto electrical.circuits
-        // to inject arbitrary conductance / transconductance / current
-        // terms into the MNA matrix. This is how 3+ terminal devices
-        // (BJTs, MOSFETs with Gm, motors, coupled inductors, etc.) hook
-        // into the same NR loop without the solver needing to know
-        // anything about them.
-        //
-        // Stamp formats (all node ids are net ids, looked up via netToIdx):
-        //   { a, b, g }                     -> conductance g between a,b
-        //   { a, b, ctrlA, ctrlB, gm }       -> transconductance: current
-        //                                       gm*(V_ctrlA - V_ctrlB) flows
-        //                                       from b to a
-        //   { a, b, i }                      -> independent current i
-        //                                       flows from b to a
-        // -------------------------------------------------------------
         if (branch._stamps) {
           for (const st of branch._stamps) this._applyStamp(mat, B, netToIdx, st);
           continue;
@@ -536,8 +559,8 @@ this._junctionV.clear();
           const RsMin = R_FLOOR[branch.type] ?? R_FLOOR.DEFAULT;
           const RsEff = Math.max(Rs, RsMin);
 
-          const Gtotal = 1.0 / (1.0 / Math.max(Gd, GMIN) + RsEff);
-          const IeqEff = Ieq * (Gtotal / Math.max(Gd, GMIN));
+          const Gtotal = 1.0 / (1.0 / Math.max(Gd, gminEff) + RsEff);
+          const IeqEff = Ieq * (Gtotal / Math.max(Gd, gminEff));
 
           if (ia !== undefined) { mat.add(ia, ia, Gtotal); B[ia] -= IeqEff; }
           if (ib !== undefined) { mat.add(ib, ib, Gtotal); B[ib] += IeqEff; }
@@ -545,6 +568,16 @@ this._junctionV.clear();
             mat.add(ia, ib, -Gtotal);
             mat.add(ib, ia, -Gtotal);
           }
+          continue;
+        }
+
+        if (branch._bjtStamps) {
+          for (const st of branch._bjtStamps) this._applyStamp(mat, B, netToIdx, st);
+          continue;
+        }
+
+        if (branch._mosfetStamps) {
+          for (const st of branch._mosfetStamps) this._applyStamp(mat, B, netToIdx, st);
           continue;
         }
 
@@ -579,7 +612,7 @@ this._junctionV.clear();
         }
       }
 
-      for (let i = 0; i < n; i++) mat.add(i, i, GMIN);
+      for (let i = 0; i < n; i++) mat.add(i, i, gminEff);
 
       for (const gndNet of electrical.gndNets) {
         const gi = netToIdx.get(gndNet);
@@ -600,8 +633,6 @@ this._junctionV.clear();
           ? Math.max(-MAX_VOLTAGE, Math.min(MAX_VOLTAGE, V[i]))
           : 0;
 
-        // With voltage limiting handling the worst nonlinear jumps,
-        // damping can be lighter than before.
         const damp = isGnd ? 1.0
                    : iter < 3  ? 0.5
                    : iter < 10 ? 0.8
@@ -620,9 +651,6 @@ this._junctionV.clear();
     return false;
   }
 
-  // ---------------------------------------------------------------------
-  // Apply one generic stamp (see _runNR comment above for format).
-  // ---------------------------------------------------------------------
   _applyStamp(mat, B, netToIdx, st) {
     const ia = st.a != null ? netToIdx.get(st.a) : undefined;
     const ib = st.b != null ? netToIdx.get(st.b) : undefined;
@@ -659,54 +687,54 @@ this._junctionV.clear();
   }
 
 
- _stampCapacitors(electrical) {
-  for (const branch of electrical.circuits) {
-    if (branch.type !== "CAPACITOR") continue;
-    if (branch._companionCap) continue;
- 
-    const C = branch.capacitance ?? 1e-6;
-    if (!Number.isFinite(C) || C <= 0) continue;
- 
-    const hist  = this._capState.get(branch.id);
-    const Vprev = hist?.V ?? (
-      (electrical.netVoltage.get(branch.a) ?? 0) -
-      (electrical.netVoltage.get(branch.b) ?? 0)
-    );
-    const Iprev = hist?.I ?? 0;
- 
-    const Geq = 2 * C / this._dt;
-    const Ieq = Geq * Vprev + Iprev;
-    branch._companionCap = { Geq, Ieq };
-  }
-}
+  _stampCapacitors(electrical) {
+    for (const branch of electrical.circuits) {
+      if (branch.type !== "CAPACITOR") continue;
+      if (branch._companionCap) continue;
 
- _stampInductors(electrical) {
-  for (const branch of electrical.circuits) {
-    if (branch.type !== "INDUCTOR") continue;
-    if (branch._companionInd) continue;
- 
-    const L = branch.inductance ?? 1e-3;
-    if (!Number.isFinite(L) || L <= 0) continue;
- 
-    const comp = this.registry.getAll().find(c => c.id === branch.id);
-    const inst = comp?.instance;
- 
-    let Req, Veq;
- 
-    if (inst?._ReqEff != null && inst?._Veq != null) {
-      Req = inst._ReqEff;
-      Veq = inst._Veq;
-    } else {
-      const hist  = this._indState.get(branch.id);
-      const Iprev = _clamp(hist?.I ?? 0, 500);
-      const Vprev = hist?.V ?? 0;
-      Req = (2.0 * (branch.inductance ?? 1e-3)) / this._dt;
-      Veq = Req * Iprev + Vprev;
+      const C = branch.capacitance ?? 1e-6;
+      if (!Number.isFinite(C) || C <= 0) continue;
+
+      const hist  = this._capState.get(branch.id);
+      const Vprev = hist?.V ?? (
+        (electrical.netVoltage.get(branch.a) ?? 0) -
+        (electrical.netVoltage.get(branch.b) ?? 0)
+      );
+      const Iprev = hist?.I ?? 0;
+
+      const { Geq, Ieq } = _capacitorCompanion(C, Vprev, Iprev, this._dt);
+      branch._companionCap = { Geq, Ieq };
     }
- 
-    branch._companionInd = { Req, Veq };
   }
-}
+
+  _stampInductors(electrical) {
+    for (const branch of electrical.circuits) {
+      if (branch.type !== "INDUCTOR") continue;
+      if (branch._companionInd) continue;
+
+      const L = branch.inductance ?? 1e-3;
+      if (!Number.isFinite(L) || L <= 0) continue;
+
+      const comp = this.registry.getAll().find(c => c.id === branch.id);
+      const inst = comp?.instance;
+
+      let Req, Veq;
+
+      if (inst?._ReqEff != null && inst?._Veq != null) {
+        Req = inst._ReqEff;
+        Veq = inst._Veq;
+      } else {
+        const hist  = this._indState.get(branch.id);
+        const Iprev = _clamp(hist?.I ?? 0, 500);
+        const Vprev = hist?.V ?? 0;
+        const result = _inductorCompanion(L, Iprev, Vprev, this._dt);
+        Req = result.Req;
+        Veq = result.Veq;
+      }
+
+      branch._companionInd = { Req, Veq };
+    }
+  }
 
   _stampDiodes(electrical) {
     for (const branch of electrical.circuits) {
@@ -717,13 +745,12 @@ this._junctionV.clear();
       const Vb = electrical.netVoltage.get(branch.b) ?? 0;
       const Vd = Va - Vb;
 
-      const Is = branch.Is ?? (branch.type === "SCHOTTKY" ? 1e-8 : IS_DEFAULT);
-      const N  = branch.N  ?? (branch.type === "SCHOTTKY" ? 1.05 : N_DEFAULT);
+      const Is   = branch.Is ?? (branch.type === "SCHOTTKY" ? 1e-8 : IS_DEFAULT);
+      const N    = branch.N  ?? (branch.type === "SCHOTTKY" ? 1.05 : N_DEFAULT);
+      const Vold = this._junctionV.get(branch.id) ?? 0;
 
- const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0;
       const { Gd, Ieq, Vlim } = _diodeLinearize(Vd, Is, N, Vold);
       this._junctionV.set(branch.id, Vlim);
-
       branch._diodeNR = { Gd, Ieq };
     }
   }
@@ -733,66 +760,117 @@ this._junctionV.clear();
       if (branch.type !== "ZENER") continue;
       if (branch._diodeNR) continue;
 
-      const Va = electrical.netVoltage.get(branch.a) ?? 0;
-      const Vb = electrical.netVoltage.get(branch.b) ?? 0;
-      const Vd = Va - Vb;
+      const Va   = electrical.netVoltage.get(branch.a) ?? 0;
+      const Vb   = electrical.netVoltage.get(branch.b) ?? 0;
+      const Vd   = Va - Vb;
+      const Is   = branch.Is ?? IS_DEFAULT;
+      const N    = branch.N  ?? N_DEFAULT;
+      const Vz   = branch.Vz ?? 5.1;
+      const Rz   = branch.Rz ?? 5.0;
+      const Vold = this._junctionV.get(branch.id) ?? 0;
 
-      const Is = branch.Is ?? IS_DEFAULT;
-      const N  = branch.N  ?? N_DEFAULT;
-      const Vz = branch.Vz ?? 5.1;
-      const Rz = branch.Rz ?? 5.0;
-
-const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0;
       const { Gd, Ieq, Vlim } = _zenerLinearize(Vd, Is, N, Vz, Rz, Vold);
       this._junctionV.set(branch.id, Vlim);
-
       branch._diodeNR = { Gd, Ieq };
     }
   }
 
   _stampBJTs(electrical) {
     for (const branch of electrical.circuits) {
-      if (branch.type !== "TRANSISTOR_BE" && branch.type !== "TRANSISTOR_BC") continue;
-      if (branch._diodeNR) continue;
+      if (branch.type !== "BJT") continue;
 
-      const Va = electrical.netVoltage.get(branch.a) ?? 0;
-      const Vb = electrical.netVoltage.get(branch.b) ?? 0;
-      const Vd = Va - Vb;
-      const Is = branch.Is ?? IS_DEFAULT;
-      const N  = branch.N  ?? 1.0;
+      const netB = branch.base;
+      const netC = branch.collector;
+      const netE = branch.emitter;
+      if (!netB || !netC || !netE) continue;
 
-     const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0;
-      const { Gd, Ieq, Vlim } = _diodeLinearize(Vd, Is, N, Vold);
-      this._junctionV.set(branch.id, Vlim);
+      const Vb = electrical.netVoltage.get(netB) ?? 0;
+      const Vc = electrical.netVoltage.get(netC) ?? 0;
+      const Ve = electrical.netVoltage.get(netE) ?? 0;
 
-      branch._diodeNR = { Gd, Ieq };
+      const isPNP = branch.pnp ?? false;
+      const sign  = isPNP ? -1 : 1;
+
+      const Vbe_raw = sign * (Vb - Ve);
+      const Vbc_raw = sign * (Vb - Vc);
+
+      const Is  = branch.Is ?? IS_DEFAULT;
+      const Bf  = branch.Bf ?? 100;
+      const Br  = branch.Br ?? 5;
+
+      const keyBE = branch.id + "_be";
+      const keyBC = branch.id + "_bc";
+      const Vold_be = this._junctionV.get(keyBE) ?? 0;
+      const Vold_bc = this._junctionV.get(keyBC) ?? 0;
+
+      const em = _bjtEbersMoll(Vbe_raw, Vbc_raw, Is, Bf, Br, Vold_be, Vold_bc);
+      this._junctionV.set(keyBE, em.Vbe_lim);
+      this._junctionV.set(keyBC, em.Vbc_lim);
+
+      const Ic_eq  = em.Ic  - em.Gm  * em.Vbe_lim + em.Gbc * em.Vbc_lim - em.Gbe * 0;
+      const Ib_eq  = em.Ib  - (em.Gbe / Math.max(Bf, 1)) * em.Vbe_lim - em.Gbc * em.Vbc_lim;
+
+      const stamps = [];
+
+      stamps.push({ a: netC, b: netE, g: em.Gm });
+      stamps.push({ a: netC, b: null, ctrlA: netB, ctrlB: netE, gm: em.Gm });
+
+      stamps.push({ a: netB, b: netE, g: em.Gbe });
+      stamps.push({ a: netC, b: netB, g: em.Gbc });
+
+      const Ic_dc = sign * em.Ic;
+      const Ib_dc = sign * em.Ib;
+
+      stamps.push({ a: netC, b: netE, i:  sign * (em.Ic - em.Gm * em.Vbe_lim - em.Gbc * (em.Vbc_lim)) });
+      stamps.push({ a: netB, b: netE, i:  sign * (em.Ib - em.Gbe * em.Vbe_lim) });
+
+      branch._bjtStamps = stamps;
+      branch.current    = Ic_dc;
+      branch.Ib         = Ib_dc;
     }
   }
 
   _stampMOSFETs(electrical) {
- for (const branch of electrical.circuits) {
-      if (branch.type !== "MOSFET_DS") continue;
-      branch._diodeNR = null;
+    for (const branch of electrical.circuits) {
+      if (branch.type !== "MOSFET_DS" && branch.type !== "MOSFET") continue;
 
-      const Vgs = branch.Vgs ?? 0;
-      const Vth = branch.Vth ?? 2.0;
-      const Kp  = branch.Kp  ?? 0.01;
-      const Va  = electrical.netVoltage.get(branch.a) ?? 0;
-      const Vb  = electrical.netVoltage.get(branch.b) ?? 0;
-      const Vds = Va - Vb;
-      const Vov = Vgs - Vth;
+      const netG = branch.gate;
+      const netD = branch.drain   ?? branch.a;
+      const netS = branch.source  ?? branch.b;
 
-      let Ids = 0, Gds = GMIN;
-      if (Vov > 0) {
-        if (Vds >= Vov) {
-          Ids = 0.5 * Kp * Vov * Vov;
-          Gds = GMIN;
-        } else {
-          Ids = Kp * (Vov * Vds - 0.5 * Vds * Vds);
-          Gds = Kp * (Vov - Vds);
-        }
+      const Vg = electrical.netVoltage.get(netG) ?? 0;
+      const Vd = electrical.netVoltage.get(netD) ?? 0;
+      const Vs = electrical.netVoltage.get(netS) ?? 0;
+
+      const isPMOS  = branch.pmos ?? false;
+      const sign    = isPMOS ? -1 : 1;
+
+      const Vgs_live = sign * (Vg - Vs);
+      const Vds_live = sign * (Vd - Vs);
+
+      const Vth    = branch.Vth    ?? 2.0;
+      const Kp     = branch.Kp     ?? 0.01;
+      const Lambda = branch.Lambda ?? 0.01;
+
+      const { Ids, Gds, Gm } = _mosfetIds(Vgs_live, Vds_live, Vth, Kp, Lambda);
+
+      const Ieq_ds = sign * (Ids - Gds * Vds_live - Gm * Vgs_live);
+
+      const stamps = [];
+
+      stamps.push({ a: netD, b: netS, g: Gds });
+
+      if (netG && Gm > GMIN * 10) {
+        stamps.push({ a: netD, b: netS, ctrlA: netG, ctrlB: netS, gm: sign * Gm });
       }
-      branch._diodeNR = { Gd: Gds, Ieq: Ids - Gds * Vds };
+
+      if (Ieq_ds !== 0) {
+        stamps.push({ a: netD, b: netS, i: sign * Ieq_ds });
+      }
+
+      branch._mosfetStamps = stamps;
+      branch._diodeNR      = null;
+      branch.current       = sign * Ids;
     }
   }
 
@@ -810,17 +888,17 @@ const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0
   }
 
   _updateCapacitorState(electrical) {
-  for (const branch of electrical.circuits) {
-    if (branch.type !== "CAPACITOR") continue;
-    const Va  = electrical.netVoltage.get(branch.a) ?? 0;
-    const Vb  = electrical.netVoltage.get(branch.b) ?? 0;
-    const Vt  = Va - Vb;
-    const Ic  = branch.current ?? 0;
-    const ESR = branch.ohms ?? 0;
-    const Vc  = Vt - Ic * ESR;
-    this._capState.set(branch.id, { V: Vc, I: Ic });
+    for (const branch of electrical.circuits) {
+      if (branch.type !== "CAPACITOR") continue;
+      const Va  = electrical.netVoltage.get(branch.a) ?? 0;
+      const Vb  = electrical.netVoltage.get(branch.b) ?? 0;
+      const Vt  = Va - Vb;
+      const Ic  = branch.current ?? 0;
+      const ESR = branch.ohms ?? 0;
+      const Vc  = Vt - Ic * ESR;
+      this._capState.set(branch.id, { V: Vc, I: Ic });
+    }
   }
-}
 
   _updateInductorState(electrical) {
     for (const branch of electrical.circuits) {
@@ -863,9 +941,7 @@ const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0
     for (const branch of electrical.circuits) {
       let I = 0;
 
-      if (branch._stamps) {
-        // Multi-terminal device: the model is responsible for setting
-        // branch.current itself (if meaningful). Nothing generic to do.
+      if (branch._stamps || branch._bjtStamps || branch._mosfetStamps) {
         if (branch.current != null) {
           this._prevBranchI.set(branch.id, branch.current);
         }
@@ -892,20 +968,20 @@ const Vold = this._junctionV.has(branch.id) ? this._junctionV.get(branch.id) : 0
         const N   = branch.N  ?? N_DEFAULT;
         const nVt = N * VT;
         const Vd_c = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd));
-        const I_junc = Is * (Math.exp(Vd_c / nVt) - 1.0);
 
         if (branch.type === "ZENER") {
           const Vz = branch.Vz ?? 5.1;
           const Rz = branch.Rz ?? 5.0;
           if (Vd >= 0) {
-            I = I_junc;
+            I = Is * (Math.exp(Vd_c / nVt) - 1.0);
           } else if (-Vd >= Vz) {
             I = (-Vd - Vz) / Math.max(Rz, 0.1);
           } else {
             I = 0;
           }
         } else {
-          I = Vd > 0 ? I_junc : 0;
+          I = Is * (Math.exp(Vd_c / nVt) - 1.0);
+          if (I < 0) I = 0;
         }
 
       } else {

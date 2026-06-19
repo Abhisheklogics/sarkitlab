@@ -1,9 +1,11 @@
+"use strict";
+
 export class NetlistBuilder {
   constructor(wires = []) {
-    this.wires = wires;
-    this.nets = new Map();
+    this.wires   = wires;
+    this.nets    = new Map();
     this._parent = new Map();
-    this._rank = new Map();
+    this._rank   = new Map();
   }
 
   build() {
@@ -38,8 +40,8 @@ export class NetlistBuilder {
   }
 
   _union(a, b) {
-    const ra = this._find(a);
-    const rb = this._find(b);
+    const ra    = this._find(a);
+    const rb    = this._find(b);
     if (ra === rb) return;
     const rankA = this._rank.get(ra);
     const rankB = this._rank.get(rb);

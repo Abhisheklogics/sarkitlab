@@ -2,7 +2,7 @@
 
 import createPins   from "./src/createPins.js";
 import { registry } from "./src/ComponentRegistry.js";
-
+import { MQ_SENSOR_DATA } from "./svg/spawnMQSensor.js";
 import VirtualBattery9V       from "./svg/Battery9V.js";
 import Capacitor              from "./svg/VirtualCapacitor.js";
 import PolorizedCapacitor     from "./svg/capacitor.js";
@@ -844,27 +844,24 @@ function spawnMotorDriver(modelName, x, y, forcedId, workspace, wireSys, pinsArr
   return true;
 }
 
-async function spawnMQSensor(type, x, y, forcedId, workspace, wireSys, pinsArray, deleteSystem, startDragFn) {
-  let data;
-  try {
-    const res = await fetch(`/components/${type}.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
-  } catch (err) {
-    console.error(`[ComponentLoader] ${type}.json load failed:`, err);
+function spawnMQSensor(type, x, y, forcedId, workspace, wireSys, pinsArray, deleteSystem, startDragFn) {
+ 
+  const data = MQ_SENSOR_DATA[type];
+  if (!data) {
+    console.error(`[ComponentLoader] MQ sensor "${type}" not found in inline data.`);
     return false;
   }
-
+ 
   const compId   = registry.generateId(data.name.toLowerCase(), forcedId);
   const mqSensor = new MQSensorIC(compId, data);
   const svg      = mqSensor.getElement();
-
+ 
   svg.__instance   = mqSensor;
   svg.classList.add("mq-sensor", "draggable");
   svg.dataset.type  = data.name;
   svg.dataset.id    = compId;
   svg.dataset.model = data.name;
-
+ 
   svg.addEventListener("mousedown", e => {
     if (e.target.closest("#mq-pot-knob")) return;
     startDragFn(e);
@@ -876,17 +873,17 @@ async function spawnMQSensor(type, x, y, forcedId, workspace, wireSys, pinsArray
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup",   onUp);
   });
-
+ 
   const Pins    = new createPins(svg, wireSys, pinsArray);
   const pinDefs = mqSensor.getPinDefs();
   for (const pin of pinDefs) {
     Pins.createPin(svg, pin.x, pin.y, 10, 10, pin.id);
   }
-
+ 
   svg.setAttribute("x", x);
   svg.setAttribute("y", y);
   workspace.appendChild(svg);
-
+ 
   registry.registerComponent({
     id:       compId,
     type:     data.name,
