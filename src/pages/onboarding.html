@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complete Profile — Sarkitshala</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../style.css" />
+  <style>
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 20px; background: var(--bg-base); }
+    .onboard-card { background: var(--bg-elevated); border: 1px solid var(--border-soft); border-radius: var(--r-xl); padding: 44px 40px; width: 100%; max-width: 480px; box-shadow: var(--shadow-xl); }
+    .onboard-header { text-align: center; margin-bottom: 36px; }
+    .onboard-icon { width: 64px; height: 64px; background: var(--accent-light); border-radius: var(--r-xl); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; }
+    .onboard-header h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--ink-900); margin-bottom: 6px; }
+    .onboard-header p { font-size: 14px; color: var(--ink-500); }
+    .form-group { margin-bottom: 20px; }
+    .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+    .role-option { display: none; }
+    .role-label { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; background: var(--bg-base); border: 1.5px solid var(--border); border-radius: var(--r-sm); cursor: pointer; transition: all var(--ease); text-align: center; }
+    .role-label:hover { border-color: var(--accent-muted); background: var(--accent-light); }
+    .role-option:checked + .role-label { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+    .role-label-icon { font-size: 20px; }
+    .role-label-text { font-size: 12px; font-weight: 600; color: var(--ink-700); line-height: 1.2; }
+    .role-option:checked + .role-label .role-label-text { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="onboard-card">
+  <div class="onboard-header">
+    <div class="onboard-icon">🎉</div>
+    <h1>One last step</h1>
+    <p>Tell us a bit about yourself to personalize your experience.</p>
+  </div>
+
+  <form id="onboardForm">
+    <div class="form-group">
+      <label class="field-label">I am a…</label>
+      <div class="role-grid">
+        <div><input type="radio" name="role" id="roleStudent" value="student" class="role-option" checked /><label for="roleStudent" class="role-label"><span class="role-label-icon">🎓</span><span class="role-label-text">Student</span></label></div>
+        <div><input type="radio" name="role" id="roleTeacher" value="teacher" class="role-option" /><label for="roleTeacher" class="role-label"><span class="role-label-icon">👨‍🏫</span><span class="role-label-text">Teacher / Professor</span></label></div>
+        <div><input type="radio" name="role" id="roleJob" value="professional" class="role-option" /><label for="roleJob" class="role-label"><span class="role-label-icon">💼</span><span class="role-label-text">Professional</span></label></div>
+        <div><input type="radio" name="role" id="roleHobbyist" value="hobbyist" class="role-option" /><label for="roleHobbyist" class="role-label"><span class="role-label-icon">🔧</span><span class="role-label-text">Hobbyist</span></label></div>
+        <div><input type="radio" name="role" id="roleResearcher" value="researcher" class="role-option" /><label for="roleResearcher" class="role-label"><span class="role-label-icon">🔬</span><span class="role-label-text">Researcher</span></label></div>
+        <div><input type="radio" name="role" id="roleOther" value="other" class="role-option" /><label for="roleOther" class="role-label"><span class="role-label-icon">🙂</span><span class="role-label-text">Other</span></label></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="field-label" id="institutionLabel">School / College Name</label>
+      <input class="input-field" type="text" id="institution" placeholder="e.g. IIT Delhi" />
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;" id="submitBtn">Complete Profile →</button>
+  </form>
+</div>
+
+<script type="module">
+  import { getSession, updateUserProfile } from "/src/utils/auth.js";
+  const session = getSession();
+  if (!session) { window.location.href = "/login"; }
+
+  const roleLabels = {
+    student: "School / College Name", teacher: "School / College Name",
+    professional: "Company Name", hobbyist: "Location / Community",
+    researcher: "Institution / Lab Name", other: "Organisation (optional)"
+  };
+  document.querySelectorAll("input[name='role']").forEach(r => {
+    r.addEventListener("change", () => {
+      document.getElementById("institutionLabel").textContent = roleLabels[r.value] || roleLabels.other;
+    });
+  });
+
+  document.getElementById("onboardForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const role = document.querySelector("input[name='role']:checked")?.value || "student";
+    const institution = document.getElementById("institution").value.trim();
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    await updateUserProfile(session.uid, { role, institution });
+    window.location.href = "/user-dashboard";
+  });
+</script>
+</body>
+</html>

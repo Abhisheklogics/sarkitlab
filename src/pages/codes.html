@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arduino Code Simulator</title>
+<style>
+  /* ===== BASE ===== */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Fira Code", monospace, "Roboto", sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #3b82f6;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 1.8rem;
+  }
+
+  /* ===== TEXTAREA STYLING ===== */
+  textarea {
+    width: 100%;
+    max-width: 900px;
+    height: 600px;
+    background: #0f172a;
+    color: #e5e7eb;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid #334155;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    resize: vertical;
+    overflow: auto;
+    outline: none;
+    font-family: "Fira Code", monospace;
+  }
+
+  textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59,130,246,0.5);
+  }
+
+  /* ===== SCROLLBAR ===== */
+  textarea::-webkit-scrollbar {
+    width: 10px;
+  }
+  textarea::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 10px;
+  }
+  textarea::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    textarea {
+      height: 500px;
+      font-size: 13px;
+      padding: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    textarea {
+      height: 400px;
+      font-size: 12px;
+      padding: 10px;
+    }
+  }
+</style>
+
+</head>
+<body>
+
+<h1>Arduino Code</h1>
+
+<textarea readonly>
+
+
+
+
+
+int redPin = 11;
+int greenPin = 10;
+int bluePin = 9;
+
+void setup() {
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+}
+
+void loop() {
+  // RED
+  digitalWrite(redPin, HIGH);
+  digitalWrite(greenPin, LOW);
+  digitalWrite(bluePin, LOW);
+  delay(1000);
+
+  // GREEN
+  digitalWrite(redPin, LOW);
+  digitalWrite(greenPin, HIGH);
+  digitalWrite(bluePin, LOW);
+  delay(1000);
+
+  // BLUE
+  digitalWrite(redPin, LOW);
+  digitalWrite(greenPin, LOW);
+  digitalWrite(bluePin, HIGH);
+  delay(1000);
+
+  // OFF
+  digitalWrite(redPin, LOW);
+  digitalWrite(greenPin, LOW);
+  digitalWrite(bluePin, LOW);
+  delay(1000);
+}
+
+int led = 13;
+int pir = 2;
+void setup() {
+  pinMode(led, OUTPUT);
+pinMode(pir, INPUT_PULLUP);
+}
+
+void loop() {
+if (digitalRead(pir) == LOW) {   
+    tone(led, 1000);
+  
+  } else {
+  noTone(led, 1000);
+  }
+  
+  
+}
+      
+int led = 13;
+int pir = 2;
+void setup() {
+  pinMode(led, OUTPUT);
+pinMode(pir, INPUT_PULLUP);
+}
+
+void loop() {
+if (digitalRead(pir) == LOW) {   
+   digitalWrite(led,HIGH);
+
+  } else {
+   digitalWrite(led, LOW);
+  }
+   
+}
+
+const int ledPin = 13;
+
+
+
+void setup()
+{
+  pinMode(ledPin, OUTPUT);
+  
+}
+void loop() {
+ 
+    digitalWrite(ledPin, HIGH); 
+   delay(1000);
+    digitalWrite(ledPin, LOW);  
+  delay(100);
+}
+const int gasSensorPin = A0;
+const int ledPin = 13;
+
+int threshold = 400; // Apne sensor ke hisab se adjust karo
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int gasValue = analogRead(gasSensorPin);
+
+  Serial.print("Gas Value: ");
+  Serial.println(gasValue);
+
+  if (gasValue > threshold) {
+    digitalWrite(ledPin, HIGH); // Gas detect hui
+  } else {
+    digitalWrite(ledPin, LOW);  // Gas nahi
+  }
+
+  delay(100);
+}
+const int gasSensorPin = 2;
+const int ledPin = 13;
+
+int threshold = 400; // Apne sensor ke hisab se adjust karo
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int gasValue = digitalRead(gasSensorPin);
+
+  Serial.print("Gas Value: ");
+  Serial.println(gasValue);
+
+  if (gasValue == HIGH) {
+    digitalWrite(ledPin, HIGH); // Gas detect hui
+  } else {
+    digitalWrite(ledPin, LOW);  // Gas nahi
+  }
+
+  delay(100);
+}
+const int gasSensorPin = 2;  // DO pin
+const int ledPin = 13;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(gasSensorPin, INPUT);  // ye bhi chahiye
+  Serial.begin(9600);
+}
+
+void loop() {
+  int gasValue = digitalRead(gasSensorPin);
+  
+  Serial.print("DO Pin: ");
+  Serial.println(gasValue);
+
+  // DO LOW matlab gas detected (open-collector logic)
+  if (gasValue == LOW) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+
+  delay(100);
+}
+int led = 13;
+int pir = 2;
+void setup() {
+  pinMode(led, OUTPUT);
+pinMode(pir, INPUT);
+}
+
+void loop() {
+if (digitalRead(pir) == HIGH) {   
+   digitalWrite(led,HIGH);
+ 
+  } else {
+   digitalWrite(led, LOW);
+  }
+ 
+} 
+
+  int led = 13;
+  int gasPin = A0;      
+ int threshold = 200; 
+
+  void setup() {
+    pinMode(led, OUTPUT);
+  
+  }
+
+  void loop() {
+    
+    if (analogRead(gasPin) > threshold) {   
+      digitalWrite(led, HIGH);     
+    } else {
+      digitalWrite(led, LOW);      
+    }
+    
+    delay(100);
+  }
+
+
+#include <TM1637Display.h>
+
+#define CLK 3
+#define DIO 2
+
+TM1637Display display(CLK, DIO);
+
+void setup() {
+  display.setBrightness(7);   
+  display.clear();
+}
+
+void loop() {
+  display.showNumberDec(1234);
+  delay(1000);
+
+  display.showNumberDec(5678); 
+  delay(1000);
+}
+
+#include <TM1637Display.h>
+
+#define CLK 3
+#define DIO 2
+
+TM1637Display display(CLK, DIO);
+
+void setup() {
+  display.setBrightness(7);   
+  display.clear();
+}
+
+void loop() {
+  display.showNumberDecEx(1234, 0b01000000);  // colon ON
+  delay(1000);
+
+  display.showNumberDecEx(5678, 0b01000000);  // colon ON
+  delay(1000);
+}
+
+#include <TM1637Display.h>
+
+#define CLK 3
+#define DIO 2
+
+TM1637Display display(CLK, DIO);
+int pir = 4;
+void setup() {
+pinMode(pir, INPUT_PULLUP);
+  display.setBrightness(7);   
+  display.clear();
+}
+
+void loop() {
+if (digitalRead(pir) == LOW) { 
+  display.showNumberDecEx(1234, 0b01000000); 
+  delay(1000);
+ display.showNumberDecEx(5678, 0b01000000);  
+  delay(1000);
+ }
+else {
+    display.clear();
+  }
+}
+
+
+
+int buzzer = 8;  
+
+void setup() {
+  pinMode(buzzer, OUTPUT);
+}
+
+void loop() {
+ 
+  tone(buzzer, 1000);
+  delay(1000);
+
+  noTone(buzzer);
+  delay(1000);
+}
+
+
+#include <Servo.h>
+int buzzer = 8; 
+Servo myservo;
+
+void setup() {
+  myservo.attach(9);
+  myservo.write(90);
+pinMode(buzzer, OUTPUT);
+
+}
+
+void loop() {
+
+  myservo.write(90);
+delay(1000);
+myservo.write(0);
+delay(500);
+ tone(buzzer, 1000);
+  delay(1000);
+
+  noTone(buzzer);
+  delay(1000);
+
+}
+
+#include <Servo.h>
+
+Servo myservo;
+
+void setup() {
+  myservo.attach(9);
+  myservo.write(90);
+}
+
+void loop() {
+
+  myservo.write(90);
+delay(1000);
+myservo.write(0);
+delay(500);
+
+}
+
+
+#include <Servo.h>
+
+Servo myservo;
+int led = 13;
+int buzzer = 8;
+void setup() {
+  myservo.attach(9);
+  myservo.write(90);
+pinMode(buzzer, OUTPUT);
+pinMode(led, OUTPUT);
+}
+
+void loop() {
+  myservo.write(0);
+  delay(1000);
+  myservo.write(90);
+  delay(1000);
+tone(buzzer, 1000);
+digitalWrite(led, HIGH);
+  delay(1000);
+ noTone(buzzer);
+  digitalWrite(led, LOW);
+  delay(1000);
+}
+
+
+int motorPin = 9;   
+
+void setup() {
+  pinMode(motorPin, OUTPUT);
+}
+
+void loop() {
+  analogWrite(motorPin, 255); 
+  delay(2000);
+
+  analogWrite(motorPin, 150); 
+  delay(2000);
+
+  analogWrite(motorPin, 0);   
+  delay(2000);
+}
+
+int motorPin = 9;   
+
+void setup() {
+  pinMode(motorPin, OUTPUT);
+}
+
+void loop() {
+digitalWrite(motorPin, HIGH); 
+  delay(1000);
+
+  digitalWrite(motorPin, LOW);   
+  delay(1000);
+}
+int vccPin = 7;
+int gndPin = 6;
+
+void setup() {
+  pinMode(vccPin, OUTPUT);
+  pinMode(gndPin, OUTPUT);
+  
+  digitalWrite(vccPin, HIGH);
+  digitalWrite(gndPin, LOW);
+}
+
+void loop() {
+  delay(2000);
+  digitalWrite(vccPin, LOW);  // VCC LOW — LED bujhni chahiye
+  delay(2000);
+  digitalWrite(vccPin, HIGH); // VCC HIGH — LED jalni chahiye
+}
+
+Arduino D9 ──[R]──► B
+                    |
+                 NPN Transistor
+                    |
+Battery − ─────────► E
+                    |
+Battery + ──► Motor ─► C
+
+Arduino D9 (Signal) ───────► [Pin 2: 1A] (Input 1)
+Arduino 5V ────────────────► [Pin 1: 1,2EN] (Enable)
+Arduino 5V ────────────────► [Pin 16: VCC1] (IC Power)
+
+Battery (+) 9V ────────────► [Pin 8: VCC2] (Motor Power)
+                            [Pin 3: 1Y] ────► Motor (+)
+                            [Pin 6: 2Y] ────► Motor (-)
+Battery (−) ────┬──────────► [Pin 4: GND]
+                └──────────► [Arduino GND] (Common Ground) 
+
+
+
+ 
+ int a=2;
+int b=3;
+int c=4;
+int d=5;
+int e=6;
+int f=7;
+int g=8;
+
+void setup(){
+  pinMode(a, OUTPUT);
+  pinMode(b, OUTPUT);
+  pinMode(c, OUTPUT);
+  pinMode(d, OUTPUT);
+  pinMode(e, OUTPUT);
+  pinMode(f, OUTPUT);
+  pinMode(g, OUTPUT);
+}
+
+void loop(){
+  // 1
+  digitalWrite(a, LOW);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, LOW);
+  delay(1000);
+
+  // 2
+  digitalWrite(a, HIGH);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, LOW);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, HIGH);
+  digitalWrite(f, LOW);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 3
+  digitalWrite(a, HIGH);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 4
+  digitalWrite(a, LOW);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 5
+  digitalWrite(a, HIGH);
+  digitalWrite(b, LOW);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, LOW);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 6
+  digitalWrite(a, HIGH);
+  digitalWrite(b, LOW);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, HIGH);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 7
+  digitalWrite(a, HIGH);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, LOW);
+  delay(1000);
+
+  // 8
+  digitalWrite(a, HIGH);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, HIGH);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+  delay(1000);
+
+  // 9
+  digitalWrite(a, HIGH);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, LOW);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+  delay(1000);
+}
+
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1  // reset pin not used
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Serial.begin(9600);
+
+  // OLED initialize
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("SSD1306 allocation failed"); // parser-friendly
+    for(;;);
+  }
+
+  display.clearDisplay();
+  display.setTextSize(1);      // small text
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println("Hello, Tinkercad!");
+  display.println("OLED Ready");
+  display.display();
+  delay(1000);
+}
+
+void loop() {
+  // scrolling text example
+  static int offset = 0;
+  String msg = "This is scrolling text! ";
+  
+  display.clearDisplay();
+  display.setCursor(-offset, 10);  // move text left by offset
+  display.println(msg);
+  display.display();
+
+  offset++;                        // move text
+  if(offset > msg.length() * 6) {  // 6 pixels per char for text size 1
+    offset = 0;
+  }
+
+  delay(100); // scroll speed
+}
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27, 16x2 LCD
+
+void setup() {
+  lcd.init();           // LCD init
+  lcd.backlight();      // Backlight ON
+  lcd.clear();          // Clear display
+ lcd.setCursor(1,1);
+  lcd.print("this is iot lab and simualation tool!");  
+}
+
+void loop() {
+
+     
+  
+  lcd.scrollDisplayRight();
+  delay(500);
+  
+}
+
+
+// Serial 
+void setup() {
+
+  Serial.begin(9600);   // Serial communication start
+
+  Serial.println("Hello Hemendra!");
+  Serial.println("Arduino Serial Monitor Working");
+
+}
+
+void loop() {
+
+  Serial.println("Loop chal raha hai...");
+  
+  delay(1000);   // 1 second wait
+}
+
+
+
+
+#include <DHT.h>
+#include <Keypad.h>
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+
+#define DHTPIN 2
+DHT dht(DHTPIN, DHT11);
+
+const byte ROWS = 4, COLS = 4;
+char keys[4][4] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+byte rowPins[4] = {9,8,7,6};
+byte colPins[4] = {5,4,3,2};
+Keypad kpad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+void setup() {
+  dht.begin();
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.display();
+}
+
+void loop() {
+  char key = kpad.getKey();
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.print("Temp: ");
+   display.print(t); 
+   display.println("C");
+
+  display.setCursor(0, 12);
+  display.print("Hum:  ");
+   display.print(h);
+    display.println("%");
+
+  display.setCursor(0, 28);
+  if (key) {
+    display.print("Key: ");
+     display.println(key);
+  } else {
+    display.println("Key: ---");
+  }
+
+  display.display();
+  delay(500);
+}
+
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+void setup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println("Hello World!");
+  display.setCursor(0,16);
+  display.println("OLED Working!");
+  display.display();
+}
+
+void loop() {}
+
+#include <Keypad.h>
+const byte ROWS = 4, COLS = 4;
+char keys[4][4] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+byte rowPins[4] = {9,8,7,6};
+byte colPins[4] = {5,4,3,2};
+Keypad kpad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
+void setup() { 
+  Serial.begin(9600); 
+}
+void loop() {
+  char key = kpad.getKey();
+  if (key) {
+    Serial.print("Key: ");
+     Serial.println(key);
+  }
+}
+
+#include <DHT.h>
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+}
+
+void loop() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  Serial.print("Temp: ");
+   Serial.print(t);
+    Serial.print("C  ");
+  Serial.print("Hum: ");  
+  Serial.print(h); Serial.println("%");
+  delay(2000);
+}
+simEngine.js:234 [SimEngine] No free 'DHT' component for 'dht'.
+
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+
+long duration;
+float distance;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+}
+
+void loop() {
+  // Trigger pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Echo time read
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Distance in cm
+  distance = duration * 0.0343 / 2;
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  delay(500);
+}
+</textarea>
+
+</body>
+</html>

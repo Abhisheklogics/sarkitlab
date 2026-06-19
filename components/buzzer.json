@@ -1,0 +1,10 @@
+{
+  "name": "buzzer",
+  "path": null,
+  "width": 100,
+  "height": 100,
+  "pins": [
+    { "id": "Cathode", "x": 33, "y": 90 },
+    { "id": "Anode", "x": 55, "y": 90 }
+  ]
+}

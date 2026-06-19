@@ -1,0 +1,11 @@
+{
+  "name": "pir",
+  "path": null,
+  "width": 500,
+  "height": 250,
+  "pins": [
+    { "id": "GND", "x": 18, "y": 90 },
+    { "id": "VCC",  "x": 40, "y":90 },
+    { "id": "OUT", "x": 63, "y": 90 }
+  ]
+}

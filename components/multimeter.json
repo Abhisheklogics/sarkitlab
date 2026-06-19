@@ -1,0 +1,10 @@
+{
+  "name": "digitalMultimeter",
+  "path": null,
+  "width": 160,
+  "height": 70,
+  "pins": [
+    { "id": "VCC", "x": 216, "y": 120 },
+    { "id": "GND", "x": 175, "y": 120 }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "74HC83",
+  "type": "logic-ic",
+  "description": "74HC83 (4-Bit Full Adder)",
+  "width": 156,
+  "height": 70
+}

@@ -1,0 +1,10 @@
+{
+  "name": "bulb",
+  "path": null,
+  "width": 90,
+  "height": 120,
+  "pins": [
+    { "id": "Anode",   "x": 31, "y": 120 },
+    { "id": "Cathode", "x": 50, "y": 120 }
+  ]
+}

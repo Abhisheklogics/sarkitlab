@@ -1,0 +1,31 @@
+{
+  "name": "led",
+  "category": "diode",
+
+  "visual": {
+    "path": "images/led.png",
+    "width": 100,
+    "height": 100,
+    "pins": [
+      { "id": "Anode", "x": 50, "y": 76 },
+    { "id": "Cathode", "x": 40, "y": 70 }
+    ]
+  },
+
+  "electrical": {
+    "type": "diode",
+    "forwardVoltage": 2.0,
+    "maxCurrent": 0.02,
+    "direction": {
+      "from": "Anode",
+      "to": "Cathode"
+    }
+  },
+
+ "constraints": [
+  { "rule": "mustReach", "pin": "Cathode", "target": "GND" },
+  { "rule": "mustReach", "pin": "Anode", "target": "ARDUINO_PIN" },
+  { "rule": "requiresSeriesElement", "pin": "Anode", "elementType": "resistor" }
+]
+
+}

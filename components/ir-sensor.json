@@ -1,0 +1,23 @@
+{
+    "name": "ir-sensor",
+    "path": null,
+    "width": 2,
+    "height": 2,
+    "pins": [
+        {
+            "id": "GND",
+            "x": 45,
+            "y": 200
+        },
+        {
+            "id": "VCC",
+            "x": 32,
+            "y": 200
+        },
+        {
+            "id": "OUT",
+            "x": 59,
+            "y": 200
+        }
+    ]
+}

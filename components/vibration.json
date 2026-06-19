@@ -1,0 +1,11 @@
+{
+  "name": "vibrationSensor",
+  "path": null,
+  "width": 100,
+  "height": 100,
+  "pins": [
+    { "id": "GND", "x": 30, "y": 100 },
+    { "id": "VCC", "x": 40, "y": 100 }
+    
+  ]
+}

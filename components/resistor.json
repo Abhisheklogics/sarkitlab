@@ -1,0 +1,24 @@
+{
+  "name": "resistor",
+  "category": "passive",
+
+  "visual": {
+    "width": 140,
+    "height": 40,
+    "pins": [
+      { "id": "T1", "x": 30, "y": 1 },
+      { "id": "T2", "x": 33, "y": 167 }
+    ]
+  },
+
+  "electrical": {
+    "type": "resistor",
+    "resistance": 220,
+    "bidirectional": true
+  },
+
+  "behavior": {
+    "allowsSeries": true,
+    "dropsVoltage": true
+  }
+}

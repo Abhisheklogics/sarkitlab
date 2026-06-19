@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SarkitLab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    :root { --nav-h: 60px; }
+
+    /* ── Nav ── */
+    nav.site-nav {
+      height: var(--nav-h); background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-soft);
+      position: sticky; top: 0; z-index: 500; box-shadow: var(--shadow-xs);
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto; padding: 0 24px;
+      height: 100%; display: flex; align-items: center; gap: 18px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-display); font-size: 20px; font-weight: 700;
+      color: var(--ink-900); letter-spacing: -0.3px; text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 36px; height: 36px; background: var(--accent);
+      border-radius: var(--r-sm); display: flex; align-items: center;
+      justify-content: center; color: #fff;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .nav-chip {
+      display: flex; align-items: center; gap: 8px; padding: 5px 14px 5px 6px;
+      background: var(--cream-200); border-radius: 99px; font-size: 13px;
+      font-weight: 600; color: var(--ink-700); text-decoration: none;
+      transition: background var(--ease);
+    }
+    .nav-chip:hover { background: var(--cream-300); }
+    .btn-nav-primary {
+      padding: 7px 16px; background: var(--accent); color: #fff; border: none;
+      border-radius: var(--r-sm); font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: var(--font-body); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: opacity var(--ease);
+    }
+    .btn-nav-primary:hover { opacity: 0.88; }
+
+    /* ── Avatar ── */
+    .av {
+      border-radius: 50%; background: var(--accent); color: #fff;
+      font-family: var(--font-display); font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .av img { width: 100%; height: 100%; object-fit: cover; }
+    .av-sm  { width: 28px; height: 28px; font-size: 12px; }
+    .av-lg  { width: 80px; height: 80px; font-size: 28px; }
+
+    /* ── Page Layout ── */
+    .page {
+      max-width: 1080px; margin: 0 auto; padding: 32px 20px;
+      display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start;
+    }
+
+    /* ── Profile Card (Scholar-style) ── */
+    .profile-card {
+      background: var(--bg-elevated); border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg); overflow: hidden;
+    }
+    .profile-header {
+      padding: 28px 24px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--cream-50, #fdfcf8);
+      text-align: center;
+    }
+    .profile-photo-wrap {
+      position: relative; margin-bottom: 14px;
+    }
+    .profile-name {
+      font-size: 18px; font-weight: 700; color: var(--ink-900);
+      font-family: var(--font-display); margin-bottom: 4px; line-height: 1.3;
+    }
+    .profile-role {
+      font-size: 12.5px; color: var(--ink-500); margin-bottom: 6px;
+    }
+    .profile-email {
+      font-size: 11.5px; color: var(--accent); font-family: var(--font-mono);
+      word-break: break-all; margin-bottom: 16px;
+    }
+    .profile-tags {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px;
+    }
+    .profile-tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 3px;
+      background: var(--accent-light); color: var(--accent); font-weight: 600;
+      border: 1px solid rgba(196,97,26,.15);
+    }
+    .follow-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 20px; background: var(--accent); color: #fff; border: none;
+      border-radius: var(--r-sm); font-size: 13px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: all var(--ease);
+    }
+    .follow-btn:hover { background: var(--accent-dark); }
+    .follow-btn.following {
+      background: var(--bg-elevated); color: var(--ink-600);
+      border: 1px solid var(--border-soft);
+    }
+    .follow-btn.following:hover { background: #fef2f0; color: #c0392b; border-color: #fcd5d0; }
+
+    /* ── Stat Row (Scholar-style: Circuits | Public | Followers | Following) ── */
+    .stat-row {
+      display: flex; border-top: 1px solid var(--border-soft);
+    }
+    .stat-cell {
+      flex: 1; padding: 14px 8px; text-align: center;
+      border-right: 1px solid var(--border-soft); cursor: default;
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-val {
+      font-family: var(--font-display); font-size: 20px; font-weight: 700;
+      color: var(--ink-900); display: block;
+    }
+    .stat-lbl { font-size: 10.5px; color: var(--ink-400); margin-top: 2px; }
+
+    /* ── Profile Sidebar Actions ── */
+    .profile-actions { padding: 16px; border-top: 1px solid var(--border-soft); }
+    .action-btn {
+      display: block; width: 100%; padding: 9px 16px; border-radius: var(--r-md);
+      font-size: 13px; font-weight: 600; font-family: var(--font-body); cursor: pointer;
+      text-align: center; transition: all var(--ease); border: 1px solid var(--border-soft);
+      background: var(--bg-elevated); color: var(--ink-700); margin-bottom: 8px;
+      text-decoration: none; box-sizing: border-box;
+    }
+    .action-btn:last-child { margin-bottom: 0; }
+    .action-btn:hover { background: var(--cream-200); }
+    .action-btn.danger { color: #c0392b; border-color: #fcd5d0; background: transparent; }
+    .action-btn.danger:hover { background: #fef2f0; }
+
+    /* ── Circuits Card (Scholar paper-list style) ── */
+    .circuits-card {
+      background: var(--bg-elevated); border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg); overflow: hidden;
+    }
+    .circuits-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+      background: var(--cream-100, #fafaf7);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .circuits-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--ink-400);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .count-pill {
+      font-size: 11px; padding: 1px 8px; border-radius: 99px;
+      background: var(--border-soft); color: var(--ink-400);
+      font-family: var(--font-mono);
+    }
+    .new-btn {
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      background: none; border: none; cursor: pointer; font-family: var(--font-body);
+      padding: 0; display: flex; align-items: center; gap: 4px;
+    }
+    .new-btn:hover { text-decoration: underline; }
+
+    /* Scholar-style column header */
+    .col-header {
+      display: grid;
+      grid-template-columns: 1fr 70px 70px 90px;
+      gap: 8px;
+      padding: 8px 20px;
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--cream-50, #fdfcf8);
+    }
+    .col-label {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--ink-400);
+    }
+    .col-label.right { text-align: right; }
+
+    /* Circuit row */
+    .circuit-row {
+      display: grid;
+      grid-template-columns: 1fr 70px 70px 90px;
+      gap: 8px; align-items: center;
+      padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+      transition: background var(--ease);
+    }
+    .circuit-row:last-child { border-bottom: none; }
+    .circuit-row:hover { background: var(--cream-100, #fafaf7); }
+
+    .circuit-title-link {
+      font-size: 14px; font-weight: 600; color: var(--accent);
+      text-decoration: none; display: block; margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .circuit-title-link:hover { text-decoration: underline; }
+
+    .circuit-meta {
+      font-size: 11.5px; color: var(--ink-400);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .badge { font-size: 10.5px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+    .badge-public  { background: #e8f5ee; color: #1a6b3a; border: 1px solid #b5dfc5; }
+    .badge-private { background: var(--cream-200); color: var(--ink-400); border: 1px solid var(--border-soft); }
+    .badge-offline { background: #fff8e1; color: #b45309; border: 1px solid #fde68a; }
+    .badge-syncing { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+    .stat-num {
+      font-family: var(--font-display); font-size: 15px; font-weight: 700;
+      color: var(--ink-700); text-align: right; display: flex;
+      align-items: center; justify-content: flex-end; gap: 4px;
+    }
+    .stat-num svg { color: var(--ink-400); }
+
+    .circuit-actions {
+      display: flex; align-items: center; justify-content: flex-end; gap: 3px;
+    }
+    .vis-btn {
+      font-size: 11.5px; color: var(--ink-500); cursor: pointer; padding: 3px 7px;
+      border-radius: var(--r-sm); border: 1px solid transparent; background: none;
+      font-family: var(--font-body); display: flex; align-items: center; gap: 3px;
+      transition: all var(--ease); white-space: nowrap;
+    }
+    .vis-btn:hover { background: var(--cream-200); border-color: var(--border-soft); }
+    .icon-btn {
+      width: 28px; height: 28px; border: none; background: transparent;
+      border-radius: var(--r-sm); cursor: pointer; display: flex; align-items: center;
+      justify-content: center; color: var(--ink-400); transition: all var(--ease);
+    }
+    .icon-btn:hover { background: var(--cream-200); color: var(--ink-800); }
+    .icon-btn.del:hover { background: #fef2f0; color: #c0392b; }
+
+    /* ── Skeletons ── */
+    .shimmer {
+      background: linear-gradient(90deg, var(--cream-200) 25%, var(--cream-300, #e8e5de) 50%, var(--cream-200) 75%);
+      background-size: 200% 100%; animation: shimmer 1.3s infinite; border-radius: var(--r-sm);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skel-row {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    /* ── Empty ── */
+    .empty { padding: 56px 24px; text-align: center; }
+    .empty h3 { font-size: 15px; font-weight: 600; color: var(--ink-600); margin-bottom: 6px; }
+    .empty p  { font-size: 13px; color: var(--ink-400); max-width: 240px; margin: 0 auto 18px; }
+    .empty-cta {
+      display: inline-block; padding: 9px 22px; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--r-md); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+    }
+
+    /* ── Delete Modal ── */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 900; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg-elevated); border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg); padding: 28px; width: 360px; max-width: 90vw;
+      transform: translateY(8px); transition: transform .2s;
+    }
+    .modal-bg.open .modal { transform: translateY(0); }
+    .modal h3 { font-size: 16px; font-weight: 700; color: var(--ink-900); margin-bottom: 8px; }
+    .modal p  { font-size: 13px; color: var(--ink-500); line-height: 1.6; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 22px; justify-content: flex-end; }
+    .modal-cancel  { padding: 8px 16px; background: var(--cream-200); border: 1px solid var(--border-soft); border-radius: var(--r-md); font-size: 13px; cursor: pointer; font-family: var(--font-body); color: var(--ink-700); }
+    .modal-confirm { padding: 8px 16px; background: #c0392b; color: #fff; border: none; border-radius: var(--r-md); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: var(--ink-900); color: #fff;
+      padding: 10px 18px; border-radius: var(--r-md); font-size: 13px; font-weight: 500;
+      opacity: 0; transform: translateY(8px); transition: all .22s; z-index: 9999;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok  { background: #166534; }
+    .toast.err { background: #991b1b; }
+    .toast.warn { background: #92400e; }
+
+    /* ── Sync banner ── */
+    .sync-banner {
+      background: #fffbeb; border-bottom: 1px solid #fde68a; color: #92400e;
+      padding: 8px 20px; font-size: 12.5px; font-weight: 500;
+      display: none; align-items: center; gap: 10px; justify-content: center;
+    }
+    .sync-banner.show { display: flex; }
+    .sync-banner svg { flex-shrink: 0; }
+
+    @media (max-width: 720px) {
+      .page { grid-template-columns: 1fr; }
+      .col-header, .circuit-row { grid-template-columns: 1fr 55px 55px; }
+      .circuit-row .circuit-actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sync Banner -->
+<div class="sync-banner" id="syncBanner">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+  <span id="syncBannerText">Offline circuits cloud pe sync ho rahe hain…</span>
+</div>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <div class="nav-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
+          <path d="M8 12h8M2 12h2M20 12h2"/>
+        </svg>
+      </div>
+      Sarkit<span>Lab</span>
+    </a>
+    <div class="nav-right">
+      <a class="btn-nav-primary" href="/create-circuit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New Circuit
+      </a>
+      <div id="navChip"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- Profile Sidebar -->
+  <aside>
+    <div class="profile-card">
+      <!-- Scholar-style header -->
+      <div class="profile-header">
+        <div class="profile-photo-wrap">
+          <div class="av av-lg" id="profileAvatar"></div>
+        </div>
+        <div class="profile-name" id="profileName">—</div>
+       
+        <div class="profile-email" id="profileEmail"></div>
+       
+        <button class="follow-btn" id="followSelfBtn" style="display:none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Follow
+        </button>
+      </div>
+
+    
+      <div class="stat-row">
+        <div class="stat-cell">
+          <span class="stat-val" id="statTotal">0</span>
+          <div class="stat-lbl">Circuits</div>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-val" id="statPublic">0</span>
+          <div class="stat-lbl">Public</div>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-val" id="statFollowers">0</span>
+          <div class="stat-lbl">Followers</div>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-val" id="statFollowing">0</span>
+          <div class="stat-lbl">Following</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="profile-actions">
+        <a href="/edit" class="action-btn">Edit Profile</a>
+        <button class="action-btn danger" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Circuits List (Scholar paper-list style) -->
+  <main>
+    <div class="circuits-card">
+      <div class="circuits-header">
+        <div class="circuits-title">
+          My Circuits <span class="count-pill" id="projCount">0</span>
+        </div>
+        <button class="new-btn" onclick="window.location.href='/create-circuit'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          New
+        </button>
+      </div>
+
+      <!-- Column headers (like Google Scholar) -->
+      <div class="col-header">
+        <div class="col-label">Title</div>
+        <div class="col-label right">Likes</div>
+        <div class="col-label right">Views</div>
+        <div class="col-label right">Actions</div>
+      </div>
+
+      <!-- Project list -->
+      <div id="projList">
+        <div class="skel-row"><div class="shimmer" style="height:13px;width:55%"></div><div class="shimmer" style="height:11px;width:32%"></div></div>
+        <div class="skel-row"><div class="shimmer" style="height:13px;width:68%"></div><div class="shimmer" style="height:11px;width:28%"></div></div>
+        <div class="skel-row"><div class="shimmer" style="height:13px;width:42%"></div><div class="shimmer" style="height:11px;width:38%"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <h3>Delete Circuit?</h3>
+    <p id="delModalMsg">This circuit will be permanently deleted.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="delCancel">Cancel</button>
+      <button class="modal-confirm" id="delConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { getSession, logoutUser, getUserProfile } from "/src/utils/auth.js";
+  import { app } from "/src/utils/auth.js";
+  import {
+    getFirestore, collection, query, where,
+    getDocs, deleteDoc, doc, updateDoc, getDoc,
+    writeBatch, setDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const db      = getFirestore(app);
+  const session = getSession();
+  if (!session) { window.location.replace("/login"); }
+  const uid = session.uid;
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function toast(msg, type = "") {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.className = "toast " + type + " show";
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 2800);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function initials(name) {
+    if (!name || !name.trim()) return "?";
+    return name.trim().split(/\s+/).filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  }
+
+  function tsMillis(ts) {
+    if (!ts) return 0;
+    if (typeof ts === "number") return ts;
+    if (typeof ts === "object" && "toMillis" in ts) return ts.toMillis();
+    if (typeof ts === "object" && "toDate" in ts) return ts.toDate().getTime();
+    return new Date(ts).getTime() || 0;
+  }
+
+  function timeAgo(ts) {
+    const ms = tsMillis(ts);
+    if (!ms) return "";
+    const diff = Date.now() - ms;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)  return "just now";
+    if (mins < 60) return mins + "m ago";
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return hrs + "h ago";
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + "d ago";
+    return new Date(ms).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function makeAv(el, name, photoURL) {
+    el.innerHTML = "";
+    if (photoURL) {
+      const img = document.createElement("img");
+      img.src = photoURL; img.alt = "";
+      img.onerror = () => { el.innerHTML = ""; el.textContent = initials(name); };
+      el.appendChild(img);
+    } else {
+      el.textContent = initials(name);
+    }
+  }
+
+  function slugify(name) {
+    return (name || "untitled").toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 60);
+  }
+
+  // ── Profile ────────────────────────────────────────────────────────────────
+  async function loadProfile() {
+    const profile = await getUserProfile(uid).catch(() => null) || session;
+    const name    = profile.displayName || session.displayName || "User";
+    const email   = profile.email       || session.email       || "";
+    const photo   = profile.photoURL    || session.photoURL    || null;
+
+    makeAv(document.getElementById("profileAvatar"), name, photo);
+    document.getElementById("profileName").textContent  = name;
+    document.getElementById("profileEmail").textContent = email;
+
+    // Nav chip
+    const chip = document.getElementById("navChip");
+    const a = document.createElement("a");
+    a.href = "/user-dashboard"; a.className = "nav-chip";
+    const av = document.createElement("div"); av.className = "av av-sm";
+    makeAv(av, name, photo);
+    a.appendChild(av);
+    a.appendChild(document.createTextNode(name.split(" ")[0]));
+    chip.appendChild(a);
+
+    // Followers/Following from Firestore (optional — graceful fallback)
+    try {
+      const uDoc = await getDoc(doc(db, "users", uid));
+      if (uDoc.exists()) {
+        const d = uDoc.data();
+        document.getElementById("statFollowers").textContent = d.followers || 0;
+        document.getElementById("statFollowing").textContent = d.following || 0;
+      }
+    } catch {}
+  }
+
+  // ── Local Projects (offline fallback) ─────────────────────────────────────
+  function localProjects() {
+    const listKey = `all_projects_${uid}`;
+    const list    = JSON.parse(localStorage.getItem(listKey) || "[]");
+    const out     = [];
+    for (const p of list) {
+      const raw = localStorage.getItem(`sks_proj_${p.id}`) || localStorage.getItem(`project_${p.id}`);
+      if (!raw) continue;
+      try { out.push({ id: p.id, ...JSON.parse(raw), _source: "local" }); } catch {}
+    }
+    out.sort((a, b) => (b.localUpdatedAt || b.timestamp || 0) - (a.localUpdatedAt || a.timestamp || 0));
+    return out;
+  }
+
+  // ── OFFLINE → ONLINE SYNC ─────────────────────────────────────────────────
+  // Kaam kaise karta hai:
+  // 1. localProjects() se sab local data lao
+  // 2. Har ek ko Firestore mein setDoc karo (merge: false — overwrite)
+  // 3. Sync success hone ke baad localStorage se us project ka data delete karo
+  // 4. all_projects_uid list se bhi us entry ko remove karo
+  // 5. Banner dikhao progress ke saath
+  async function syncOfflineToCloud() {
+    if (!navigator.onLine) return;
+
+    const listKey = `all_projects_${uid}`;
+    const list    = JSON.parse(localStorage.getItem(listKey) || "[]");
+    if (!list.length) return;
+
+    // Sirf wahi projects sync karo jo actually localStorage mein hain
+    const toSync = list.filter(p => {
+      const raw = localStorage.getItem(`sks_proj_${p.id}`) || localStorage.getItem(`project_${p.id}`);
+      return !!raw;
+    });
+    if (!toSync.length) return;
+
+    const banner     = document.getElementById("syncBanner");
+    const bannerText = document.getElementById("syncBannerText");
+    banner.classList.add("show");
+    bannerText.textContent = `${toSync.length} circuit${toSync.length > 1 ? "s" : ""} sync ho raha hai…`;
+
+    let synced = 0;
+    const newList = [...list]; // updated list
+
+    for (const p of toSync) {
+      try {
+        const rawKey = localStorage.getItem(`sks_proj_${p.id}`) ? `sks_proj_${p.id}` : `project_${p.id}`;
+        const data   = JSON.parse(localStorage.getItem(rawKey));
+
+        // Firestore mein save
+        await setDoc(doc(db, "projects", p.id), {
+          ...data,
+          authorUid: uid,
+          syncedAt: Date.now(),
+        });
+
+        // Local se delete
+        localStorage.removeItem(rawKey);
+        localStorage.removeItem(`sks_proj_${p.id}`);
+
+        // newList se mark karo (data sirf cloud pe ab)
+        const idx = newList.findIndex(x => x.id === p.id);
+        if (idx !== -1) {
+          newList[idx] = { id: p.id, name: data.name, slug: data.slug, date: data.timestamp };
+        }
+
+        synced++;
+        bannerText.textContent = `${synced}/${toSync.length} sync ho gaye…`;
+      } catch (err) {
+        console.error(`[Sync] Failed for ${p.id}:`, err);
+      }
+    }
+
+    // Updated list save karo (list remain karti hai for project index, but raw data cloud pe)
+    localStorage.setItem(listKey, JSON.stringify(newList));
+
+    if (synced > 0) {
+      bannerText.textContent = `✓ ${synced} circuit${synced > 1 ? "s" : ""} successfully synced!`;
+      setTimeout(() => banner.classList.remove("show"), 3000);
+      // Reload projects from cloud
+      loadProjects();
+    } else {
+      banner.classList.remove("show");
+    }
+  }
+
+  // Online hone par auto-sync
+  window.addEventListener("online", syncOfflineToCloud);
+  // Page load par bhi try karo
+  if (navigator.onLine) {
+    // Thoda delay — auth settle hone do
+    setTimeout(syncOfflineToCloud, 2000);
+  }
+
+  // ── BATCH LIKES/VIEWS (company-level optimization) ─────────────────────────
+  // Technique: Firestore "in" query — max 30 IDs ek baar mein
+  // Cache: sessionStorage mein 5-minute TTL
+  // Result: N projects ke liye sirf Math.ceil(N/30) calls, N calls nahi!
+
+  const STATS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  async function batchFetchStats(projectIds) {
+    if (!projectIds.length) return {};
+
+    const cacheKey = `statsCache_${uid}`;
+    const now      = Date.now();
+
+    // Cache check
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+      if (cached && (now - cached.ts) < STATS_CACHE_TTL) {
+        // Sab requested IDs cache mein hain?
+        const allCached = projectIds.every(id => id in cached.data);
+        if (allCached) return cached.data;
+      }
+    } catch {}
+
+    // Batch fetch — Firestore "in" max 30 IDs per query
+    const stats = {};
+    const BATCH = 30;
+
+    for (let i = 0; i < projectIds.length; i += BATCH) {
+      const chunk = projectIds.slice(i, i + BATCH);
+      try {
+        const q    = query(collection(db, "projectStats"), where("__name__", "in", chunk));
+        const snap = await getDocs(q);
+        snap.forEach(d => { stats[d.id] = d.data(); });
+      } catch (err) {
+        console.error("[Stats] Batch fetch error:", err);
+      }
+    }
+
+    // Cache save
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ ts: now, data: stats }));
+    } catch {}
+
+    return stats;
+  }
+
+  // Stats cache ko invalidate karo jab like karo (optimistic update)
+  function invalidateStatsCache() {
+    try { sessionStorage.removeItem(`statsCache_${uid}`); } catch {}
+  }
+
+  // ── SVG Icons ──────────────────────────────────────────────────────────────
+  const SVG = {
+    heart:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    heartFill: `<svg width="12" height="12" viewBox="0 0 24 24" fill="#c0392b" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    eye:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eyeOn:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eyeOff: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+    open:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+    del:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  };
+
+  let deleteTarget = null;
+
+  // ── Render Projects ────────────────────────────────────────────────────────
+  async function renderProjects(projects, fromLocal) {
+    const listEl  = document.getElementById("projList");
+    const countEl = document.getElementById("projCount");
+    const statTot = document.getElementById("statTotal");
+    const statPub = document.getElementById("statPublic");
+
+    const total  = projects.length;
+    const pubCnt = projects.filter(p => p.isPublic).length;
+    countEl.textContent = total;
+    statTot.textContent = total;
+    statPub.textContent = pubCnt;
+
+    if (!total) {
+      listEl.innerHTML = `
+        <div class="empty">
+          <h3>No circuits yet</h3>
+          <p>Create your first circuit to get started.</p>
+          <a class="empty-cta" href="/create-circuit">+ Create Circuit</a>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = "";
+
+    // Render rows immediately (without stats)
+    for (const proj of projects) {
+      const isPublic = !!proj.isPublic;
+      const isLocal  = fromLocal || proj._source === "local";
+      const ts       = proj.updatedAt || proj.localUpdatedAt || proj.timestamp;
+      const slug     = proj.slug || slugify(proj.name || "untitled");
+      const editUrl  = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}`;
+
+      const row = document.createElement("div");
+      row.className  = "circuit-row";
+      row.dataset.id = proj.id;
+      row.innerHTML  = `
+        <div class="circuit-info">
+          <a class="circuit-title-link" href="${editUrl}">${esc(proj.name || "Untitled Circuit")}</a>
+          <div class="circuit-meta">
+            <span class="badge ${isPublic ? "badge-public" : "badge-private"}" id="badge-${proj.id}">${isPublic ? "Public" : "Private"}</span>
+            <span>${timeAgo(ts)}</span>
+            ${isLocal ? `<span class="badge badge-offline">offline</span>` : ""}
+          </div>
+        </div>
+        <div class="stat-num" id="likes-${proj.id}">${SVG.heart} —</div>
+        <div class="stat-num" id="views-${proj.id}">${SVG.eye} —</div>
+        <div class="circuit-actions">
+          <button class="vis-btn" id="vis-${proj.id}" data-id="${proj.id}" data-public="${isPublic}" title="${isPublic ? "Make private" : "Make public"}">
+            ${isPublic ? SVG.eyeOn + " Pub" : SVG.eyeOff + " Priv"}
+          </button>
+          <button class="icon-btn" title="Open" onclick="window.location.href='${editUrl}'">${SVG.open}</button>
+          <button class="icon-btn del" data-id="${proj.id}" data-name="${esc(proj.name || "Untitled")}" title="Delete">${SVG.del}</button>
+        </div>`;
+      listEl.appendChild(row);
+    }
+
+    // Attach event listeners
+    listEl.querySelectorAll(".icon-btn.del").forEach(btn => {
+      btn.addEventListener("click", () => {
+        deleteTarget = { id: btn.dataset.id, name: btn.dataset.name };
+        document.getElementById("delModalMsg").textContent = `"${deleteTarget.name}" will be permanently deleted.`;
+        document.getElementById("delModal").classList.add("open");
+      });
+    });
+
+    listEl.querySelectorAll(".vis-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id       = btn.dataset.id;
+        const nowPub   = btn.dataset.public !== "true";
+        try {
+          await updateDoc(doc(db, "projects", id), { isPublic: nowPub });
+          btn.dataset.public = String(nowPub);
+          const badge = document.getElementById("badge-" + id);
+          if (badge) { badge.textContent = nowPub ? "Public" : "Private"; badge.className = "badge " + (nowPub ? "badge-public" : "badge-private"); }
+          btn.innerHTML = nowPub ? SVG.eyeOn + " Pub" : SVG.eyeOff + " Priv";
+          statPub.textContent = document.querySelectorAll(".badge-public").length;
+          toast(nowPub ? "Circuit is now public" : "Circuit is now private", "ok");
+        } catch { toast("Failed to update visibility", "err"); }
+      });
+    });
+
+    // BATCH stats fetch (single round-trip for all projects)
+    if (!fromLocal && projects.length > 0) {
+      const ids   = projects.map(p => p.id);
+      const stats = await batchFetchStats(ids);
+      for (const proj of projects) {
+        const d   = stats[proj.id] || {};
+        const lEl = document.getElementById("likes-" + proj.id);
+        const vEl = document.getElementById("views-" + proj.id);
+        if (lEl) lEl.innerHTML = SVG.heart + " " + (d.likes || 0);
+        if (vEl) vEl.innerHTML = SVG.eye  + " " + (d.views || 0);
+      }
+    }
+  }
+
+  // ── Load Projects ──────────────────────────────────────────────────────────
+  async function loadProjects() {
+    const listEl = document.getElementById("projList");
+    try {
+      const q    = query(collection(db, "projects"), where("authorUid", "==", uid));
+      const snap = await getDocs(q);
+      let projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      projects.sort((a, b) => tsMillis(b.updatedAt || b.timestamp) - tsMillis(a.updatedAt || a.timestamp));
+      renderProjects(projects, false);
+    } catch (err) {
+      console.error("[Dashboard] Firestore query failed:", err.code, err.message);
+      const local = localProjects();
+      if (local.length > 0) {
+        toast("Showing offline data", "warn");
+        renderProjects(local, true);
+      } else {
+        listEl.innerHTML = `
+          <div class="empty">
+            <h3>Could not load projects</h3>
+            <p style="color:#c0392b;font-size:12px;font-family:var(--font-mono)">${err.code}: ${err.message}</p>
+            <p>Check your internet connection.</p>
+            <button class="empty-cta" onclick="location.reload()">Retry</button>
+          </div>`;
+      }
+    }
+  }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  document.getElementById("delCancel").addEventListener("click", () => {
+    document.getElementById("delModal").classList.remove("open");
+    deleteTarget = null;
+  });
+  document.getElementById("delConfirm").addEventListener("click", async () => {
+    if (!deleteTarget) return;
+    const { id, name } = deleteTarget;
+    document.getElementById("delModal").classList.remove("open");
+    deleteTarget = null;
+    try {
+      await deleteDoc(doc(db, "projects", id));
+      // Local se bhi clean karo
+      localStorage.removeItem(`sks_proj_${id}`);
+      localStorage.removeItem(`project_${id}`);
+      const lk   = `all_projects_${uid}`;
+      const list = JSON.parse(localStorage.getItem(lk) || "[]").filter(p => p.id !== id);
+      localStorage.setItem(lk, JSON.stringify(list));
+      invalidateStatsCache();
+      toast(`"${name}" deleted`, "ok");
+      loadProjects();
+    } catch { toast("Delete failed. Try again.", "err"); }
+  });
+
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await logoutUser();
+    window.location.replace("/login");
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadProfile();
+  loadProjects();
+</script>
+</body>
+</html>

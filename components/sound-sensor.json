@@ -1,0 +1,25 @@
+{
+  "name": "sound-sensor",
+  "category": "sensor",
+  "visual": {
+    "width": 120,
+    "height": 80,
+    "path": null,
+   "pins": [
+      { "id": "VCC",  "x": 40, "y": 216 },
+      { "id": "GND",  "x": 13, "y": 216},
+      { "id": "DOUT", "x": 25, "y": 216 },
+      { "id": "AOUT", "x": 54, "y": 216 }
+    ]
+  },
+  "electrical": {
+    "type": "sound-sensor",
+    "vcc": 5,
+    "activeLow": false
+  },
+  "behavior": {
+    "requiresPolarity": false,
+    "digitalOut": true,
+    "analogOut": true
+  }
+}

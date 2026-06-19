@@ -1,0 +1,11 @@
+{
+  "name": "touchSensor",
+  "path": null,
+  "width": 70,
+  "height": 90,
+  "pins": [
+    { "id": "GND", "x": 30, "y": 100},
+    { "id": "SIGNAL", "x": 65, "y": 100 },
+    { "id": "VCC", "x": 100, "y": 100 }
+  ]
+}

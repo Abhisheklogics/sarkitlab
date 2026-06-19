@@ -1,0 +1,10 @@
+{
+  "name": "coinBattery",
+  "path": null,
+  "width": 80,
+  "height": 80,
+  "pins": [
+    { "id": "+", "x": 46, "y": 10 },
+    { "id": "-", "x": 46, "y": 80 }
+  ]
+}

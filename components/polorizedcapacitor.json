@@ -1,0 +1,9 @@
+{
+  "name": "polorizedcapacitor",
+  "width": 70,
+  "height": 130,
+  "pins": [
+    { "id": "P", "x": 24, "y": 124 },
+    { "id": "N", "x": 42, "y": 121 }
+  ]
+}

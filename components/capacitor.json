@@ -1,0 +1,10 @@
+{
+  "name": "capacitor",
+  "path": null,
+  "width": 80,
+  "height": 100,
+  "pins": [
+    { "id": "T1", "x": 23, "y": 100 },
+    { "id": "T2", "x": 50, "y": 100 }
+  ]
+}

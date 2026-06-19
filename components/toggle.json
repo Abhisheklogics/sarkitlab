@@ -1,0 +1,11 @@
+{
+  "name": "toggleSwitch",
+  "path": null,
+  "width": 50,
+  "height": 40,
+  "pins": [
+    { "id": "GND", "x": 46, "y": 105 },
+    { "id": "T1",  "x": 22, "y":105 },
+    { "id": "T2",  "x": 66, "y": 105 }
+  ]
+}

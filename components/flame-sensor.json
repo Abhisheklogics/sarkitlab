@@ -1,0 +1,26 @@
+{
+  "name": "flame-sensor",
+  "category": "sensor",
+  "visual": {
+    "width": 140,
+    "height": 90,
+    "path": null,
+    "pins": [
+      { "id": "VCC",  "x": 40, "y": 216 },
+      { "id": "GND",  "x": 13, "y": 216},
+      { "id": "DOUT", "x": 25, "y": 216 },
+      { "id": "AOUT", "x": 54, "y": 216 }
+    ]
+  },
+  "electrical": {
+    "type": "flame-sensor",
+    "vcc": 5,
+    "activeLow": true
+  },
+  "behavior": {
+    "requiresPolarity": false,
+    "digitalOut": true,
+    "analogOut": true,
+    "clickToTrigger": true
+  }
+}

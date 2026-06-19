@@ -1,0 +1,8 @@
+{
+  "name": "74HC04",
+  "type": "logic-ic",
+  "description": "74HC04 not gate",
+  "width": 156,
+  "height": 70
+}
+

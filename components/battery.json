@@ -1,0 +1,10 @@
+{
+  "name": "battery9v",
+  "path": null,
+  "width": 60,
+  "height": 100,
+  "pins": [
+    { "id": "POS", "x": 40, "y": 80 },
+    { "id": "NEG", "x": 40, "y": 30 }
+  ]
+}

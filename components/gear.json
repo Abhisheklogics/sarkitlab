@@ -1,0 +1,10 @@
+{
+  "name": "gearmotor",
+  "path": null,
+  "width": 200,
+  "height": 260,
+  "pins": [
+    { "id": "VCC", "x": 70, "y": 165 },
+    { "id": "GND", "x": 130, "y": 165 }
+  ]
+}
