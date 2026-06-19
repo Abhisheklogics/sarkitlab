@@ -1,4 +1,4 @@
-"use strict";
+
 
 const MAX_CURRENT     = 500;
 const FLYBACK_THRESH  = 50;

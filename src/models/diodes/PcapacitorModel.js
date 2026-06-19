@@ -1,4 +1,4 @@
-"use strict";
+
 
 const MAX_VOLTAGE       = 1e4;
 const FORWARD_THRESHOLD = 0.05;

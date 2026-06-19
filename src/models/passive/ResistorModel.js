@@ -1,4 +1,4 @@
-"use strict";
+
 
 const T_NOM = 27;
 const R_MIN = 1e-6;

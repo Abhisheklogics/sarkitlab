@@ -1,19 +1,4 @@
-/**
- * TM1637Model.js
- * TM1637 4-digit 7-segment display — Circuit Solver MNA model
- *
- * MNA stamp strategy:
- *  ┌─ VCC ──[R_pwr=680Ω]── GND   (power draw: segments + IC ~7 mA at 5 V)
- *  ├─ CLK ──[R_pull=10kΩ]── VCC  (open-drain pull-up)
- *  └─ DIO ──[R_pull=10kΩ]── VCC  (open-drain pull-up)
- *
- * Pin resolution:
- *   wireCLK / wireDIO  — actual Arduino pin numbers from the netlist
- *   codeCLK / codeDIO  — pin numbers from user's sketch (set by setCodePins)
- *   validated          — true only when both match
- *
- * update() is called once after NR converges — safe for SVG/display writes.
- */
+
 
 const R_PWR_LOAD  = 680;    // Ω — TM1637 + segment power model (~7 mA at 5 V)
 const R_PULLUP    = 10_000; // Ω — CLK/DIO open-drain pull-up to VCC

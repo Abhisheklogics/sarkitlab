@@ -1,6 +1,6 @@
 
 
-const R_POT_MIN     = 100;     // min segment R — short circuit se bachao (Ω)
+const R_POT_MIN     = 100;     
 const R_POT_DEFAULT = 10_000;  // default total track resistance (Ω)
 
 function netV(voltageMap, netId) {
