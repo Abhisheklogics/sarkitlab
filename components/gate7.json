@@ -1,7 +1,0 @@
-{
-  "name": "74HC148",
-  "type": "logic-ic",
-  "description": "74HC148 (8-to-3 Priority Encoder)",
-  "width": 156,
-  "height": 70
-}

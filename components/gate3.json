@@ -1,7 +1,0 @@
-{
-    "name": "74HC08",
-    "type": "logic-ic",
-    "description": "Quad 2-Input OR Gate",
-    "width": 138,
-    "height": 70
-  }

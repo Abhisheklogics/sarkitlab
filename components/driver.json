@@ -1,7 +1,0 @@
-{
-  "name": "L293D",
-  "type": "motor-driver",
-  "description": "Dual H-Bridge Motor Driver IC",
-  "width": 138,
-  "height": 70
-}

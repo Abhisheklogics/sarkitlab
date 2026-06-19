@@ -1114,8 +1114,8 @@ export default class CircuitSolver {
     }
 
     const powerAliases = {
-      VCC: ["VCC","Vcc","vcc","VDD","Vdd","vdd","POWER","5V","3V3","3.3V","VBAT"],
-      GND: ["GND","gnd","Gnd","VSS","vss","GROUND","0V","NEG"],
+      VCC: ["VCC","Vcc","vcc","VDD","Vdd","vdd","POWER","5V","3V3","3.3V","VBAT",'+'],
+      GND: ["GND","gnd","Gnd","VSS","vss","GROUND","0V","NEG",'-'],
       VIN: ["VIN","Vin","vin","IN+"],
       OUT: ["OUT","out","Out","OUTPUT","output"],
     };

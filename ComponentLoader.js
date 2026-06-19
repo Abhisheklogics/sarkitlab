@@ -73,8 +73,8 @@ VirtualCoinBattery.manifest = {
   physics:          { conductive: true, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: true },
   instanceNameBase: "coin",
   pins: [
-    { id: "NEG", x: 30, y: 20, power: "GND" },
-    { id: "POS", x: 80, y: 20, power: "VCC" },
+    { id: "-", x: 30, y: 20, power: "GND" },
+    { id: "+", x: 80, y: 20, power: "VCC" },
   ],
   factory: () => new VirtualCoinBattery(),
 };
@@ -119,8 +119,8 @@ PolorizedCapacitor.manifest = {
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: true, allowsSeries: true },
   instanceNameBase: "pcap",
   pins: [
-    { id: "POS", x: 20, y: 60, power: "VCC" },
-    { id: "NEG", x: 80, y: 60, power: "GND" },
+    { id: "P", x: 20, y: 123, power: "VCC" },
+    { id: "N", x: 40, y: 120, power: "GND" },
   ],
   factory: () => new PolorizedCapacitor(),
 };
@@ -134,8 +134,8 @@ VirtualInductor.manifest = {
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: true },
   instanceNameBase: "ind",
   pins: [
-    { id: "T1", x: 15, y: 30, conductive: true },
-    { id: "T2", x: 85, y: 30, conductive: true },
+    { id: "A", x: 15, y: 30, conductive: true },
+    { id: "B", x: 85, y: 30, conductive: true },
   ],
   factory: () => new VirtualInductor(),
 };
@@ -148,8 +148,8 @@ VirtualBulb.manifest = {
   cssClasses:       ["bulb"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: true },
   pins: [
-    { id: "T1", x: 30, y: 80, conductive: true },
-    { id: "T2", x: 70, y: 80, conductive: true },
+    { id: "Anode", x: 30, y: 80, conductive: true },
+    { id: "Cathode", x: 70, y: 80, conductive: true },
   ],
   factory: () => new VirtualBulb(),
 };
@@ -176,8 +176,8 @@ VirtualLDR.manifest = {
   cssClasses:       ["ldr"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: true },
   pins: [
-    { id: "T1", x: 20, y: 50, conductive: true },
-    { id: "T2", x: 80, y: 50, conductive: true },
+    { id: "A", x: 20, y: 50, conductive: true },
+    { id: "B", x: 80, y: 50, conductive: true },
   ],
   factory: () => new VirtualLDR(),
 };
@@ -206,8 +206,8 @@ VirtualBuzzer.manifest = {
   cssClasses:       ["buzzer"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: false },
   pins: [
-    { id: "VCC", x: 30, y: 20, power: "VCC" },
-    { id: "GND", x: 70, y: 20, power: "GND" },
+    { id: "Anode", x: 30, y: 20, power: "VCC" },
+    { id: "Cathode", x: 70, y: 20, power: "GND" },
   ],
   factory: () => new VirtualBuzzer(),
 };
@@ -221,8 +221,8 @@ VirtualDCMotor.manifest = {
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "motor",
   pins: [
-    { id: "T1", x: 30, y: 80, conductive: true },
-    { id: "T2", x: 70, y: 80, conductive: true },
+    { id: "VCC", x: 30, y: 80, conductive: true },
+    { id: "GND", x: 70, y: 80, conductive: true },
   ],
   factory: () => new VirtualDCMotor(),
 };
@@ -236,8 +236,8 @@ VirtualGearMotor.manifest = {
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "gearmotor",
   pins: [
-    { id: "T1", x: 30, y: 80, conductive: true },
-    { id: "T2", x: 70, y: 80, conductive: true },
+    { id: "VCC", x: 30, y: 80, conductive: true },
+    { id: "GND", x: 70, y: 80, conductive: true },
   ],
   factory: () => new VirtualGearMotor(),
 };
@@ -320,10 +320,12 @@ PushButtons.manifest = {
   imageSrc:         "../images/push.png",
   cssClasses:       ["push-button"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  pins: [
-    { id: "T1", x: 15, y: 50, conductive: true },
-    { id: "T2", x: 85, y: 50, conductive: true },
-  ],
+ pins: [
+      { id: "A1", x: 28, y: 75 },
+      { id: "A2", x: 28, y: 20  },
+      { id: "B1", x: 80,y: 75 },
+      { id: "B2", x: 80, y: 20  },
+    ],
   factory: (ctx) => new PushButtons(ctx?.digitalInputs ?? {}),
 };
 
@@ -337,6 +339,7 @@ ToggleSwitch.manifest = {
   pins: [
     { id: "T1", x: 15, y: 50, conductive: true },
     { id: "T2", x: 85, y: 50, conductive: true },
+    { id: "comman", x: 85, y: 50, conductive: true },
   ],
   factory: (ctx) => new ToggleSwitch(ctx?.digitalInputs ?? {}),
 };
@@ -349,8 +352,8 @@ VirtualTiltSensor.manifest = {
   cssClasses:       ["tilt-sensor"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
-    { id: "T1", x: 20, y: 60, conductive: true },
-    { id: "T2", x: 60, y: 60, conductive: true },
+    { id: "OUT", x: 20, y: 60, conductive: true },
+    { id: "GND", x: 60, y: 60, conductive: true },
   ],
   factory: (ctx) => new VirtualTiltSensor(ctx?.digitalInputs ?? {}),
 };
@@ -380,7 +383,7 @@ PIRSensor.manifest = {
   pins: [
     { id: "VCC", x: 20, y: 10, power: "VCC" },
     { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "OUT", x: 80, y: 10, signal: true },
+    { id: "SIG", x: 80, y: 10, signal: true },
   ],
   factory: (ctx) => new PIRSensor(ctx?.digitalInputs ?? {}),
 };
@@ -442,7 +445,7 @@ IRSensor.manifest = {
   pins: [
     { id: "VCC", x: 20, y: 10, power: "VCC" },
     { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "OUT", x: 80, y: 10, signal: true },
+    { id: "SIG", x: 80, y: 10, signal: true },
   ],
   factory: () => new IRSensor(),
 };
@@ -683,8 +686,8 @@ function spawnResistor(x, y, forcedId, workspace, wireSys, pinsArray, deleteSyst
   resistor.pinB = "T2";
 
   const Pins = new createPins(svg, wireSys, pinsArray);
-  Pins.createPin(svg, 5,  30, 15, 15, "T1");
-  Pins.createPin(svg, 95, 30, 15, 15, "T2");
+  Pins.createPin(svg, 30,  2, 15, 15, "T1");
+  Pins.createPin(svg, 30, 164, 15, 15, "T2");
 
   registry.registerComponent({
     id,
@@ -714,8 +717,8 @@ function spawnDiode(x, y, forcedId, workspace, wireSys, pinsArray, deleteSystem,
   svg.__instance = diode;
 
   const Pins = new createPins(svg, wireSys, pinsArray);
-  Pins.createPin(svg, 5,  30, 15, 15, "A");
-  Pins.createPin(svg, 95, 30, 15, 15, "K");
+  Pins.createPin(svg, 10,  64, 10, 10, "A");
+  Pins.createPin(svg, 119, 64, 10, 10, "K");
 
   registry.registerComponent({
     id, type: "diode", instance: diode, svg,

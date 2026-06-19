@@ -4,33 +4,7 @@ const SMOOTH_TAU = 0.15;
 
 export default class VirtualBattery9V {
 
-  // ── Manifest ──────────────────────────────────────────────────────────
-  // Pin coordinates createSVG() ke andar drawn terminals se exact match
-  // karte hain — purani battery9v.json (width:60/height:100, pins x:40)
-  // is real class se match NAHI karti thi, isliye actual SVG geometry se
-  // numbers liye gaye hain:
-  //   - Negative terminal ellipse  → cx:65,  cy:28
-  //   - Positive terminal cap      → cx:135, cy:25
-  static manifest = {
-    id:         "battery9v",
-    label:      "Battery 9V",
-    group:      "Power",
-    imageSrc:   "images/battery.png",   // sidebar card image
-    width:      200,                    // svg.setAttribute width se match
-    height:     350,                    // svg.setAttribute height se match
-    cssClasses: ["battery"],
-    physics:    { conductive: true, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: true },
 
-    instanceNameBase: "battery",
-
-    pins: [
-      { id: "NEG", x: 65,  y: 28, power: "GND" },
-      { id: "POS", x: 135, y: 25, power: "VCC" },
-    ],
-
-    // Constructor koi ctx nahi maangta — Group A jaisa simple hai
-    factory: () => new VirtualBattery9V(),
-  };
 
   constructor(pins = {}, instanceName = null, registryId = null) {
     this.pinPositive  = pins.positive ?? null;

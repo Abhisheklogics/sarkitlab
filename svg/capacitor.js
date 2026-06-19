@@ -1,24 +1,5 @@
 export default class PolarizedCapacitor {
-       static manifest = {
-    id:         "polorizedcapacitor",
-    label:      "polorizedcapacitor",
-    group:      "Power",
-    imageSrc:   "images/pcapacitor.png",   // sidebar card image
-    width:      76,                    // svg.setAttribute width se match
-    height:     138,                    // svg.setAttribute height se match
-    cssClasses: ["polorizedcapacitor"],
   
-
-    instanceNameBase: "polorizedcapacitor",
-
-    pins: [
-      { id: "P", x: 30,  y: 50, power: "power" },
-      { id: "N", x: 35, y: 25, power: "negtive" },
-    ],
-
-    // Constructor koi ctx nahi maangta — Group A jaisa simple hai
-    factory: () => new  PolarizedCapacitor(),
-  };
   constructor(
     capacitance  = 100e-6,
     pins         = {},

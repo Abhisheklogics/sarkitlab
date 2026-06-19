@@ -1,38 +1,7 @@
-// ── Manifest ──────────────────────────────────────────────────────────────
-// IMPORTANT: is class ka constructor() koi argument nahi leta — purane
-// ComponentSpawner mein pushbutton ko ctx.digitalInputs milta tha
-// (new ClassMap[type](this.digitalInputs)), lekin ye REWRITTEN version
-// digitalInputs object use hi nahi karta — iski jagah getActiveShorts()
-// short-circuit-pair pattern use karta hai jo simulation engine khud
-// query karega. Isliye factory yahan ctx nahi leta — Group A jaisa simple.
-//
-// Pin x/y exactly class ke andar already-defined `this.pins` array se
-// liye gaye hain — agar kabhi SVG ke andar wire/terminal position badle,
-// dono jagah (yahan manifest mein, aur constructor ke this.pins mein)
-// sync rakhna.
+
 export default class PushButtons {
 
-  static manifest = {
-    id:         "pushbutton",
-    label:      "Push Button",
-    group:      "Sensors & Input",
-    imageSrc:   "images/push.png",
-    width:      120,
-    height:     130,
-    cssClasses: ["pushbutton"],
-    physics:    { conductive: false, switchable: true },
-
-    instanceNameBase: "btn",
-
-    pins: [
-      { id: "A1", x: 28, y: 110 },
-      { id: "A2", x: 28, y: 20  },
-      { id: "B1", x: 92, y: 110 },
-      { id: "B2", x: 92, y: 20  },
-    ],
-
-    factory: () => new PushButtons(),
-  };
+ 
 
   constructor() {
     this.active   = false;
