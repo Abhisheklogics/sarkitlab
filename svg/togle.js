@@ -1,13 +1,14 @@
+"use strict";
+
 export default class ToggleSwitch {
   constructor() {
     this.active   = false;
     this.instance = this;
     this.meta = {
       category  : "digital-input",
-      signalPins: ["T1", "T2"],
+      signalPins: ["T1","T2"],
       gndPins   : ["GND"],
     };
-
     this.svg = this._createSVG();
     this._attachEvents();
   }
@@ -18,19 +19,14 @@ export default class ToggleSwitch {
     svg.setAttribute("height",  "130");
     svg.setAttribute("viewBox", "0 0 100 130");
     svg.innerHTML = `
-      <!-- Switch body -->
       <rect x="20" y="10" width="60" height="80" rx="4"
             fill="#333" stroke="#000" stroke-width="2"/>
-      <!-- Track -->
       <rect x="45" y="20" width="10" height="60" rx="5" fill="#111"/>
-      <!-- Lever (animated via JS) -->
       <circle id="lever" cx="50" cy="70" r="12"
-              fill="#eee" style="cursor:pointer"/>
-      <!-- State label -->
+              fill="#eee" style="cursor:pointer; transition: cy 0.1s, fill 0.1s;"/>
       <text id="sw-label" x="50" y="105"
             text-anchor="middle" font-size="9"
             fill="#888" font-family="monospace">OFF</text>
-      <!-- Pins -->
       <g transform="translate(25,90)">
         <rect x="0"  y="0" width="6" height="30" fill="#aaa"/>
         <rect x="22" y="0" width="6" height="30" fill="#aaa"/>
@@ -61,8 +57,14 @@ export default class ToggleSwitch {
     }
   }
 
+  getActiveShorts() {
+    if (!this.active) return [];
+    return [["T1","T2"]];
+  }
+
   isActive()   { return this.active ? 1 : 0; }
   getElement() { return this.svg; }
+
   updateVisual(state) {
     this.active = !!state;
     this._updateVisual();

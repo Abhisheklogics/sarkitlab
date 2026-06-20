@@ -1,7 +1,6 @@
+"use strict";
 
 export default class PushButtons {
-
- 
 
   constructor() {
     this.active   = false;
@@ -33,18 +32,19 @@ export default class PushButtons {
     svg.setAttribute("width",   "120");
     svg.setAttribute("height",  "130");
     svg.setAttribute("viewBox", "0 0 120 130");
-    svg.style.overflow  = "visible";
-    svg.style.cursor    = "pointer";
+    svg.style.overflow   = "visible";
+    svg.style.cursor     = "pointer";
     svg.style.userSelect = "none";
 
     svg.innerHTML = `
-      <rect x="30" y="20" width="60" height="60" rx="8" fill="#2f2f2f" stroke="#1a1a1a" stroke-width="3"/>
+      <rect x="30" y="20" width="60" height="60" rx="8"
+            fill="#2f2f2f" stroke="#1a1a1a" stroke-width="3"/>
       <rect x="38" y="28" width="44" height="44" rx="6" fill="#3d3d3d"/>
-      <circle id="btncap" cx="60" cy="50" r="14" fill="#d6d6d6" stroke="#9e9e9e" stroke-width="3"/>
+      <circle id="btncap" cx="60" cy="50" r="14"
+              fill="#d6d6d6" stroke="#9e9e9e" stroke-width="3"/>
       <circle cx="56" cy="46" r="6" fill="rgba(255,255,255,0.4)"/>
       <rect x="28" y="20" width="8"  height="54" fill="#cfcfcf"/>
       <rect x="84" y="20" width="8"  height="54" fill="#cfcfcf"/>
-
       <text x="18"  y="118" font-size="7" font-family="monospace" fill="#888" text-anchor="middle">A1</text>
       <text x="18"  y="17"  font-size="7" font-family="monospace" fill="#888" text-anchor="middle">A2</text>
       <text x="102" y="118" font-size="7" font-family="monospace" fill="#888" text-anchor="middle">B1</text>
@@ -59,7 +59,6 @@ export default class PushButtons {
       this.active = true;
       this._updateVisual();
     });
-
     window.addEventListener("pointerup",     this._pointerUpHandler);
     window.addEventListener("pointercancel", this._pointerUpHandler);
   }
@@ -72,11 +71,8 @@ export default class PushButtons {
   }
 
   getActiveShorts() {
-    const shorts = [["A1","A2"], ["B1","B2"]];
-    if (this.active) {
-      shorts.push(["A1","B1"]);
-      shorts.push(["A2","B2"]);
-    }
+    const shorts = [["A1","A2"],["B1","B2"]];
+    if (this.active) { shorts.push(["A1","B1"]); shorts.push(["A2","B2"]); }
     return shorts;
   }
 
@@ -88,10 +84,6 @@ export default class PushButtons {
     this._updateVisual();
   }
 
-  // ── REMINDER: ye method exist karta hai par abhi koi bhi delete-flow
-  // (deleteSystem.js) ise call nahi karta — pushbutton delete hone par
-  // window pointerup/pointercancel listener leak hoga jab tak
-  // deleteSystem mein `comp.instance?.destroy?.()` add nahi kiya jaata.
   destroy() {
     window.removeEventListener("pointerup",     this._pointerUpHandler);
     window.removeEventListener("pointercancel", this._pointerUpHandler);

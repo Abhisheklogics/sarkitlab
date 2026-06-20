@@ -65,13 +65,13 @@ VirtualBattery9V.manifest = {
 };
 
 VirtualCoinBattery.manifest = {
-  id:               "coinbattery",
+  id:               "coinBattery",
   label:            "Coin Battery",
   group:            "Power",
   imageSrc:         "../images/coin.png",
-  cssClasses:       ["coin-battery"],
+  cssClasses:       ["coinBattery"],
   physics:          { conductive: true, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: true },
-  instanceNameBase: "coin",
+  instanceNameBase: "coinBattery",
   pins: [
     { id: "-", x: 30, y: 20, power: "GND" },
     { id: "+", x: 80, y: 20, power: "VCC" },
@@ -318,7 +318,7 @@ PushButtons.manifest = {
   label:            "Push Button",
   group:            "Sensors & Input",
   imageSrc:         "../images/push.png",
-  cssClasses:       ["push-button"],
+  cssClasses:       ["pushbutton"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
  pins: [
       { id: "A1", x: 28, y: 75 },
@@ -334,12 +334,12 @@ ToggleSwitch.manifest = {
   label:            "Toggle Switch",
   group:            "Sensors & Input",
   imageSrc:         "../images/togle.png",
-  cssClasses:       ["toggle-switch-comp"],
+  cssClasses:       ["toggleSwitch"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
     { id: "T1", x: 15, y: 50, conductive: true },
     { id: "T2", x: 85, y: 50, conductive: true },
-    { id: "comman", x: 85, y: 50, conductive: true },
+    { id: "GND", x: 85, y: 50, conductive: true },
   ],
   factory: (ctx) => new ToggleSwitch(ctx?.digitalInputs ?? {}),
 };
@@ -349,7 +349,7 @@ VirtualTiltSensor.manifest = {
   label:            "Tilt Sensor",
   group:            "Sensors & Input",
   imageSrc:         "../images/tilt.png",
-  cssClasses:       ["tilt-sensor"],
+  cssClasses:       ["tiltSensor"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
     { id: "OUT", x: 20, y: 60, conductive: true },
@@ -363,7 +363,7 @@ TouchSensor.manifest = {
   label:            "Touch Sensor",
   group:            "Sensors & Input",
   imageSrc:         "../images/touch.jpg",
-  cssClasses:       ["touch-sensor"],
+  cssClasses:       ["touchSensor"],
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
     { id: "VCC", x: 20, y: 10, power: "VCC" },
@@ -383,7 +383,7 @@ PIRSensor.manifest = {
   pins: [
     { id: "VCC", x: 20, y: 10, power: "VCC" },
     { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "SIG", x: 80, y: 10, signal: true },
+    { id: "OUT", x: 80, y: 10, signal: true },
   ],
   factory: (ctx) => new PIRSensor(ctx?.digitalInputs ?? {}),
 };
@@ -445,7 +445,7 @@ IRSensor.manifest = {
   pins: [
     { id: "VCC", x: 20, y: 10, power: "VCC" },
     { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "SIG", x: 80, y: 10, signal: true },
+    { id: "OUT", x: 80, y: 10, signal: true },
   ],
   factory: () => new IRSensor(),
 };
@@ -854,7 +854,7 @@ function spawnMQSensor(type, x, y, forcedId, workspace, wireSys, pinsArray, dele
     console.error(`[ComponentLoader] MQ sensor "${type}" not found in inline data.`);
     return false;
   }
- 
+ console.log(data)
   const compId   = registry.generateId(data.name.toLowerCase(), forcedId);
   const mqSensor = new MQSensorIC(compId, data);
   const svg      = mqSensor.getElement();

@@ -55,13 +55,38 @@ function _rOutLow(I_abs) {
   return R_OUT_LOW_BASE * (1 + 3 * x * x);
 }
 
+function _resolveOutputVoltage(engine, key, pinNum) {
+  const raw = engine.digitalVoltages?.[key];
+
+  if (raw === undefined || raw === null) return 0;
+
+  if (raw === 0 || raw === false) return 0;
+  if (raw === 1 || raw === true)  return V_CC;
+
+  const duty = Math.max(0, Math.min(255, raw));
+
+  if (PWM_PINS.has(pinNum)) {
+    const pwmMode = engine.simState?.pwmMode ?? "average";
+    if (pwmMode === "average") {
+      return (duty / 255) * V_CC;
+    }
+    const freq    = PWM_FREQ[pinNum] ?? 490;
+    const period  = 1 / freq;
+    const simTime = engine.simState?.simTime ?? 0;
+    const phase   = (simTime % period) / period;
+    return phase < (duty / 255) ? V_CC : 0;
+  }
+
+  return duty >= 128 ? V_CC : 0;
+}
+
 export default class ArduinoModel {
 
   static solve(comp, electrical, solver) {
-    const engine   = solver.simEngine;
-    const gndNet   = solver.findNet(comp.id, "GND");
-    const vcc5Net  = solver.findNet(comp.id, "5V");
-    const vcc33Net = solver.findNet(comp.id, "3.3V");
+    const engine  = solver.simEngine;
+    const gndNet  = solver.findNet(comp.id, "GND");
+    const vcc5Net = solver.findNet(comp.id, "5V");
+    const vcc33Net= solver.findNet(comp.id, "3.3V");
     if (!gndNet) return;
 
     electrical.gndNets.add(gndNet);
@@ -103,7 +128,7 @@ export default class ArduinoModel {
       if (!net) continue;
       const pinNum = parseInt(pinName, 10);
       const key    = `D${pinNum}`;
-      const mode   = inReset ? "INPUT" : (engine.pinStates[key]);
+      const mode   = inReset ? "INPUT" : (engine.pinStates?.[key]);
       const isTone = !inReset && tonePin != null && pinNum === tonePin;
 
       ArduinoModel._stampPin(
@@ -118,7 +143,7 @@ export default class ArduinoModel {
       if (!net) continue;
       const pinNum = 14 + parseInt(pinName.slice(1), 10);
       const key    = pinName;
-      const mode   = inReset ? "INPUT" : (engine.pinStates[key]);
+      const mode   = inReset ? "INPUT" : (engine.pinStates?.[key]);
 
       ArduinoModel._stampPin(
         comp, electrical, engine, solver,
@@ -152,34 +177,17 @@ export default class ArduinoModel {
     }
 
     if (mode === "OUTPUT" || isTone) {
-      const raw = engine.digitalVoltages[key] ?? 0;
+      const overcurrent = comp._pinOvercurrent?.[key] ?? false;
       let targetV;
 
       if (isTone) {
         targetV = V_CC;
-      } else if (raw === 0 || raw === false) {
+      } else if (overcurrent) {
         targetV = 0;
-      } else if (raw === 1 || raw === true) {
-        targetV = V_CC;
       } else {
-        const duty = Math.max(0, Math.min(255, raw));
-        if (PWM_PINS.has(pinNum)) {
-          const pwmMode = engine.simState?.pwmMode ?? "average";
-          if (pwmMode === "average") {
-            targetV = (duty / 255) * V_CC;
-          } else {
-            const freq   = PWM_FREQ[pinNum] ?? 490;
-            const period = 1 / freq;
-            const simTime = engine.simState?.simTime ?? 0;
-            const phase  = (simTime % period) / period;
-            targetV = phase < (duty / 255) ? V_CC : 0;
-          }
-        } else {
-          targetV = duty >= 128 ? V_CC : 0;
-        }
+        targetV = _resolveOutputVoltage(engine, key, pinNum);
       }
 
-      const overcurrent = comp._pinOvercurrent?.[key] ?? false;
       let rEff;
       if (overcurrent) {
         rEff = R_OUT_CLAMP;
@@ -188,13 +196,16 @@ export default class ArduinoModel {
         rEff = targetV > 2.5 ? _rOutHigh(I_prev) : _rOutLow(I_prev);
       }
 
+      const vSat   = targetV > 2.5 ? (V_CC - V_SAT_HIGH) : V_SAT_LOW;
+      const vStamp = targetV > 2.5 ? vSat : 0;
+
       electrical.circuits.push({
         id:       `${comp.id}_out_${pinName}`,
         type:     "ARDUINO_PIN_OUT",
         a:        net,
         b:        gndNet,
         ohms:     rEff,
-        vOffset:  targetV > 0.5 ? (V_CC - V_SAT_HIGH) : V_SAT_LOW,
+        vOffset:  vStamp,
         _targetV: targetV,
         _rEff:    rEff,
       });
@@ -227,21 +238,17 @@ export default class ArduinoModel {
       return;
     }
 
-    // INPUT ya undefined — floating ya externally driven
     electrical.circuits.push({
       id: `${comp.id}_hz_${pinName}`, type: "INPUT_HIGH_Z",
       a: net, b: gndNet, ohms: R_HIGH_Z,
     });
 
-    // KEY FIX: external driver check — agar koi bahar ka component
-    // is net pe connected hai to floating anchor mat lagao
-    // Ye analog AO net ko stable rakhta hai bina digital pin ke
     const hasExternalDriver = ArduinoModel._hasExternalDriver(
       net, electrical, comp.id, pinName
     );
 
     if (!hasExternalDriver) {
-      const floatV = (_floatNoise(key, comp._floatT ?? 0)) * V_CC;
+      const floatV = _floatNoise(key, comp._floatT ?? 0) * V_CC;
       electrical.circuits.push({
         id:      `${comp.id}_flt_${pinName}`, type: "DEFAULT",
         a:       net, b: gndNet,
@@ -287,7 +294,7 @@ export default class ArduinoModel {
     let activeOutputs = 0;
     for (const pinName of DIGITAL_PINS) {
       const key = `D${parseInt(pinName, 10)}`;
-      if (engine.pinStates[key] === "OUTPUT") activeOutputs++;
+      if (engine.pinStates?.[key] === "OUTPUT") activeOutputs++;
     }
     if      (activeOutputs > 8) comp._rMcu = R_MCU_HEAVY;
     else if (activeOutputs > 2) comp._rMcu = R_MCU_RUNNING;
@@ -300,7 +307,7 @@ export default class ArduinoModel {
       if (!net) continue;
       const pinNum = parseInt(pinName, 10);
       const key    = `D${pinNum}`;
-      const mode   = engine.pinStates[key];
+      const mode   = engine.pinStates?.[key];
       const netV   = electrical.netVoltage.get(net) ?? 0;
 
       if (mode === "OUTPUT") {
@@ -328,12 +335,28 @@ export default class ArduinoModel {
             comp._pinWarnings[key] = false;
           }
         }
-      }
 
-      engine._digitalNetV[key] = netV;
-      if (mode !== "OUTPUT") {
+        engine._digitalNetV[key] = netV;
+
+      } else if (mode === "INPUT_PULLUP" || mode === "INPUT_PULLDOWN" || mode === "INPUT" || !mode) {
+
+        engine._digitalNetV[key] = netV;
+
         const isHigh = netV >= DIGITAL_HIGH_THRESHOLD;
-        if (engine.digitalInputs) engine.digitalInputs[key] = isHigh ? 1 : 0;
+        const isLow  = netV <  DIGITAL_LOW_THRESHOLD;
+
+        const hasExternalDriver = ArduinoModel._hasExternalDriver(
+          net, electrical, comp.id, pinName
+        );
+
+        let readVal;
+        if (!hasExternalDriver && (!mode || mode === "INPUT")) {
+          readVal = Math.random() > 0.5 ? 1 : 0;
+        } else {
+          readVal = isHigh ? 1 : (isLow ? 0 : (engine.digitalInputs?.[key] ?? 0));
+        }
+
+        if (engine.digitalInputs) engine.digitalInputs[key] = readVal;
       }
     }
 
@@ -353,7 +376,7 @@ export default class ArduinoModel {
     for (const pinName of ANALOG_PINS) {
       const net = solver.findNet(comp.id, pinName);
       if (!net) continue;
-      const mode = engine.pinStates[pinName];
+      const mode = engine.pinStates?.[pinName];
       if (mode === "OUTPUT") continue;
 
       let voltage = electrical.netVoltage.get(net) ?? 0;
@@ -363,14 +386,12 @@ export default class ArduinoModel {
       const maxBits = (1 << bits) - 1;
       let   adcVal  = Math.round((voltage / vRef) * maxBits);
 
-      // Sirf truly floating pin pe noise inject karo
-      // External driver (jaise MQ sensor) connected hai to noise nahi
       if (!mode || mode === "INPUT") {
-        const isFloating = !ArduinoModel._hasExternalDriver(
+        const hasExternalDriver = ArduinoModel._hasExternalDriver(
           net, electrical, comp.id, pinName
         );
-        if (isFloating) {
-          const noise = Math.floor(Math.random() * 1024);
+        if (!hasExternalDriver) {
+          const noise = Math.floor(Math.random() * maxBits);
           adcVal = Math.floor(adcVal * 0.3 + noise * 0.7);
         }
       }
@@ -405,9 +426,35 @@ export default class ArduinoModel {
   static _hasExternalDriver(net, electrical, compId, pinName) {
     for (const branch of electrical.circuits) {
       if (branch.a !== net && branch.b !== net) continue;
-      if (branch.id?.startsWith(compId)) continue;
+      if (branch.id?.startsWith(compId))        continue;
+      const t = branch.type;
+      if (
+        t === "INPUT_HIGH_Z" ||
+        t === "PULLUP"       ||
+        t === "PULLDOWN"     ||
+        t === "DEFAULT"
+      ) continue;
       return true;
     }
     return false;
+  }
+
+  static reset(comp, solver) {
+    comp._resetState         = false;
+    comp._brownout           = false;
+    comp._pinOvercurrent     = {};
+    comp._pinWarnings        = {};
+    comp._pinCurrents        = {};
+    comp._totalOver          = false;
+    comp._totalOutputCurrent = 0;
+    comp._rMcu               = R_MCU_RUNNING;
+    comp._floatT             = 0;
+    comp._diagnostics        = null;
+
+    const engine = solver?.simEngine;
+    if (engine) {
+      engine._digitalNetV  = {};
+      engine._analogCache  = {};
+    }
   }
 }

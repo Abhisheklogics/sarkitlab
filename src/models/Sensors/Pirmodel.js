@@ -1,38 +1,33 @@
 "use strict";
 
 const R_PIR_LOAD = 10_000;
-const R_PIR_OUT  = 200;
+const R_PIR_OUT  = 100;
 
 export default class PIRModel {
 
   static solve(comp, electrical, solver) {
     const nets = solver.getNets(comp, ["VCC", "GND", "OUT"]);
 
-    // Power load — sensor draws current when powered
     if (nets.VCC && nets.GND) {
       electrical.circuits.push({
-        id  : `${comp.id}_load`,
-        type: "RESISTOR",
-        a   : nets.VCC,
-        b   : nets.GND,
-        ohms: R_PIR_LOAD,
+        id: `${comp.id}_load`, type: "RESISTOR",
+        a: nets.VCC, b: nets.GND, ohms: R_PIR_LOAD,
       });
     }
 
-    // OUT pin — high when motion detected, low otherwise
-    // Active module — no pullup needed, drives its own output
-    if (nets.OUT && nets.GND) {
+    if (nets.OUT && nets.GND && nets.VCC) {
       const vcc     = electrical.netVoltage.get(nets.VCC) ?? 0;
       const gnd     = electrical.netVoltage.get(nets.GND) ?? 0;
       const powered = (vcc - gnd) >= 3.0;
-      const isHigh  = powered && comp.instance?.state === 1;
+      const isHigh  = powered && (comp.instance?.state === 1);
 
       electrical.circuits.push({
-        id      : `${comp.id}_out`,
-        type    : "RESISTOR",
-        a       : nets.OUT,
-        b       : isHigh ? nets.VCC : nets.GND,
-        ohms    : R_PIR_OUT,
+        id:      `${comp.id}_out`,
+        type:    "SENSOR_OUT",
+        a:       nets.OUT,
+        b:       isHigh ? nets.VCC : nets.GND,
+        ohms:    R_PIR_OUT,
+        vOffset: isHigh ? (vcc - gnd) : 0,
       });
     }
 
@@ -41,37 +36,28 @@ export default class PIRModel {
 
   static update(comp, electrical, solver) {
     const inst = comp.instance;
-    if (!inst) return;
+    if (!inst?._nets) return;
 
     const nets    = inst._nets;
-    if (!nets) return;
-
     const vcc     = electrical.netVoltage.get(nets.VCC) ?? 0;
     const gnd     = electrical.netVoltage.get(nets.GND) ?? 0;
     const powered = (vcc - gnd) >= 3.0;
-
     inst._powered = powered;
 
-    // Not powered — force output low
     if (!powered) {
-      if (inst.pinOUT !== null && inst.pinOUT !== undefined) {
-        inst.digitalInputs[inst.pinOUT] = 0;
-      }
+      PIRModel._updateArduinoPin(inst, nets.OUT, 0, solver);
       return;
     }
 
-    // Auto-detect which Arduino pin is connected to OUT net
-    if ((inst.pinOUT === null || inst.pinOUT === undefined) && nets.OUT) {
-      PIRModel._autoDetectPin(inst, nets.OUT, solver);
-    }
-
-    // Update digitalInputs so Arduino digitalRead works
-    if (inst.pinOUT !== null && inst.pinOUT !== undefined) {
-      inst.digitalInputs[inst.pinOUT] = inst.state ?? 0;
+    if (nets.OUT) {
+      const vOut   = electrical.netVoltage.get(nets.OUT) ?? 0;
+      const isHigh = (vOut - gnd) > (vcc - gnd) * 0.5;
+      PIRModel._updateArduinoPin(inst, nets.OUT, isHigh ? 1 : 0, solver);
     }
   }
 
-  static _autoDetectPin(inst, outNet, solver) {
+  static _updateArduinoPin(inst, outNet, val, solver) {
+    if (!outNet) return;
     const arduino = solver.registry?.getAll?.()
       .find(c => c.type?.toLowerCase().includes("arduino"));
     if (!arduino) return;
@@ -82,8 +68,9 @@ export default class PIRModel {
     for (const ref of pins) {
       if (typeof ref === "string" && ref.startsWith(arduino.id + ":")) {
         const pinStr = ref.split(":")[1];
-        const pinNum = isNaN(pinStr) ? pinStr : Number(pinStr);
-        inst.setOutputPin?.(pinNum);
+        const key    = isNaN(pinStr) ? pinStr : `D${Number(pinStr)}`;
+        if (solver.simEngine?.digitalInputs)
+          solver.simEngine.digitalInputs[key] = val;
         break;
       }
     }

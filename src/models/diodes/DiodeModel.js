@@ -1,4 +1,4 @@
-
+"use strict";
 
 import { limitJunctionVoltage } from "../../../engine/circuitsolver.js";
 
@@ -13,33 +13,23 @@ function _tempScaleIs(Is, N, T) {
   return Is * Math.pow(ratio, 3) * Math.exp((1.1 / (N * VT)) * (1 - 1 / ratio));
 }
 
-function _calcDiodeCurrent(Vj, Is, N) {
-  const nVt  = N * VT;
-  const Vj_c = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vj));
-  return Is * (Math.exp(Vj_c / nVt) - 1.0);
-}
-
 function _diodeLinearize(Vd, Is, N, Vold) {
   const nVt  = N * VT;
   let Vd_lim = Vd;
-  if (Vold !== undefined && Number.isFinite(Vold)) {
+  if (Vold !== undefined && Number.isFinite(Vold))
     Vd_lim = limitJunctionVoltage(Vd, Vold, N, Is);
-  }
   const Vd_c   = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd_lim));
   const expVal = Math.exp(Vd_c / nVt);
   const Id     = Is * (expVal - 1.0);
   const Gd     = (Is * expVal) / nVt + GMIN;
-  const Ieq    = Id - Gd * Vd_c;
-  return { Gd, Ieq, Vlim: Vd_c };
+  return { Gd, Ieq: Id - Gd * Vd_c, Vlim: Vd_c };
 }
 
 export default class DiodeModel {
 
   static solve(comp, electrical, solver) {
-    const A = solver.findNet(comp.id, "A")
-           ?? solver.findNet(comp.id, "Anode");
-    const K = solver.findNet(comp.id, "K")
-           ?? solver.findNet(comp.id, "Cathode");
+    const A = solver.findNet(comp.id, "A") ?? solver.findNet(comp.id, "Anode");
+    const K = solver.findNet(comp.id, "K") ?? solver.findNet(comp.id, "Cathode");
     if (!A || !K) return;
 
     const inst   = comp.instance;
@@ -60,54 +50,38 @@ export default class DiodeModel {
 
     if (Number.isFinite(Vbr) && Vd < -Vbr) {
       const Rz  = Math.max(Rs, 0.1);
-      const Gbr = 1.0 / Rz;
-      const Vop = -(Vbr + Ibr * Rz);
-      Gd        = Gbr + GMIN;
-      Ieq       = -Ibr - Gbr * Vop;
+      Gd        = 1.0 / Rz + GMIN;
+      Ieq       = -Ibr - (Gd - GMIN) * Vbr;
       Vd_c      = Vd;
     } else {
-      const result = _diodeLinearize(Vd, Is, N, Vold);
-      Gd   = result.Gd;
-      Ieq  = result.Ieq;
-      Vd_c = result.Vlim;
+      const r = _diodeLinearize(Vd, Is, N, Vold);
+      Gd = r.Gd; Ieq = r.Ieq; Vd_c = r.Vlim;
     }
 
     solver._junctionV?.set(comp.id, Vd_c);
 
     electrical.circuits.push({
-      id:       comp.id,
-      type:     "DIODE",
-      a:        A,
-      b:        K,
-      Is,
-      N,
-      ohms:     Rs,
-      _Vbr:     Vbr,
-      _Ibr:     Ibr,
+      id: comp.id, type: "DIODE",
+      a: A, b: K, Is, N, ohms: Rs,
+      _Vbr: Vbr, _Ibr: Ibr,
       _diodeNR: { Gd, Ieq },
     });
 
-    const Cj0 = Math.max(0, inst?.junctionCapacitance ?? 0);
-    if (Cj0 > 0 && solver._dt) {
+    if ((inst?.junctionCapacitance ?? 0) > 0 && solver._dt) {
+      const Cj0    = inst.junctionCapacitance;
       const Vj_pot = inst?.junctionPotential ?? 0.75;
-      const M      = inst?.gradingCoeff ?? 0.5;
+      const Mj     = inst?.gradingCoeff ?? 0.5;
       const Vcj    = Math.min(Vd, Vj_pot * 0.99);
-      const Cj     = Cj0 / Math.pow(Math.max(1 - Vcj / Vj_pot, 0.01), M);
-      const dt     = Math.max(1e-15, solver._dt);
+      const Cj     = Cj0 / Math.pow(Math.max(1 - Vcj / Vj_pot, 0.01), Mj);
       const capId  = `${comp.id}_cj`;
       const hist   = solver._capState?.get(capId);
       const Vprev  = hist?.V ?? Vd;
       const Iprev  = hist?.I ?? 0;
-      const Geq    = (2.0 * Cj) / dt;
-      const IeqCap = Geq * Vprev + Iprev;
+      const Geq    = (2.0 * Cj) / Math.max(solver._dt, 1e-15);
       electrical.circuits.push({
-        id:            capId,
-        type:          "CAPACITOR",
-        a:             A,
-        b:             K,
-        capacitance:   Cj,
-        ohms:          1e-6,
-        _companionCap: { Geq, Ieq: IeqCap },
+        id: capId, type: "CAPACITOR",
+        a: A, b: K, capacitance: Cj, ohms: 1e-6,
+        _companionCap: { Geq, Ieq: Geq * Vprev + Iprev },
       });
     }
 
@@ -124,26 +98,28 @@ export default class DiodeModel {
     const Vd = Va - Vk;
 
     const branch = electrical.circuits.find(b => b.id === comp.id);
-    const Is     = branch?.Is  ?? 1e-14;
-    const N      = branch?.N   ?? 1.0;
-    const Rs     = Math.max(0.1, branch?.ohms ?? 0.5);
+    const Is     = branch?.Is ?? 1e-14;
+    const N      = branch?.N  ?? 1.0;
     const Vbr    = branch?._Vbr ?? Infinity;
     const Ibr    = branch?._Ibr ?? 1e-3;
+    const Rs     = Math.max(0.1, branch?.ohms ?? 0.5);
 
     let I = 0;
     if (Number.isFinite(Vbr) && Vd < -Vbr) {
       I = -(Ibr + (Math.abs(Vd) - Vbr) / Math.max(Rs, 0.1));
     } else {
-      I = _calcDiodeCurrent(Vd, Is, N);
+      const nVt  = N * VT;
+      const Vd_c = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd));
+      I = Is * (Math.exp(Vd_c / nVt) - 1.0);
+      if (I < 0) I = 0;
     }
 
-    const capId = `${comp.id}_cj`;
+    const capId     = `${comp.id}_cj`;
     const capBranch = electrical.circuits.find(b => b.id === capId);
     if (capBranch) {
       const Ic = capBranch.current ?? 0;
-      const Vc = Vd - Ic * (capBranch.ohms ?? 1e-6);
       if (!solver._capState) solver._capState = new Map();
-      solver._capState.set(capId, { V: Vc, I: Ic });
+      solver._capState.set(capId, { V: Vd - Ic * (capBranch.ohms ?? 1e-6), I: Ic });
     }
 
     inst.conducting  = I > I_CONDUCT;
@@ -152,12 +128,9 @@ export default class DiodeModel {
     inst.Vf          = Vd;
     inst.power       = Math.abs(Vd * I);
     inst.inBreakdown = Number.isFinite(Vbr) && Vd < -Vbr;
-
     inst.updateVisual?.(I > I_CONDUCT);
 
-    const Pmax = inst?.maxPower ?? 0.5;
-    if (inst.power > Pmax) {
-      console.warn(`[DiodeModel] OVERPOW ${comp.id}: P=${inst.power.toFixed(3)}W > ${Pmax}W`);
-    }
+    if (inst.power > (inst?.maxPower ?? 0.5))
+      console.warn(`[DiodeModel] OVERPOW ${comp.id}: P=${inst.power.toFixed(3)}W`);
   }
 }
