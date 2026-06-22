@@ -133,8 +133,11 @@ export default class ProjectStorage {
     let existingData = {};
 
     if (projectId) {
-      const raw = localStorage.getItem(`sks_proj_${projectId}`);
-      if (raw) { try { existingData = JSON.parse(raw); } catch {} }
+      const raw = localStorage.getItem(`sks_proj_${projectId}`)
+               || localStorage.getItem(`project_${projectId}`);
+      if (raw) {
+        try { existingData = JSON.parse(raw); } catch {}
+      }
     } else {
       const name = prompt("Circuit ka naam daalein:", projectName || "Untitled Circuit");
       if (!name?.trim()) return null;
@@ -149,10 +152,6 @@ export default class ProjectStorage {
     if (result.error === "not_logged_in") {
       alert("Session expire ho gaya, pehle login karein!");
       return null;
-    }
-
-    if (result.synced) {
-      localStorage.removeItem(`sks_proj_${projectId}`);
     }
 
     const storageKey = this._storageKey();

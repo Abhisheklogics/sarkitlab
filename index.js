@@ -37,10 +37,15 @@ let   on             = false;
 let   activeResistor = null;
 let   engine         = null;
 let   projectSaved   = false;
+let   _loadingProject = false;
 
 const aceEditor = new ArduinoEditor("codeInput", {
   initialValue: ``,
-  onChange: () => { projectSaved = false; setSaveStatus(false); }
+  onChange: () => {
+    if (_loadingProject) return;
+    projectSaved = false;
+    setSaveStatus(false);
+  }
 });
 
 const wireSys      = new WireSystem(workspace, connections, () => tCheck?.checkAllConnections());
@@ -118,9 +123,11 @@ const storage = new ProjectStorage(
   () => aceEditor.getValue(),
   (code) => {
     if (!code) return;
+    _loadingProject = true;
     aceEditor.setValue(code);
     aceEditor._histStack = [code];
     aceEditor._histIdx   = 0;
+    _loadingProject = false;
   }
 );
 

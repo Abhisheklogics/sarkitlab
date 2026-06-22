@@ -267,25 +267,37 @@ export async function toggleLikeProject(projectId) {
 
 export async function recordProjectView(projectId, viewerUid) {
   const session = getSession();
-  const owner   = await _getProjectOwner(projectId);
-  if (session?.uid && owner && session.uid === owner) return;
-
+ 
   const seenKey = `sks_viewed_${viewerUid || "anon"}_${projectId}`;
   if (sessionStorage.getItem(seenKey)) return;
+ 
+  const localData = loadLocal(projectId);
+  if (session?.uid && localData?.authorUid && session.uid === localData.authorUid) return;
+ 
+  if (navigator.onLine && session?.uid) {
+    try {
+      const snap = await getDoc(doc(db, "projects", projectId));
+      if (snap.exists() && snap.data().authorUid === session.uid) return;
+    } catch {}
+  }
+ 
   sessionStorage.setItem(seenKey, "1");
-
+ 
   const statsKey = `sks_stats_${projectId}`;
   let stats = {};
   try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
   stats.views = (stats.views || 0) + 1;
   try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
-
+ 
   if (navigator.onLine) {
     try {
       await setDoc(doc(db, STATS_COLLECTION, projectId), { views: increment(1) }, { merge: true });
-    } catch (err) { console.warn("[Sync] View sync failed:", err.message); }
+    } catch (err) {
+      console.warn("[Sync] View sync failed:", err.message);
+    }
   }
 }
+ 
 
 async function _getProjectOwner(projectId) {
   const local = loadLocal(projectId);
