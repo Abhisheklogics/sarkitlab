@@ -1,5 +1,7 @@
 "use strict";
 
+const LEAKAGE_R_BASE = 1e6;
+
 export default class CapacitorModel {
 
   static solve(comp, electrical, solver) {
@@ -12,12 +14,15 @@ export default class CapacitorModel {
     const inst     = comp.instance;
     const C        = Math.max(1e-15, inst?.capacitance ?? 100e-6);
     const ESR      = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
-    const dt       = Math.max(1e-15, solver._dt ?? 1e-4);
-    const hist     = solver._capState?.get(comp.id);
-    const Va0      = electrical.netVoltage.get(A) ?? 0;
-    const Vb0      = electrical.netVoltage.get(B) ?? 0;
-    const Vprev    = hist?.V ?? (Va0 - Vb0);
-    const Iprev    = hist?.I ?? 0;
+    const Vrated   = inst?.maxVoltage ?? 50;
+    const dt       = Math.max(1e-6, solver._dt ?? 1e-4);
+
+    const Va0   = electrical.netVoltage.get(A) ?? 0;
+    const Vb0   = electrical.netVoltage.get(B) ?? 0;
+    const Vest  = Va0 - Vb0;
+    const hist  = solver._capState?.get(comp.id);
+    const Vprev = hist?.V ?? Vest;
+    const Iprev = hist?.I ?? 0;
 
     const Geq     = 2.0 * C / dt;
     const Ieq     = Geq * Vprev + Iprev;
@@ -30,7 +35,14 @@ export default class CapacitorModel {
       _companionCap: { Geq: Geq_eff, Ieq: Ieq_eff },
     };
     electrical.circuits.push(branch);
-    if (inst) { inst._nets = { A, B }; inst._branch = branch; }
+
+    const Rleak = _leakageR(C, inst?.leakageCurrent);
+    electrical.circuits.push({
+      id: `${comp.id}_leak`, type: "RESISTOR",
+      a: A, b: B, ohms: Rleak,
+    });
+
+    if (inst) { inst._nets = { A, B }; inst._branch = branch; inst._Vrated = Vrated; }
   }
 
   static update(comp, electrical, solver) {
@@ -46,11 +58,11 @@ export default class CapacitorModel {
     const ESR      = Math.max(1e-9,  inst.esr ?? _defaultESR(C));
     const Ic       = branch?.current ?? 0;
     const Vc       = Vt - Ic * ESR;
+    const Vrated   = inst._Vrated ?? inst.maxVoltage ?? 50;
 
     if (!solver._capState) solver._capState = new Map();
     solver._capState.set(comp.id, { V: Vc, I: Ic });
 
-    const Vrated = inst.maxVoltage ?? 50;
     inst.Vcurrent      = Vc;
     inst.voltage       = Vc;
     inst.Icurrent      = Ic;
@@ -61,18 +73,42 @@ export default class CapacitorModel {
     inst.chargePercent = Math.min(100, Math.abs(Vc) / Vrated * 100);
     inst.updateVoltage?.(Vc);
 
-    if (Math.abs(Vc) > Vrated * 1.05)
+    if (Math.abs(Vc) > Vrated * 1.1 && !inst._overvoltageWarned) {
+      inst._overvoltageWarned = true;
       console.warn(`[Cap] OVERVOLTAGE ${comp.id}: ${Vc.toFixed(2)}V > ${Vrated}V`);
-    if ((inst.polarized ?? false) && Vc < -0.3)
+      inst.onOvervoltage?.();
+    } else if (Math.abs(Vc) <= Vrated) {
+      inst._overvoltageWarned = false;
+    }
+
+    if ((inst.polarized ?? false) && Vc < -0.3 && !inst._reverseWarned) {
+      inst._reverseWarned = true;
       console.warn(`[Cap] REVERSE POLARITY ${comp.id}: ${Vc.toFixed(2)}V`);
+      inst.onReversePolarity?.();
+    }
   }
 
   static reset(comp, solver) {
     solver?._capState?.delete(comp.id);
     if (comp.instance) {
-      Object.assign(comp.instance, { voltage:0, Vcurrent:0, Icurrent:0, current:0, energyStored:0, chargeStored:0, chargePercent:0 });
+      Object.assign(comp.instance, {
+        voltage: 0, Vcurrent: 0, Icurrent: 0, current: 0,
+        energyStored: 0, chargeStored: 0, chargePercent: 0,
+        _overvoltageWarned: false, _reverseWarned: false,
+      });
     }
   }
+}
+
+function _leakageR(C, leakageCurrent) {
+  if (leakageCurrent && leakageCurrent > 0) {
+    return Math.min(1e9, 5.0 / leakageCurrent);
+  }
+  if (C >= 100e-6) return 500e3;
+  if (C >= 10e-6)  return 1e6;
+  if (C >= 1e-6)   return 5e6;
+  if (C >= 100e-9) return 50e6;
+  return 500e6;
 }
 
 function _defaultESR(C) {

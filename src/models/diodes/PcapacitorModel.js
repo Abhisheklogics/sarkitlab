@@ -1,6 +1,5 @@
 "use strict";
 
-const MAX_VOLTAGE       = 1e4;
 const FORWARD_THRESHOLD = 0.05;
 
 export default class PcapacitorModel {
@@ -10,10 +9,11 @@ export default class PcapacitorModel {
     const netN = solver.findNet(comp.id, "N") ?? solver.findNet(comp.id, "negative") ?? solver.findNet(comp.id, "B");
     if (!netP || !netN) return;
 
-    const inst      = comp.instance;
-    const C         = Math.max(1e-15, inst?.capacitance ?? 100e-6);
-    const ESR       = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
-    const polarized = inst?.polarized ?? true;
+    const inst         = comp.instance;
+    const C            = Math.max(1e-15, inst?.capacitance ?? 100e-6);
+    const ESR          = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
+    const polarized    = inst?.polarized ?? true;
+    const Vbreakdown   = inst?.maxVoltage ?? 25;
 
     const Va0   = electrical.netVoltage.get(netP) ?? 0;
     const Vb0   = electrical.netVoltage.get(netN) ?? 0;
@@ -23,31 +23,47 @@ export default class PcapacitorModel {
     const Iprev = hist?.I ?? 0;
 
     if (polarized && Vest < -FORWARD_THRESHOLD) {
-      const Vbreakdown = inst?.maxVoltage ?? 25;
-      const Vrev       = Math.abs(Vest);
-      let ohms;
+      const Vrev = Math.abs(Vest);
 
       if (Vrev >= Vbreakdown) {
-        ohms = 0.1;
-        if (!inst._breakdownWarned) {
-          console.warn(`[PCap] BREAKDOWN ${comp.id}: ${Vrev.toFixed(2)}V >= ${Vbreakdown}V`);
-          inst._breakdownWarned = true;
+        if (!inst._damaged) {
+          inst._damaged = true;
+          console.warn(`[PCap] BREAKDOWN DAMAGE ${comp.id}: ${Vrev.toFixed(2)}V >= ${Vbreakdown}V`);
+          inst.onBreakdown?.();
         }
+        electrical.circuits.push({
+          id: `${comp.id}_damaged`, type: "RESISTOR",
+          a: netP, b: netN, ohms: 0.5,
+        });
       } else {
         const C_uF      = C * 1e6;
-        const I_leakage = 0.01e-3 * C_uF * Math.max(Vrev, 0.01);
-        ohms = Math.min(1.0 / Math.max(I_leakage / Math.max(Vrev, 0.01), 1e-9), 1e6);
+        const I_leakage = Math.max(0.01e-3 * C_uF * Vrev, 1e-9);
+        const Rleak     = Vrev / I_leakage;
+        electrical.circuits.push({
+          id: `${comp.id}_revleak`, type: "RESISTOR",
+          a: netP, b: netN, ohms: Math.min(Rleak, 1e6),
+        });
+        if (!inst._reverseWarned) {
+          inst._reverseWarned = true;
+          console.warn(`[PCap] REVERSE POLARITY ${comp.id}: ${Vest.toFixed(2)}V`);
+          inst.onReversePolarity?.();
+        }
       }
 
-      const branch = { id: comp.id, type: "RESISTOR", a: netP, b: netN, ohms };
-      electrical.circuits.push(branch);
-      if (inst) { inst._nets = { A: netP, B: netN }; inst._branch = branch; inst._reverseMode = true; inst._breakdownWarned = inst._breakdownWarned ?? false; }
+      if (inst) {
+        inst._nets = { A: netP, B: netN };
+        inst._branch = null;
+        inst._reverseMode = true;
+      }
       return;
     }
 
-    if (inst) inst._breakdownWarned = false;
+    if (inst) {
+      inst._reverseWarned = false;
+      inst._reverseMode   = false;
+    }
 
-    const dt      = Math.max(1e-15, solver._dt ?? 1e-4);
+    const dt      = Math.max(1e-6, solver._dt ?? 1e-4);
     const Geq     = 2.0 * C / dt;
     const Ieq     = Geq * Vprev + Iprev;
     const Geq_eff = 1.0 / (1.0 / Geq + ESR);
@@ -59,7 +75,14 @@ export default class PcapacitorModel {
       _companionCap: { Geq: Geq_eff, Ieq: Ieq_eff },
     };
     electrical.circuits.push(branch);
-    if (inst) { inst._nets = { A: netP, B: netN }; inst._branch = branch; inst._reverseMode = false; }
+
+    const Rleak = _leakageR(C, inst?.leakageCurrent);
+    electrical.circuits.push({
+      id: `${comp.id}_leak`, type: "RESISTOR",
+      a: netP, b: netN, ohms: Rleak,
+    });
+
+    if (inst) { inst._nets = { A: netP, B: netN }; inst._branch = branch; }
   }
 
   static update(comp, electrical, solver) {
@@ -70,14 +93,17 @@ export default class PcapacitorModel {
     const branch   = inst._branch;
     const Va       = electrical.netVoltage.get(A) ?? 0;
     const Vb       = electrical.netVoltage.get(B) ?? 0;
-    const Vt       = Math.max(-MAX_VOLTAGE, Math.min(MAX_VOLTAGE, Va - Vb));
+    const Vt       = Math.max(-1e4, Math.min(1e4, Va - Vb));
     const C        = Math.max(1e-15, inst.capacitance ?? 100e-6);
     const ESR      = Math.max(1e-9,  inst.esr ?? _defaultESR(C));
     const Ic       = branch?.current ?? 0;
     const Vrated   = inst.maxVoltage ?? 25;
 
-    if (inst._reverseMode) {
-      Object.assign(inst, { Vcurrent: Vt, voltage: Vt, Icurrent: Ic, current: Ic, power: Math.abs(Vt*Ic), energyStored: 0, chargeStored: 0, chargePercent: 0 });
+    if (inst._reverseMode || inst._damaged) {
+      Object.assign(inst, {
+        Vcurrent: Vt, voltage: Vt, Icurrent: Ic, current: Ic,
+        power: Math.abs(Vt * Ic), energyStored: 0, chargeStored: 0, chargePercent: 0,
+      });
       inst.updateVoltage?.(Vt);
       return;
     }
@@ -93,18 +119,35 @@ export default class PcapacitorModel {
     });
     inst.updateVoltage?.(Vc);
 
-    if (Math.abs(Vc) > Vrated * 1.05)
+    if (Math.abs(Vc) > Vrated * 1.1 && !inst._overvoltageWarned) {
+      inst._overvoltageWarned = true;
       console.warn(`[PCap] OVERVOLTAGE ${comp.id}: ${Vc.toFixed(2)}V > ${Vrated}V`);
-    if ((inst.polarized ?? true) && Vc < -0.3)
-      console.warn(`[PCap] REVERSE POLARITY ${comp.id}: ${Vc.toFixed(2)}V`);
+      inst.onOvervoltage?.();
+    } else if (Math.abs(Vc) <= Vrated) {
+      inst._overvoltageWarned = false;
+    }
   }
 
   static reset(comp, solver) {
     solver?._capState?.delete(comp.id);
     if (comp.instance) {
-      Object.assign(comp.instance, { voltage:0, Vcurrent:0, Icurrent:0, current:0, energyStored:0, chargeStored:0, chargePercent:0, _reverseMode:false, _breakdownWarned:false });
+      Object.assign(comp.instance, {
+        voltage: 0, Vcurrent: 0, Icurrent: 0, current: 0,
+        energyStored: 0, chargeStored: 0, chargePercent: 0,
+        _reverseMode: false, _reverseWarned: false,
+        _damaged: false, _overvoltageWarned: false,
+      });
     }
   }
+}
+
+function _leakageR(C, leakageCurrent) {
+  if (leakageCurrent && leakageCurrent > 0) return Math.min(1e9, 5.0 / leakageCurrent);
+  if (C >= 100e-6) return 500e3;
+  if (C >= 10e-6)  return 1e6;
+  if (C >= 1e-6)   return 5e6;
+  if (C >= 100e-9) return 50e6;
+  return 500e6;
 }
 
 function _defaultESR(C) {

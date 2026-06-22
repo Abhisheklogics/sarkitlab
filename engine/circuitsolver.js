@@ -223,11 +223,18 @@ export default class CircuitSolver {
     this._branchMap = new Map(); this._sourceScale = 1.0;
     this._capState = new Map(); this._indState = new Map();
     this._junctionV = new Map(); this._gminOverride = null;
+    this._lastSolveTime = null;
   }
 
   setTimestep(dt) { this._dt = Math.max(1e-15, dt); }
 
   solve(electrical) {
+    const now = performance.now();
+    if (this._lastSolveTime != null) {
+      const elapsed = (now - this._lastSolveTime) / 1000;
+      this._dt = Math.max(1e-6, Math.min(elapsed, 0.1));
+    }
+    this._lastSolveTime = now;
     const netList = this.wireSystem?.lastNetlist;
     if (!netList) return;
     if (netList !== this._cachedNetlist) { this._netCache = new Map(); this._cachedNetlist = netList; }
@@ -645,7 +652,7 @@ export default class CircuitSolver {
     if (/^[Dd]\d+$/.test(s)) aliases.add(s.slice(1));
     const aMatch = s.match(/^[Aa](\d+)$/);
     if (aMatch) { const n=parseInt(aMatch[1],10); if(n<=5){aliases.add(String(14+n));aliases.add(`D${14+n}`);aliases.add(`d${14+n}`);} }
-    const pa = { VCC:["VCC","Vcc","vcc","VDD","Vdd","vdd","POWER","5V","3V3","3.3V","VBAT",'+'], GND:["GND","gnd","Gnd","VSS","vss","GROUND","0V","NEG",'-'], VIN:["VIN","Vin","vin","IN+"], OUT:["OUT","out","Out","OUTPUT","output"] };
+    const pa = { VCC:["VCC","Vcc","vcc","VDD","Vdd","vdd","POWER","5V","3V3","3.3V","VBAT"], GND:["GND","gnd","Gnd","VSS","vss","GROUND","0V","NEG"], VIN:["VIN","Vin","vin","IN+"], OUT:["OUT","out","Out","OUTPUT","output"] };
     for (const [,group] of Object.entries(pa)) { if (group.includes(s)) group.forEach(a=>aliases.add(a)); }
     return aliases;
   }

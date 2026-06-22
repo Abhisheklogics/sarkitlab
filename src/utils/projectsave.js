@@ -1,18 +1,15 @@
-// projectsave.js — Updated with:
-// 1. Rename bug fix (Firestore + localStorage + URL sab sync honge)
-// 2. URL always has project id + slug
-// 3. Offline → online auto-sync (listener in dashboard)
-// 4. After Firestore sync, local raw data delete ho jata hai
-
-import { getSession }                    from "./auth.js";
+import { getSession } from "./auth.js";
 import { saveProjectData, loadProjectData } from "./projectsync.js";
 
 export default class ProjectStorage {
-  constructor(registry, wireSys, spawnComponent) {
-    this.registry         = registry;
-    this.wireSys          = wireSys;
-    this.spawnComponent   = spawnComponent;
-    const p               = new URLSearchParams(window.location.search);
+  constructor(registry, wireSys, spawnComponent, getEditorCode, setEditorCode) {
+    this.registry       = registry;
+    this.wireSys        = wireSys;
+    this.spawnComponent = spawnComponent;
+    this.getEditorCode  = getEditorCode;
+    this.setEditorCode  = setEditorCode;
+
+    const p = new URLSearchParams(window.location.search);
     this.currentProjectId = p.get("project") || null;
   }
 
@@ -109,15 +106,20 @@ export default class ProjectStorage {
       })
       .filter(Boolean);
 
+    const arduinoCode = typeof this.getEditorCode === "function"
+      ? (this.getEditorCode() || "")
+      : "";
+
     const finalName = existingData.name || name || "Untitled Circuit";
     return {
-      name:      finalName,
-      slug:      existingData.slug || this._slugify(finalName),
-      timestamp: Date.now(),
-      version:   3,
-      isPublic:  existingData.isPublic !== undefined ? existingData.isPublic : true,
-      author:    session?.displayName || "Guest",
-      authorUid: session?.uid || null,
+      name:        finalName,
+      slug:        existingData.slug || this._slugify(finalName),
+      timestamp:   Date.now(),
+      version:     3,
+      isPublic:    existingData.isPublic !== undefined ? existingData.isPublic : true,
+      author:      session?.displayName || "Guest",
+      authorUid:   session?.uid || null,
+      arduinoCode,
       components,
       wires,
     };
@@ -127,9 +129,8 @@ export default class ProjectStorage {
     const session = getSession();
     if (!session) { alert("Pehle login karein!"); return null; }
 
-    const storageKey   = this._storageKey();
-    let   projectId    = this.currentProjectId;
-    let   existingData = {};
+    let projectId    = this.currentProjectId;
+    let existingData = {};
 
     if (projectId) {
       const raw = localStorage.getItem(`sks_proj_${projectId}`);
@@ -137,8 +138,8 @@ export default class ProjectStorage {
     } else {
       const name = prompt("Circuit ka naam daalein:", projectName || "Untitled Circuit");
       if (!name?.trim()) return null;
-      projectName   = name.trim();
-      projectId     = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      projectName           = name.trim();
+      projectId             = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       this.currentProjectId = projectId;
     }
 
@@ -150,27 +151,25 @@ export default class ProjectStorage {
       return null;
     }
 
-    // If synced to Firestore, delete local raw data (keep index entry only)
     if (result.synced) {
       localStorage.removeItem(`sks_proj_${projectId}`);
     }
 
-    // Update project index
+    const storageKey = this._storageKey();
     let list = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    const idx = list.findIndex(p => p.id === projectId);
+    const idx   = list.findIndex(p => p.id === projectId);
     const entry = { id: projectId, name: data.name, slug: data.slug, date: data.timestamp };
     if (idx !== -1) list[idx] = entry;
     else list.push(entry);
     localStorage.setItem(storageKey, JSON.stringify(list));
 
-    // URL update: always include project id + slug
-    this._updateURLSlug(data.slug, projectId);
+    this._updateURL(data.slug, projectId);
     this._updatePageTitle(data.name);
 
     if (result.synced) {
-      this._toast("Project saved ✓", false, false);
+      this._toast("Project saved");
     } else if (result.queued) {
-      this._toast("Saved offline — will sync when online", false, true);
+      this._toast("Saved offline — syncs when online", false, true);
     } else {
       this._toast("Saved locally", false, true);
     }
@@ -178,12 +177,6 @@ export default class ProjectStorage {
     return projectId;
   }
 
-  // ── RENAME (FIXED) ─────────────────────────────────────────────────────────
-  // Ab rename properly kaam karta hai:
-  // 1. Firestore mein name + slug update
-  // 2. localStorage (project data + index) update
-  // 3. URL slug update
-  // 4. Page title update
   async renameProject(newName) {
     const session   = getSession();
     const projectId = this.currentProjectId;
@@ -191,7 +184,6 @@ export default class ProjectStorage {
 
     const slug = this._slugify(newName);
 
-    // localStorage update
     const rawKey = `sks_proj_${projectId}`;
     const raw    = localStorage.getItem(rawKey);
     if (raw) {
@@ -203,7 +195,6 @@ export default class ProjectStorage {
       } catch {}
     }
 
-    // Index update
     if (session) {
       const lk   = `all_projects_${session.uid}`;
       const list = JSON.parse(localStorage.getItem(lk) || "[]");
@@ -212,7 +203,6 @@ export default class ProjectStorage {
       localStorage.setItem(lk, JSON.stringify(list));
     }
 
-    // Firestore update (if online)
     if (navigator.onLine && session) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
@@ -223,16 +213,22 @@ export default class ProjectStorage {
       }
     }
 
-    this._updateURLSlug(slug, projectId);
+    this._updateURL(slug, projectId);
     this._updatePageTitle(newName);
   }
 
-  _updateURLSlug(slug, projectId) {
+  _updateURL(slug, projectId) {
     try {
       const url = new URL(window.location.href);
-      url.searchParams.set("project", projectId);
-      if (slug) url.searchParams.set("name", slug);
+      if (projectId) url.searchParams.set("project", projectId);
+      if (slug)      url.searchParams.set("name", slug);
       window.history.replaceState({}, "", url.toString());
+
+      const displayEl = document.getElementById("projectUrlDisplay");
+      if (displayEl) {
+        const shown = `${window.location.origin}/circuit/${slug || projectId}`;
+        displayEl.textContent = shown;
+      }
     } catch {}
   }
 
@@ -247,15 +243,13 @@ export default class ProjectStorage {
 
     this.currentProjectId = projectId;
     this._updatePageTitle(data.name || "Untitled");
-    // URL mein slug bhi set karo
-    this._updateURLSlug(data.slug || this._slugify(data.name || "untitled"), projectId);
+    this._updateURL(data.slug || this._slugify(data.name || "untitled"), projectId);
 
     const components  = data.components || [];
     const breadboards = components.filter(c => c.spawnType === "breadboard30" || c.type === "breadboard");
     const others      = components.filter(c => c.spawnType !== "breadboard30" && c.type !== "breadboard");
-    const ordered     = [...breadboards, ...others];
 
-    for (const c of ordered) {
+    for (const c of [...breadboards, ...others]) {
       try {
         const spawnType = this._resolveSpawnTypeFromData(c);
         await this.spawnComponent(spawnType, c.x ?? 100, c.y ?? 100, c.id);
@@ -278,6 +272,11 @@ export default class ProjectStorage {
       if (!w.from || !w.to) continue;
       await this._reconstructWireWithRetry(w);
     }
+
+    if (data.arduinoCode && typeof this.setEditorCode === "function") {
+      await this._raf();
+      this.setEditorCode(data.arduinoCode);
+    }
   }
 
   async _reconstructWireWithRetry(w, retries = 10) {
@@ -291,7 +290,7 @@ export default class ProjectStorage {
       if (startEl && endEl) { this._drawWire(startEl, endEl, w); return; }
       await this._sleep(delays[i] ?? 1000);
     }
-    console.warn(`[Storage] Wire restore failed after ${retries} retries: ${w.from} → ${w.to}`);
+    console.warn(`[Storage] Wire restore failed: ${w.from} → ${w.to}`);
   }
 
   _splitPinKey(key) {
@@ -350,6 +349,7 @@ export default class ProjectStorage {
         },
       };
     });
+
     const wires = (this.wireSys.connections || []).map(conn => {
       const from = this.wireSys.getPinKey(conn.startPin);
       const to   = this.wireSys.getPinKey(conn.endPin);
@@ -361,12 +361,14 @@ export default class ProjectStorage {
       };
     }).filter(Boolean);
 
-    const name = document.getElementById("projectNameDisplay")?.textContent || "circuit";
+    const arduinoCode = typeof this.getEditorCode === "function" ? this.getEditorCode() : "";
+    const name        = document.getElementById("projectNameDisplay")?.textContent || "circuit";
+
     const blob = new Blob(
-      [JSON.stringify({ name, version: 3, components, wires }, null, 2)],
+      [JSON.stringify({ name, version: 3, arduinoCode, components, wires }, null, 2)],
       { type: "application/json" }
     );
-    const a = document.createElement("a");
+    const a    = document.createElement("a");
     a.href     = URL.createObjectURL(blob);
     a.download = `${name.replace(/\s+/g, "_")}.json`;
     a.click();

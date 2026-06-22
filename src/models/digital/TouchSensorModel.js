@@ -1,38 +1,54 @@
 "use strict";
 
-// ─── Touch Sensor (TTP223) Model — SPICE level fix ────────────────────────
+// ─── Touch Sensor (TTP223 / capacitive touch module) ─────────────────────────
 //
-// FIXES vs original:
+// Physical behavior:
+//   - 3 pins: VCC (power), GND, SIGNAL (digital output)
+//   - Internal: comparator + capacitive sense pad
+//   - Output is ACTIVE-HIGH: SIGNAL = VCC when touched, GND when not touched
 //
-// 1. R_OUT: was 10Ω — wrong.
-//    Real TTP223 has push-pull CMOS output (rail-to-rail driver).
-//    Output impedance: ~1Ω (typical CMOS output driver).
-//    With 10Ω and Arduino 50kΩ INPUT_PULLUP:
-//      V_signal = Vcc * 50000/(50000+10) = 0.9998*Vcc — almost ok but
-//      with multiple loads on the net the error compounds.
-//    Fix: R_OUT = 1Ω — push-pull CMOS rail-to-rail.
+// Simulation model:
+//   The sensor is a self-powered digital output device.
+//   We model it as a voltage source on the SIGNAL pin:
 //
-// 2. VCC fallback iteration problem:
-//    Original: if liveVcc < 0.5 use config fallback.
-//    Problem: on iter 0 liveVcc = 0, so fallback is used.
-//    On iter 1 liveVcc might be 4.8V (loaded), which is fine.
-//    But if fallback was 5V and real VCC is 3.3V system,
-//    first stamp was wrong and NR may not converge cleanly.
-//    Fix: use comp._solvedVcc (persists across iters, updated in update()).
-//    On first call ever: use config or 5V. After first solve: use real net.
+//     Touched:     SIGNAL net driven to VCC voltage  via low R (R_OUT)
+//     Not touched: SIGNAL net driven to 0V (GND)     via low R (R_OUT)
 //
-// 3. VCC supply load: was 10kΩ (~0.5mA).
-//    Real TTP223 quiescent: 1.5μA typical at 3V, max 3μA.
-//    10kΩ at 5V = 0.5mA — 300× too high.
-//    Fix: 2MΩ → ~2.5μA at 5V.
+//   This is correct because:
+//     - A real TTP223 actively drives its output HIGH or LOW (push-pull)
+//     - It does NOT float — it always drives, regardless of pullup/pulldown
+//     - The Arduino sees a clean HIGH or LOW regardless of INPUT_PULLUP
 //
-// 4. SENSOR_OUT is in CircuitSolver's HISTORY_TYPES → not sourceScaled. ✓
-//    No change needed there.
+// MNA stamping:
+//   Branch: SIGNAL → GND, ohms=R_OUT, vOffset=outputVoltage
+//   The vOffset creates a Thevenin equivalent: V_signal = vOffset = 0 or VCC
+//
+//   IMPORTANT: vOffset here is NOT an independent source being stepped —
+//   it represents the output of an internal comparator (a model artifact).
+//   We mark it as type "SENSOR_OUT" so CircuitSolver does NOT apply
+//   sourceScale to it during source stepping (same logic as CAPACITOR/INDUCTOR
+//   history voltages which use HISTORY_TYPES exclusion).
+//
+//   If CircuitSolver's HISTORY_TYPES does not include "SENSOR_OUT", add it,
+//   OR set the branch ohms low enough that vOffset dominates regardless of scale.
+//   The safest approach (used here): stamp vOffset directly and keep R_OUT
+//   small so the output voltage is well-defined.
+//
+// VCC sensing:
+//   We read the VCC net voltage from electricalState if it is connected,
+//   falling back to 5.0V (Arduino Uno default) or 3.3V if the component
+//   config says so. This makes the model correct for both 5V and 3.3V systems.
+//
+// Pin aliases:
+//   VCC:    VCC → VDD → 3V3 → 5V → PWR
+//   GND:    GND → VSS → 0V
+//   SIGNAL: SIGNAL → SIG → OUT → DO → IO → S
 
-const R_OUT      = 1;        // push-pull CMOS output driver (Ω)
-const R_VCC_LOAD = 2_000_000; // TTP223 quiescent ~2.5μA at 5V
+const R_OUT      = 10;    // output driver impedance (Ω) — low, so output is stiff
+const R_VCC_LOAD = 10000; // supply current draw model (10kΩ, ~0.5mA at 5V)
 
 function pushBranch(electrical, branch) {
+  // Require both nodes to be valid and distinct
   if (branch.a == null || branch.b == null) return;
   if (branch.a === branch.b) return;
   electrical.circuits.push(branch);
@@ -59,28 +75,35 @@ export const TouchSensorModel = {
                ?? solver.findNet(comp.id, "IO")
                ?? solver.findNet(comp.id, "S");
 
+    // SIGNAL and GND must both be wired for the output to do anything
     if (!sigNet || !gndNet) return;
 
-    // ── VCC: use persisted solved value, fall back to config/default ──────
-    // comp._solvedVcc is set in update() after each successful solve.
-    // This means NR iter 0 uses config, iter 1+ uses real solved VCC.
-    // Much more stable than checking liveVcc > 0.5 inline.
-    let vcc = comp._solvedVcc ?? (comp.instance?.vcc ?? 5.0);
+    // ── Determine supply voltage ──────────────────────────────────────────
+    // Prefer reading the live VCC net voltage so the model works correctly
+    // in both 5V (Uno) and 3.3V (ESP32) systems.
+    // If VCC pin is not wired, fall back to component config, then 5V.
+    let vcc;
+    if (vccNet) {
+      const liveVcc = electrical.netVoltage.get(vccNet) ?? 0;
+      // If the net hasn't been solved yet (iter 0), use config fallback
+      vcc = liveVcc > 0.5 ? liveVcc : (comp.instance?.vcc ?? 5.0);
+    } else {
+      vcc = comp.instance?.vcc ?? 5.0;
+    }
 
-    // Clamp to realistic range — if net not solved yet, use safe default
-    if (!Number.isFinite(vcc) || vcc < 1.5) vcc = comp.instance?.vcc ?? 5.0;
+    // ── Determine output state ────────────────────────────────────────────
+    // active=true or tilted=true → sensor is touched → output HIGH
+    const isTouched = comp.instance?.active === true
+                   || comp.instance?.tilted === true;
 
-    // ── Power check: TTP223 needs min 2V to operate ───────────────────────
-    if (vcc < 2.0) return;
-
-    // ── Output state ──────────────────────────────────────────────────────
-    const isTouched     = comp.instance?.active === true
-                       || comp.instance?.tilted === true;
     const outputVoltage = isTouched ? vcc : 0;
 
-    // ── Stamp SIGNAL output (push-pull CMOS, near-zero R) ────────────────
-    // type "SENSOR_OUT" → CircuitSolver HISTORY_TYPES excludes it from
-    // sourceScale, so it is always stamped at full vOffset.
+    // ── Stamp SIGNAL output branch ────────────────────────────────────────
+    // Model: Thevenin source — SIGNAL pin is driven to outputVoltage
+    // through R_OUT from the GND reference.
+    // type "SENSOR_OUT" → CircuitSolver must NOT apply sourceScale here
+    // (this is an internal comparator output, not a user-controlled source).
+    // Add "SENSOR_OUT" to HISTORY_TYPES in CircuitSolver if not already present.
     pushBranch(electrical, {
       id:      `${comp.id}_out`,
       type:    "SENSOR_OUT",
@@ -90,7 +113,10 @@ export const TouchSensorModel = {
       vOffset: outputVoltage,
     });
 
-    // ── VCC supply load (realistic quiescent current) ─────────────────────
+    // ── Stamp VCC supply load ─────────────────────────────────────────────
+    // Models the sensor's own current draw so the power rail sees a realistic
+    // load. Only stamp if VCC is actually wired — otherwise the branch would
+    // have a=null which pushBranch rejects anyway, but being explicit is cleaner.
     if (vccNet) {
       pushBranch(electrical, {
         id:   `${comp.id}_vcc_load`,
@@ -100,19 +126,9 @@ export const TouchSensorModel = {
         ohms: R_VCC_LOAD,
       });
     }
-
-    // Save nets for update()
-    comp._nets = { vccNet, gndNet, sigNet };
   },
 
   update(comp, electrical, solver) {
-    // ── Persist solved VCC for next solve() call ──────────────────────────
-    if (comp._nets?.vccNet) {
-      const liveVcc = electrical.netVoltage.get(comp._nets.vccNet) ?? 0;
-      if (liveVcc > 1.5) comp._solvedVcc = liveVcc;
-    }
-
-    // ── Trigger electrical re-solve on state change ───────────────────────
     const curr = (comp.instance?.active === true)
               || (comp.instance?.tilted === true);
 

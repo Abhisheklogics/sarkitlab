@@ -1,10 +1,8 @@
 "use strict";
 
-import { registry } from "../../ComponentRegistry.js";
-
-const R_HOLE        = 0.05;
-const R_RAIL        = 0.01;
-const R_COMPONENT   = 0.1;
+const R_HOLE        = 0.001;
+const R_RAIL        = 0.001;
+const R_COMPONENT   = 0.05;
 
 export default class BreadboardModel {
 
@@ -25,14 +23,12 @@ export default class BreadboardModel {
     const bbId = comp.id;
     const cols = comp.instance?.columns ?? 30;
 
-    const rails = ["tneg", "tpos", "bpos", "bneg"];
-    for (const rail of rails) {
+    for (const rail of ["tneg", "tpos", "bpos", "bneg"]) {
       let prevNet = solver.findNet(bbId, `${rail}1`);
       for (let c = 2; c <= cols; c++) {
         const net = solver.findNet(bbId, `${rail}${c}`);
-        if (prevNet && net && prevNet !== net) {
+        if (prevNet && net && prevNet !== net)
           BreadboardModel._push(electrical, `${bbId}_${rail}_${c}`, prevNet, net, R_RAIL);
-        }
         if (net) prevNet = net;
       }
     }
@@ -49,9 +45,8 @@ export default class BreadboardModel {
         let prevNet = solver.findNet(bbId, `${rows[0]}${c}`);
         for (let r = 1; r < rows.length; r++) {
           const net = solver.findNet(bbId, `${rows[r]}${c}`);
-          if (prevNet && net && prevNet !== net) {
+          if (prevNet && net && prevNet !== net)
             BreadboardModel._push(electrical, `${bbId}_col_${rows[r]}${c}`, prevNet, net, R_HOLE);
-          }
           if (net) prevNet = net;
         }
       }
@@ -59,16 +54,11 @@ export default class BreadboardModel {
   }
 
   static _bridgeMountedComponents(comp, electrical, solver) {
-    const bbId = comp.id;
+    const bbId    = comp.id;
+    const allComps = solver.registry?.getAll?.() ?? [];
 
-    let allComps;
-    try { allComps = registry.getAll(); }
-    catch { return; }
-
-    const mounted = allComps.filter(c => c.mountedOn === bbId);
-
-    for (const child of mounted) {
-      if (!child.pins?.length) continue;
+    for (const child of allComps) {
+      if (child.mountedOn !== bbId || !child.pins?.length) continue;
 
       for (const pin of child.pins) {
         const hole = pin.connectedToBreadboardHole ?? null;
@@ -89,5 +79,5 @@ export default class BreadboardModel {
     }
   }
 
-  static reset(_comp, _solver) {}
+  static reset(_comp) {}
 }

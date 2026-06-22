@@ -1,5 +1,3 @@
-
-
 import { limitJunctionVoltage } from "../../../engine/circuitsolver.js";
 
 const CHANNEL_PARAMS = {
@@ -71,7 +69,7 @@ export default class RGBLedModel {
       const Vk   = electrical.netVoltage.get(gndNet)      ?? 0;
       const Vd   = Va - Vk;
       const bId  = `${comp.id}_${color}`;
-      const Vold = solver._junctionV?.get(bId) ?? Vd;
+      const Vold = solver._junctionV?.get(bId) ?? 0;
       const { Gd, Ieq, Vlim } = _nrStamp(Vd, Is, p.N, Vold);
       solver._junctionV?.set(bId, Vlim);
 
@@ -97,15 +95,11 @@ export default class RGBLedModel {
     const T = Math.max(200, inst?.temperature ?? T_NOM);
 
     for (const color of ["R", "G", "B"]) {
-      const bId   = `${comp.id}_${color}`;
-      const branch = electrical.circuits.find(b => b.id === bId);
-      if (!branch) continue;
-
-      const Va  = electrical.netVoltage.get(branch.a) ?? 0;
-      const Vk  = electrical.netVoltage.get(branch.b) ?? 0;
-      const p   = CHANNEL_PARAMS[color];
-      const Is  = _tempScaleIs(p.IS, p.N, T);
-
+      const bId    = `${comp.id}_${color}`;
+      const Va     = electrical.netVoltage.get(solver.findNet(comp.id, color) ?? "") ?? 0;
+      const Vk     = electrical.netVoltage.get(solver.findNet(comp.id, "GND") ?? "") ?? 0;
+      const p      = CHANNEL_PARAMS[color];
+      const Is     = _tempScaleIs(p.IS, p.N, T);
       const current = _calcCurrent(Va, Vk, Is, p.N, p.Rs);
       const Vd      = Va - Vk;
       const power   = Math.abs(Vd * current);

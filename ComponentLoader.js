@@ -73,8 +73,8 @@ VirtualCoinBattery.manifest = {
   physics:          { conductive: true, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: true },
   instanceNameBase: "coinBattery",
   pins: [
-    { id: "-", x: 30, y: 20, power: "GND" },
-    { id: "+", x: 80, y: 20, power: "VCC" },
+    { id: "-", x: 50, y: 85, power: "GND" },
+    { id: "+", x: 50, y: 20, power: "VCC" },
   ],
   factory: () => new VirtualCoinBattery(),
 };
@@ -88,9 +88,9 @@ VirtualRegulator7805.manifest = {
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "reg",
   pins: [
-    { id: "IN",  x: 20, y: 50, power: "VCC" },
-    { id: "GND", x: 60, y: 50, power: "GND" },
-    { id: "OUT", x: 100, y: 50, power: "VCC" },
+    { id: "IN",  x: 20, y: 105, power: "VCC" },
+    { id: "GND", x: 35, y: 105, power: "GND" },
+    { id: "OUT", x:50, y: 105, power: "VCC" },
   ],
   factory: () => new VirtualRegulator7805(),
 };
@@ -104,8 +104,8 @@ Capacitor.manifest = {
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: true },
   instanceNameBase: "cap",
   pins: [
-    { id: "T1", x: 20, y: 60, conductive: true },
-    { id: "T2", x: 80, y: 60, conductive: true },
+    { id: "T1", x: 21, y: 105, conductive: true },
+    { id: "T2", x: 50, y: 105, conductive: true },
   ],
   factory: () => new Capacitor(),
 };
@@ -134,8 +134,8 @@ VirtualInductor.manifest = {
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: true },
   instanceNameBase: "ind",
   pins: [
-    { id: "A", x: 15, y: 30, conductive: true },
-    { id: "B", x: 85, y: 30, conductive: true },
+    { id: "A", x: -3, y: 35, conductive: true },
+    { id: "B", x: 205, y: 35, conductive: true },
   ],
   factory: () => new VirtualInductor(),
 };
@@ -148,8 +148,8 @@ VirtualBulb.manifest = {
   cssClasses:       ["bulb"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: true },
   pins: [
-    { id: "Anode", x: 30, y: 80, conductive: true },
-    { id: "Cathode", x: 70, y: 80, conductive: true },
+    { id: "Anode", x: 30, y: 120, conductive: true },
+    { id: "Cathode", x: 50, y: 120, conductive: true },
   ],
   factory: () => new VirtualBulb(),
 };
@@ -162,8 +162,8 @@ ZenerDiode.manifest = {
   cssClasses:       ["zener-diode"],
   physics:          { conductive: true, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: true },
   pins: [
-    { id: "A", x: 15, y: 30, conductive: true },
-    { id: "K", x: 85, y: 30, conductive: true },
+    { id: "A", x: 20, y: -3, conductive: true },
+    { id: "K", x: 20, y: 120, conductive: true },
   ],
   factory: () => new ZenerDiode(),
 };
@@ -190,10 +190,10 @@ RGBLed.manifest = {
   cssClasses:       ["rgb-led"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: false },
   pins: [
-    { id: "R",   x: 20, y: 80, conductive: true },
-    { id: "G",   x: 40, y: 80, conductive: true },
-    { id: "B",   x: 60, y: 80, conductive: true },
-    { id: "GND", x: 80, y: 80, power: "GND" },
+    { id: "R",   x: 30, y: 260, conductive: true },
+    { id: "G",   x: 60, y: 260, conductive: true },
+    { id: "B",   x: 130, y: 260, conductive: true },
+    { id: "GND", x: 160, y: 260, power: "GND" },
   ],
   factory: () => new RGBLed(),
 };
@@ -206,8 +206,8 @@ VirtualBuzzer.manifest = {
   cssClasses:       ["buzzer"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: false },
   pins: [
-    { id: "Anode", x: 30, y: 20, power: "VCC" },
-    { id: "Cathode", x: 70, y: 20, power: "GND" },
+    { id: "Anode", x: 45, y: 5, power: "VCC" },
+    { id: "Cathode", x: 45, y: 83, power: "GND" },
   ],
   factory: () => new VirtualBuzzer(),
 };
@@ -221,8 +221,8 @@ VirtualDCMotor.manifest = {
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "motor",
   pins: [
-    { id: "VCC", x: 30, y: 80, conductive: true },
-    { id: "GND", x: 70, y: 80, conductive: true },
+    { id: "VCC", x: 60, y: 45, conductive: true },
+    { id: "GND", x: 150, y: 45, conductive: true },
   ],
   factory: () => new VirtualDCMotor(),
 };
@@ -235,9 +235,9 @@ VirtualGearMotor.manifest = {
   cssClasses:       ["gear-motor"],
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "gearmotor",
-  pins: [
-    { id: "VCC", x: 30, y: 80, conductive: true },
-    { id: "GND", x: 70, y: 80, conductive: true },
+ pins: [
+    { id: "VCC", x: 60, y: 25, conductive: true },
+    { id: "GND", x: 140, y: 25, conductive: true },
   ],
   factory: () => new VirtualGearMotor(),
 };
@@ -251,9 +251,9 @@ ServoMotor.manifest = {
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "servo",
   pins: [
-    { id: "VCC", x: 20, y: 60, power: "VCC" },
-    { id: "GND", x: 50, y: 60, power: "GND" },
-    { id: "SIG", x: 80, y: 60, signal: true },
+    { id: "VCC", x: 243, y: 60, power: "VCC" },
+    { id: "GND", x: 223, y: 60, power: "GND" },
+    { id: "SIG", x: 263, y: 60, signal: true },
   ],
   factory: (ctx) => new ServoMotor(ctx?.digitalOutputs ?? {}),
 };
@@ -288,10 +288,10 @@ FourDigitSevenSegment.manifest = {
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   instanceNameBase: "seg4",
   pins: [
-    { id: "CLK", x: 20, y: 10, signal: true },
-    { id: "DIO", x: 50, y: 10, signal: true },
-    { id: "VCC", x: 80, y: 10, power: "VCC" },
-    { id: "GND", x: 110, y: 10, power: "GND" },
+    { id: "CLK", x: 110, y: 123, signal: true },
+    { id: "DIO", x: 130, y: 123, signal: true },
+    { id: "VCC", x: 150, y: 123, power: "VCC" },
+    { id: "GND", x: 170, y: 123, power: "GND" },
   ],
   factory: () => new FourDigitSevenSegment(),
 };
@@ -337,9 +337,9 @@ ToggleSwitch.manifest = {
   cssClasses:       ["toggleSwitch"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
-    { id: "T1", x: 15, y: 50, conductive: true },
-    { id: "T2", x: 85, y: 50, conductive: true },
-    { id: "GND", x: 85, y: 50, conductive: true },
+    { id: "T1", x: 25, y: 120, conductive: true },
+    { id: "T2", x: 65, y: 120, conductive: true },
+    { id: "GND", x: 45, y: 120, conductive: true },
   ],
   factory: (ctx) => new ToggleSwitch(ctx?.digitalInputs ?? {}),
 };
@@ -352,8 +352,8 @@ VirtualTiltSensor.manifest = {
   cssClasses:       ["tiltSensor"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
-    { id: "OUT", x: 20, y: 60, conductive: true },
-    { id: "GND", x: 60, y: 60, conductive: true },
+    { id: "OUT", x: 40, y: 65, conductive: true },
+    { id: "GND", x: 110, y: 65, conductive: true },
   ],
   factory: (ctx) => new VirtualTiltSensor(ctx?.digitalInputs ?? {}),
 };
@@ -366,9 +366,9 @@ TouchSensor.manifest = {
   cssClasses:       ["touchSensor"],
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
-    { id: "VCC", x: 20, y: 10, power: "VCC" },
-    { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "SIG", x: 80, y: 10, signal: true },
+    { id: "VCC", x: 30, y: 110, power: "VCC" },
+    { id: "GND", x: 65, y: 110, power: "GND" },
+    { id: "SIG", x: 100, y: 110, signal: true },
   ],
   factory: (ctx) => new TouchSensor(ctx?.digitalInputs ?? {}),
 };

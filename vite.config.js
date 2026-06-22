@@ -9,6 +9,9 @@ const routes = {
   '/onboarding':     '/src/pages/onboarding.html',
   '/edit':           '/src/pages/edit.html',
   '/codes':          '/src/pages/codes.html',
+  '/user-profile':'/src/pages/user-profile.html',
+  '/circuit-view':'/src/pages/circuit-view.html'
+
 };
 
 function pageRewritePlugin() {

@@ -107,9 +107,24 @@ window.spawnComponent = async (type, x, y, forcedId, skipUndo) => {
   return spawner.spawnComponent(type, x, y, forcedId, skipUndo);
 };
 
-const tCheck  = new TinkerCheck(workspace, wireSys, [], registry);
-const storage = new ProjectStorage(registry, wireSys, window.spawnComponent);
-const wsCtrl  = new WorkspaceController(workspace, registry, wireSys);
+const tCheck = new TinkerCheck(workspace, wireSys, [], registry);
+
+window.aceEditor = aceEditor;
+
+const storage = new ProjectStorage(
+  registry,
+  wireSys,
+  window.spawnComponent,
+  () => aceEditor.getValue(),
+  (code) => {
+    if (!code) return;
+    aceEditor.setValue(code);
+    aceEditor._histStack = [code];
+    aceEditor._histIdx   = 0;
+  }
+);
+
+const wsCtrl = new WorkspaceController(workspace, registry, wireSys);
 const parser  = new ArduinoParserEngine();
 
 wsCtrl.mount();
@@ -234,6 +249,52 @@ function setSaveStatus(saved) {
     : '<span class="dot unsaved-dot"></span> Unsaved';
 }
 
+function buildShareURL(projectId, slug) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("project", projectId);
+  if (slug) url.searchParams.set("name", slug);
+  url.searchParams.set("autorun", "1");
+  return url.toString();
+}
+
+function updateShareModalURL() {
+  const params    = new URLSearchParams(window.location.search);
+  const projectId = params.get("project");
+  const name      = document.getElementById("projectNameDisplay")?.textContent || "circuit";
+  const slug      = name.toLowerCase().trim().replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").slice(0,60);
+  const shareUrl  = projectId ? buildShareURL(projectId, slug) : window.location.href;
+
+  const inputEl = document.getElementById("shareCircuitUrl");
+  if (inputEl) inputEl.value = shareUrl;
+
+  const enc = encodeURIComponent;
+  document.getElementById("shareWA").onclick = () =>
+    window.open(`https://wa.me/?text=${enc(`Check out my circuit "${name}" on SarkitLab: ${shareUrl}`)}`);
+  document.getElementById("shareTW").onclick = () =>
+    window.open(`https://twitter.com/intent/tweet?text=${enc(`Check out my circuit "${name}" on SarkitLab!`)}&url=${enc(shareUrl)}`);
+  document.getElementById("shareLI").onclick = () =>
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${enc(shareUrl)}`);
+  document.getElementById("shareTG").onclick = () =>
+    window.open(`https://t.me/share/url?url=${enc(shareUrl)}&text=${enc(`Check out "${name}" on SarkitLab!`)}`);
+}
+
+document.getElementById("shareCircuitBtn")?.addEventListener("click", () => {
+  updateShareModalURL();
+
+  const params    = new URLSearchParams(window.location.search);
+  const projectId = params.get("project");
+  if (projectId) {
+    const raw = localStorage.getItem(`sks_proj_${projectId}`) || localStorage.getItem(`project_${projectId}`);
+    if (raw) {
+      try { document.getElementById("publicToggleCheck").checked = !!JSON.parse(raw).isPublic; } catch {}
+    }
+  }
+
+  document.getElementById("shareCircuitModal").style.display = "flex";
+});
+
+const autoRunMode = new URLSearchParams(window.location.search).get("autorun") === "1";
+
 window.addEventListener("load", () => {
   const projectId = new URLSearchParams(window.location.search).get("project");
   if (projectId) {
@@ -241,6 +302,10 @@ window.addEventListener("load", () => {
       projectSaved = true;
       setSaveStatus(true);
       updateCompCount();
+
+      if (autoRunMode) {
+        setTimeout(() => simulationBtn?.click(), 900);
+      }
     });
   }
 });

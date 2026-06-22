@@ -643,7 +643,7 @@
 
 <section class="cta-section">
   <h2>Ready to start <em>building</em>?</h2>
-  <p>Join thousands of students and educators using Sarkitshala.</p>
+  <p>Join thousands of students and educators using SarkitLab.</p>
   <a href="/register" class="btn btn-primary btn-xl" id="ctaBtn2">
     Create Free Account
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -658,7 +658,7 @@
           <div class="footer-logo-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/><path d="M8 12h8M2 12h2M20 12h2"/></svg>
           </div>
-          Sarkitshala
+          SarkitLab
         </div>
         <p class="footer-desc">A browser-based circuit simulation platform for students, teachers, and makers.</p>
       </div>
@@ -697,6 +697,7 @@
 </footer>
 
 <script type="module">
+
   import { getSession } from "./src/utils/auth.js";
 
   const session = getSession();
@@ -704,8 +705,8 @@
     const navRight = document.getElementById("navRight");
     navRight.innerHTML = `
       <a href="/user-dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
-      <a href="/user-dashboard" class="nav-user-chip">
-        <div class="avatar avatar-sm" style="background:var(--accent);color:#fff;font-family:var(--font-display);">${session.displayName.charAt(0).toUpperCase()}</div>
+      <a href="/user-profile?uid=${session.uid}" class="nav-user-chip">
+        <div class="avatar avatar-sm" style="background:var(--accent);color:#fff;font-family:var(--font-display);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${session.displayName?.charAt(0)?.toUpperCase() ?? "?"}</div>
         ${session.displayName}
       </a>
     `;
@@ -714,6 +715,7 @@
       btn.href = "/user-dashboard";
     });
   }
+
 </script>
 
 </body>
