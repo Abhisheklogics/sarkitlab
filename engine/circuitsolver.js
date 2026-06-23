@@ -61,7 +61,7 @@ const RECTIFYING = new Set([
 const DIODE_TYPES = new Set(["DIODE","LED_SEGMENT","SCHOTTKY"]); // "LED" hatao
 
 const VOLTAGE_SOURCE_TYPES = new Set([
-  "BATTERY","VOLTAGE_SOURCE","REGULATOR","POWER_SOURCE",
+  "BATTERY","VOLTAGE_SOURCE","REGULATOR","POWER_SOURCE","IC_OUTPUT",
 ]);
 
 class SparseMatrix {

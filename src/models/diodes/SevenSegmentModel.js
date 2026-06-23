@@ -1,8 +1,11 @@
+
+
 import { limitJunctionVoltage } from "../../../engine/circuitsolver.js";
 
 const SEG_IS  = 1.2e-17;
 const SEG_N   = 2.0;
 const SEG_RS  = 8.0;
+const SEG_Cj0 = 0;
 
 const VT          = 0.02585;
 const MAX_EXP_ARG = 40;
@@ -50,23 +53,18 @@ function _nrStamp(Vd, Is, N, Vold) {
   return { Gd, Ieq, Vlim: Vd_c };
 }
 
-function _resolveCommon(comp, solver) {
-  return solver.findNet(comp.id, "common")
-      ?? solver.findNet(comp.id, "COM")
-      ?? solver.findNet(comp.id, "CC")
-      ?? solver.findNet(comp.id, "CA");
-}
-
 export default class SevenSegmentModel {
 
   static solve(comp, electrical, solver) {
-    const common = _resolveCommon(comp, solver);
+    const common = solver.findNet(comp.id, "common")
+                ?? solver.findNet(comp.id, "COM")
+                ?? solver.findNet(comp.id, "CC")
+                ?? solver.findNet(comp.id, "CA");
     if (!common) return;
 
-    const inst     = comp.instance;
-    const T        = Math.max(200, inst?.temperature ?? T_NOM);
-    const Is       = _tempScaleIs(SEG_IS, SEG_N, T);
-    const isAnode  = !!(inst?.commonAnode ?? false);
+    const inst = comp.instance;
+    const T    = Math.max(200, inst?.temperature ?? T_NOM);
+    const Is   = _tempScaleIs(SEG_IS, SEG_N, T);
 
     for (const seg of SEGMENTS) {
       const segNet = solver.findNet(comp.id, seg)
@@ -74,45 +72,40 @@ export default class SevenSegmentModel {
       if (!segNet) continue;
 
       const bId  = `${comp.id}_${seg}`;
-      const Va   = electrical.netVoltage.get(isAnode ? common : segNet) ?? 0;
-      const Vk   = electrical.netVoltage.get(isAnode ? segNet : common) ?? 0;
+      const Va   = electrical.netVoltage.get(segNet) ?? 0;
+      const Vk   = electrical.netVoltage.get(common) ?? 0;
       const Vd   = Va - Vk;
-      const Vold = solver._junctionV?.get(bId) ?? 0;
+      const Vold = solver._junctionV?.get(bId) ?? Vd;
       const { Gd, Ieq, Vlim } = _nrStamp(Vd, Is, SEG_N, Vold);
       solver._junctionV?.set(bId, Vlim);
 
       electrical.circuits.push({
         id:       bId,
         type:     "LED_SEGMENT",
-        a:        isAnode ? common  : segNet,
-        b:        isAnode ? segNet  : common,
+        a:        segNet,
+        b:        common,
         Is,
         N:        SEG_N,
         ohms:     SEG_RS,
         _diodeNR: { Gd, Ieq },
       });
     }
-
-    if (inst) inst._commonNet = common;
   }
 
   static update(comp, electrical, solver) {
     if (!comp.instance) return;
 
-    const inst     = comp.instance;
-    const T        = Math.max(200, inst?.temperature ?? T_NOM);
-    const Is       = _tempScaleIs(SEG_IS, SEG_N, T);
-    const isAnode  = !!(inst?.commonAnode ?? false);
-    const common   = _resolveCommon(comp, solver);
-    if (!common) return;
+    const inst = comp.instance;
+    const T    = Math.max(200, inst?.temperature ?? T_NOM);
+    const Is   = _tempScaleIs(SEG_IS, SEG_N, T);
 
     for (const seg of SEGMENTS) {
-      const segNet = solver.findNet(comp.id, seg)
-                  ?? solver.findNet(comp.id, seg.toLowerCase());
-      if (!segNet) continue;
+      const bId    = `${comp.id}_${seg}`;
+      const branch = electrical.circuits.find(b => b.id === bId);
+      if (!branch) continue;
 
-      const Va = electrical.netVoltage.get(isAnode ? common : segNet) ?? 0;
-      const Vk = electrical.netVoltage.get(isAnode ? segNet : common) ?? 0;
+      const Va = electrical.netVoltage.get(branch.a) ?? 0;
+      const Vk = electrical.netVoltage.get(branch.b) ?? 0;
 
       const current   = _calcCurrent(Va, Vk, Is, SEG_N, SEG_RS);
       const Vd        = Va - Vk;

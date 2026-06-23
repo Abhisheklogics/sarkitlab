@@ -231,30 +231,7 @@ void loop() {
 
   delay(100);
 }
-const int gasSensorPin = 2;  // DO pin
-const int ledPin = 13;
 
-void setup() {
-  pinMode(ledPin, OUTPUT);
-  pinMode(gasSensorPin, INPUT);  // ye bhi chahiye
-  Serial.begin(9600);
-}
-
-void loop() {
-  int gasValue = digitalRead(gasSensorPin);
-  
-  Serial.print("DO Pin: ");
-  Serial.println(gasValue);
-
-  // DO LOW matlab gas detected (open-collector logic)
-  if (gasValue == LOW) {
-    digitalWrite(ledPin, HIGH);
-  } else {
-    digitalWrite(ledPin, LOW);
-  }
-
-  delay(100);
-}
 int led = 13;
 int pir = 2;
 void setup() {

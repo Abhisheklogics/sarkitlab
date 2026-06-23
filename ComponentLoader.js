@@ -183,11 +183,12 @@ VirtualLDR.manifest = {
 };
 
 RGBLed.manifest = {
-  id:               "rgb",
+  id:               "rgb-led",
   label:            "RGB LED",
   group:            "Basic",
   imageSrc:         "../images/rgb.png",
   cssClasses:       ["rgb-led"],
+  
   physics:          { conductive: false, requiresClosedLoop: true, requiresPolarity: true, allowsSeries: false },
   pins: [
     { id: "R",   x: 30, y: 260, conductive: true },

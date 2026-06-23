@@ -474,7 +474,7 @@ function resetAllComponents() {
     if (!inst) return;
 
     if (comp.type === "led")               inst.setOff?.();
-    if (comp.type === "rgb")               inst.turnOff?.();
+    if (comp.type === "rgb-led")               inst.turnOff?.();
     if (comp.type === "buzzer")            inst.stopTone?.();
     if (comp.type === "dcmotor")           inst.setOff?.();
     if (comp.type === "gearmotor")         inst.setOff?.();
@@ -572,10 +572,7 @@ function resetAllComponents() {
       "74HC83","74HC148","74HC153","74HC04","74HC14",
       "74HC74","74HC73","74HC76","74HC266","74HC7266",
     ]);
-    if (LOGIC_MODELS.has(comp.model) || comp.type === "logic-ic") {
-      LogicICModel.reset(comp);
-      inst.reset?.();
-    }
+  
 
     if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
       if (typeof inst.reset === "function") {

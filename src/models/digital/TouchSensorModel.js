@@ -82,21 +82,21 @@ export const TouchSensorModel = {
     // Prefer reading the live VCC net voltage so the model works correctly
     // in both 5V (Uno) and 3.3V (ESP32) systems.
     // If VCC pin is not wired, fall back to component config, then 5V.
-    let vcc;
-    if (vccNet) {
-      const liveVcc = electrical.netVoltage.get(vccNet) ?? 0;
-      // If the net hasn't been solved yet (iter 0), use config fallback
-      vcc = liveVcc > 0.5 ? liveVcc : (comp.instance?.vcc ?? 5.0);
-    } else {
-      vcc = comp.instance?.vcc ?? 5.0;
-    }
+  let vcc;
+if (vccNet) {
+  const liveVcc = electrical.netVoltage.get(vccNet) ?? 0;
+  vcc = liveVcc > 0.5 ? liveVcc : (comp.instance?.vcc ?? 5.0);
+} else {
+  // FIX: VCC wire nahi lagi to sensor powered nahi — output force 0
+  vcc = 0;  // <-- yahi badlo, ?? 5.0 hata do
+}
 
     // ── Determine output state ────────────────────────────────────────────
     // active=true or tilted=true → sensor is touched → output HIGH
     const isTouched = comp.instance?.active === true
                    || comp.instance?.tilted === true;
 
-    const outputVoltage = isTouched ? vcc : 0;
+  const outputVoltage = isTouched ? vcc : 0;
 
     // ── Stamp SIGNAL output branch ────────────────────────────────────────
     // Model: Thevenin source — SIGNAL pin is driven to outputVoltage
