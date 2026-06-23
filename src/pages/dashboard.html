@@ -576,11 +576,11 @@
     return (name || "untitled").toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").slice(0,60);
   }
-
-  function buildViewUrl(proj) {
-    const slug = proj.slug || slugify(proj.name || "untitled");
-    return `/circuit-view?project=${proj.id}&name=${encodeURIComponent(slug)}`;
-  }
+  
+function buildViewUrl(proj) {
+  const slug = proj.slug || slugify(proj.name || "untitled");
+  return `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
+}
 
   async function loadProfile() {
     const profile = await getUserProfile(uid).catch(() => null) || session;

@@ -417,7 +417,7 @@
         const chunk = statsIds.slice(i, i + 30);
         try {
           const statsSnap = await getDocs(
-            query(collection(db, "project_states"), where("__name__", "in", chunk))
+           query(collection(db, "projectStats"), where("__name__", "in", chunk))
           );
           statsSnap.forEach(d => { statsMap[d.id] = d.data(); });
         } catch {}
@@ -431,12 +431,11 @@
         totalViews += views;
 
         const slug = proj.slug || slugify(proj.name || "");
-        const editUrl = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}`;
-        const viewUrl = `/circuit-view?project=${proj.id}&name=${encodeURIComponent(slug)}`;
+       const circuitUrl = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
 
         const card = document.createElement("a");
         card.className = "circuit-card";
-        card.href = isSelf ? editUrl : viewUrl;
+     card.href = circuitUrl;
         card.innerHTML = `
           <div class="circuit-thumb">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

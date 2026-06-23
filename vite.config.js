@@ -40,6 +40,8 @@ export default defineConfig({
         onboarding: resolve(__dirname, 'src/pages/onboarding.html'),
         edit:       resolve(__dirname, 'src/pages/edit.html'),
         codes:      resolve(__dirname, 'src/pages/codes.html'),
+       
+'user-profile': resolve(__dirname, 'src/pages/user-profile.html'),
       },
     },
   },
