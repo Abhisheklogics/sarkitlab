@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Circuits — SarkitLab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../style.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --nav-h: 58px;
+      --accent: #c4611a; --accent-dark: #a34f13; --accent-light: #fff2e8;
+      --ink-900: #1a1714; --ink-700: #3d3730; --ink-500: #6b6259;
+      --ink-400: #8c8178; --ink-300: #b5aca3;
+      --bg: #f5f2ee; --bg-el: #ffffff;
+      --border: #e8e3dc; --border-soft: #ede8e1;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 22px;
+      --shadow-xs: 0 1px 3px rgba(0,0,0,.06);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 20px rgba(0,0,0,.10);
+      --ease: .18s ease;
+    }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--ink-700); min-height: 100vh; }
+
+    .nav {
+      height: var(--nav-h); background: var(--bg-el);
+      border-bottom: 1px solid var(--border); position: sticky;
+      top: 0; z-index: 200; box-shadow: var(--shadow-xs);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      height: 100%; display: flex; align-items: center; gap: 12px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 9px;
+      font-family: var(--font-display); font-size: 19px; font-weight: 700;
+      color: var(--ink-900); text-decoration: none; letter-spacing: -0.02em; flex-shrink: 0;
+    }
+    .nav-logo-icon {
+      width: 32px; height: 32px; background: var(--accent);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-center { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .nav-search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 99px; padding: 7px 16px; width: 320px;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    .nav-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.1); }
+    .nav-search input {
+      border: none; background: transparent; font-family: var(--font-body);
+      font-size: 13px; color: var(--ink-900); outline: none; width: 100%;
+    }
+    .nav-search input::placeholder { color: var(--ink-300); }
+    .nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: var(--r-md);
+      font-family: var(--font-body); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all var(--ease);
+    }
+    .btn-ghost { background: transparent; border-color: var(--border); color: var(--ink-700); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .page-header {
+      background: var(--bg-el); border-bottom: 1px solid var(--border-soft);
+      padding: 32px 24px 24px;
+    }
+    .page-header-inner { max-width: 1200px; margin: 0 auto; }
+    .page-header h1 {
+      font-family: var(--font-display); font-size: 32px; font-weight: 700;
+      color: var(--ink-900); margin-bottom: 6px; letter-spacing: -0.4px;
+    }
+    .page-header p { font-size: 14px; color: var(--ink-400); margin-bottom: 20px; }
+
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border);
+      background: transparent; color: var(--ink-500); transition: all var(--ease);
+    }
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .page-body { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+    .stats-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .stats-bar-text { font-size: 13px; color: var(--ink-400); }
+    .stats-bar-text strong { color: var(--ink-700); }
+
+    .circuit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .circuit-card {
+      background: var(--bg-el); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
+      transition: all var(--ease); display: flex; flex-direction: column;
+    }
+    .circuit-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.07); transform: translateY(-2px); }
+
+    .circuit-thumb {
+      height: 120px;
+      background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%);
+      display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid var(--border-soft); color: var(--border);
+      cursor: pointer; text-decoration: none;
+    }
+
+    .circuit-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+    .circuit-name {
+      font-size: 14px; font-weight: 700; color: var(--ink-900);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-decoration: none; cursor: pointer;
+    }
+    .circuit-name:hover { color: var(--accent); }
+
+    .circuit-author {
+      font-size: 12px; color: var(--ink-400);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .circuit-author a {
+      color: var(--accent); font-weight: 600; text-decoration: none;
+    }
+    .circuit-author a:hover { text-decoration: underline; }
+
+    .circuit-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border-soft);
+    }
+    .circuit-stats { display: flex; align-items: center; gap: 10px; }
+
+    .like-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 99px; padding: 4px 10px; cursor: pointer;
+      font-size: 12px; color: var(--ink-400); font-family: var(--font-body);
+      transition: all .15s;
+    }
+    .like-btn:hover { border-color: #e05b5b; color: #e05b5b; }
+    .like-btn.liked { border-color: #e05b5b; color: #e05b5b; background: #fff0f0; }
+
+    .view-stat {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; color: var(--ink-400);
+    }
+
+    .open-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 10px; border-radius: var(--r-sm);
+      background: var(--accent); color: #fff; font-size: 12px;
+      font-weight: 600; font-family: var(--font-body);
+      text-decoration: none; border: none; cursor: pointer; transition: background var(--ease);
+    }
+    .open-btn:hover { background: var(--accent-dark); }
+
+    .meta-time { font-size: 11px; color: var(--ink-300); }
+
+    .shimmer {
+      background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skel-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+
+    .load-more-wrap { text-align: center; margin-top: 36px; }
+    .load-more-btn {
+      padding: 10px 28px; border-radius: var(--r-md);
+      border: 1px solid var(--border); background: var(--bg-el);
+      font-size: 13px; font-weight: 600; font-family: var(--font-body);
+      color: var(--ink-700); cursor: pointer; transition: all var(--ease);
+    }
+    .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .empty-state {
+      text-align: center; padding: 80px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .empty-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--bg); display: flex; align-items: center;
+      justify-content: center; color: var(--ink-300);
+    }
+    .empty-state h3 { font-size: 15px; font-weight: 700; color: var(--ink-700); }
+    .empty-state p { font-size: 13px; color: var(--ink-400); max-width: 240px; line-height: 1.6; }
+
+    .toast {
+      position: fixed; bottom: 22px; right: 22px; padding: 10px 18px;
+      border-radius: var(--r-md); font-size: 13px; font-weight: 600;
+      font-family: var(--font-body); opacity: 0; transform: translateY(6px);
+      transition: all .22s; z-index: 9999; pointer-events: none; box-shadow: var(--shadow-md);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok  { background: #14532d; color: #fff; }
+    .toast.err { background: #7f1d1d; color: #fff; }
+
+    @media (max-width: 768px) {
+      .nav-center { display: none; }
+      .circuit-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+      .page-body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <div class="nav-logo-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
+          <path d="M8 12h8M2 12h2M20 12h2"/>
+        </svg>
+      </div>
+      Sarkit<span>Lab</span>
+    </a>
+    <div class="nav-center">
+      <div class="nav-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search circuits…" />
+      </div>
+    </div>
+    <div class="nav-right" id="navRight">
+      <a class="nav-btn btn-ghost" href="/login">Log in</a>
+      <a class="nav-btn btn-primary" href="/register">Sign up</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1>Explore Circuits</h1>
+    <p id="totalText">Community ke saare public circuits ek jagah</p>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-sort="views">🔥 Most Viewed</button>
+      <button class="filter-btn" data-sort="likes">❤️ Most Liked</button>
+      <button class="filter-btn" data-sort="newest">🆕 Newest</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="stats-bar">
+    <div class="stats-bar-text">Showing <strong id="showingCount">—</strong> circuits</div>
+  </div>
+
+  <div class="circuit-grid" id="circuitGrid">
+    <!-- Skeleton -->
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:80%"></div><div class="shimmer" style="height:11px;width:30%"></div></div></div>
+  </div>
+
+  <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
+    <button class="load-more-btn" id="loadMoreBtn">Load more circuits</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { getSession } from "/src/utils/auth.js";
+  import { app } from "/src/utils/auth.js";
+  import {
+    getFirestore, collection, query, where, orderBy, limit,
+    startAfter, getDocs, doc, getDoc, setDoc, increment,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const db      = getFirestore(app);
+  const session = getSession();
+
+  // Nav update if logged in
+  if (session) {
+    document.getElementById("navRight").innerHTML = `
+      <a class="nav-btn btn-ghost" href="/user-dashboard">Dashboard</a>
+      <a class="nav-btn btn-primary" href="/create-circuit">+ New Circuit</a>
+    `;
+  }
+
+  function toast(msg, type = "ok") {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.className = "toast " + type + " show";
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  function slugify(n) {
+    return (n || "untitled").toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 60);
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return "";
+    const ms   = typeof ts === "object" && "toMillis" in ts ? ts.toMillis() : (typeof ts === "number" ? ts : new Date(ts).getTime());
+    const diff = Date.now() - ms;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)  return "just now";
+    if (mins < 60) return mins + "m ago";
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return hrs + "h ago";
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + "d ago";
+    return new Date(ms).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  // ─── State ───────────────────────────────────────────────────────
+  let currentSort   = "views";
+  let lastDoc       = null;
+  let allProjects   = [];
+  let likedSet      = new Set();
+  const PAGE_SIZE   = 12;
+  let loading       = false;
+  let searchQuery   = "";
+
+  // ─── Fetch liked set for current user ────────────────────────────
+  async function fetchLikedSet(projectIds) {
+    if (!session?.uid || !projectIds.length) return;
+    for (let i = 0; i < projectIds.length; i += 30) {
+      const chunk = projectIds.slice(i, i + 30);
+      try {
+        const snap = await getDocs(
+          query(collection(db, "projectStats"), where("__name__", "in", chunk))
+        );
+        snap.forEach(d => {
+          if (d.data()?.likedBy?.[session.uid]) likedSet.add(d.id);
+        });
+      } catch {}
+    }
+  }
+
+  // ─── Build card HTML ─────────────────────────────────────────────
+  function buildCard(proj) {
+    const slug     = proj.slug || slugify(proj.name || "");
+    const url      = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
+    const liked    = likedSet.has(proj.id);
+    const likes    = proj._likes || 0;
+    const views    = proj._views || 0;
+    const authorUid = proj.authorUid || "";
+
+    const card = document.createElement("div");
+    card.className  = "circuit-card";
+    card.dataset.id = proj.id;
+    card.innerHTML  = `
+      <a href="${url}" class="circuit-thumb">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
+          <path d="M8 12h8M2 12h2M20 12h2"/>
+        </svg>
+      </a>
+      <div class="circuit-body">
+        <a href="${url}" class="circuit-name">${esc(proj.name || "Untitled Circuit")}</a>
+        <div class="circuit-author">
+          by
+          <a href="/explore?author=${authorUid}">${esc(proj.author || "Anonymous")}</a>
+        </div>
+        <div class="circuit-footer">
+          <div class="circuit-stats">
+            <button class="like-btn ${liked ? "liked" : ""}" data-id="${proj.id}" data-liked="${liked}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="${liked ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span class="like-count">${likes}</span>
+            </button>
+            <span class="view-stat">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              ${views}
+            </span>
+          </div>
+          <span class="meta-time">${timeAgo(proj.updatedAt || proj.timestamp)}</span>
+        </div>
+      </div>`;
+    return card;
+  }
+
+  // ─── Attach like handlers ─────────────────────────────────────────
+  function attachLikeHandlers(container) {
+    container.querySelectorAll(".like-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!session?.uid) { toast("Like karne ke liye login karein", "err"); return; }
+        const id       = btn.dataset.id;
+        const wasLiked = btn.dataset.liked === "true";
+        const countEl  = btn.querySelector(".like-count");
+        const cur      = parseInt(countEl.textContent) || 0;
+
+        // Optimistic
+        btn.dataset.liked = String(!wasLiked);
+        btn.classList.toggle("liked", !wasLiked);
+        btn.querySelector("svg").setAttribute("fill", !wasLiked ? "currentColor" : "none");
+        countEl.textContent = !wasLiked ? cur + 1 : Math.max(0, cur - 1);
+        if (!wasLiked) likedSet.add(id); else likedSet.delete(id);
+
+        try {
+          await setDoc(doc(db, "projectStats", id), {
+            likes:                        increment(!wasLiked ? 1 : -1),
+            [`likedBy.${session.uid}`]:   !wasLiked,
+          }, { merge: true });
+        } catch {
+          // Rollback
+          btn.dataset.liked = String(wasLiked);
+          btn.classList.toggle("liked", wasLiked);
+          btn.querySelector("svg").setAttribute("fill", wasLiked ? "currentColor" : "none");
+          countEl.textContent = cur;
+          if (wasLiked) likedSet.add(id); else likedSet.delete(id);
+          toast("Like save nahi hua", "err");
+        }
+      });
+    });
+  }
+
+  // ─── Load circuits ────────────────────────────────────────────────
+  async function loadCircuits(reset = false) {
+    if (loading) return;
+    loading = true;
+    const grid = document.getElementById("circuitGrid");
+
+    if (reset) {
+      grid.innerHTML = `
+        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
+        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
+        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>`;
+      allProjects = [];
+      lastDoc     = null;
+      likedSet    = new Set();
+      document.getElementById("loadMoreWrap").style.display = "none";
+    }
+
+    try {
+      let projects = [];
+
+      if (currentSort === "views" || currentSort === "likes") {
+        // Step 1: projectStats se top IDs le (ordered by views/likes)
+        const field     = currentSort === "views" ? "views" : "likes";
+        const statsQ    = lastDoc
+          ? query(collection(db, "projectStats"), orderBy(field, "desc"), startAfter(lastDoc), limit(PAGE_SIZE))
+          : query(collection(db, "projectStats"), orderBy(field, "desc"), limit(PAGE_SIZE));
+        const statsSnap = await getDocs(statsQ);
+
+        if (statsSnap.empty) {
+          loading = false;
+          if (reset) grid.innerHTML = "";
+          document.getElementById("loadMoreWrap").style.display = "none";
+          return;
+        }
+
+        lastDoc = statsSnap.docs[statsSnap.docs.length - 1];
+        const statsMap = {};
+        statsSnap.docs.forEach(d => { statsMap[d.id] = d.data(); });
+
+        // Step 2: un IDs ke projects fetch karo
+        const ids      = statsSnap.docs.map(d => d.id);
+        const projDocs = await Promise.all(ids.map(id => getDoc(doc(db, "projects", id))));
+
+        projDocs.forEach(d => {
+          if (d.exists() && d.data().isPublic) {
+            const s = statsMap[d.id] || {};
+            projects.push({ id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 });
+          }
+        });
+
+      } else {
+        // Newest — projects collection se directly
+        const authorFilter = new URLSearchParams(window.location.search).get("author");
+        let constraints = [where("isPublic", "==", true), orderBy("timestamp", "desc"), limit(PAGE_SIZE)];
+        if (authorFilter) constraints.unshift(where("authorUid", "==", authorFilter));
+        if (lastDoc) constraints.push(startAfter(lastDoc));
+
+        const snap = await getDocs(query(collection(db, "projects"), ...constraints));
+        lastDoc = snap.docs[snap.docs.length - 1] || null;
+
+        const ids = snap.docs.map(d => d.id);
+
+        // Batch stats
+        const statsMap = {};
+        for (let i = 0; i < ids.length; i += 30) {
+          try {
+            const ss = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i+30))));
+            ss.forEach(d => { statsMap[d.id] = d.data(); });
+          } catch {}
+        }
+
+        snap.docs.forEach(d => {
+          const s = statsMap[d.id] || {};
+          projects.push({ id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 });
+        });
+      }
+
+      // Fetch liked status
+      await fetchLikedSet(projects.map(p => p.id));
+
+      // Author filter (client side for views/likes sort)
+      const authorFilter = new URLSearchParams(window.location.search).get("author");
+      if (authorFilter && currentSort !== "newest") {
+        projects = projects.filter(p => p.authorUid === authorFilter);
+      }
+
+      // Search filter
+      if (searchQuery) {
+        projects = projects.filter(p =>
+          (p.name || "").toLowerCase().includes(searchQuery) ||
+          (p.author || "").toLowerCase().includes(searchQuery)
+        );
+      }
+
+      allProjects = [...allProjects, ...projects];
+      document.getElementById("showingCount").textContent = allProjects.length;
+
+      if (reset) grid.innerHTML = "";
+
+      if (!allProjects.length && reset) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg></div>
+            <h3>Koi circuit nahi mila</h3>
+            <p>Abhi tak koi public circuit nahi hai. Pehle banao!</p>
+          </div>`;
+        loading = false;
+        return;
+      }
+
+      projects.forEach(proj => {
+        const card = buildCard(proj);
+        grid.appendChild(card);
+      });
+
+      attachLikeHandlers(grid);
+
+      // Show/hide load more
+      document.getElementById("loadMoreWrap").style.display =
+        projects.length >= PAGE_SIZE ? "block" : "none";
+
+      // Record views (sirf ek baar per session)
+      for (const proj of projects) {
+        if (proj.authorUid === session?.uid) continue;
+        const seenKey = `sks_viewed_${session?.uid || "anon"}_${proj.id}`;
+        if (!sessionStorage.getItem(seenKey)) {
+          sessionStorage.setItem(seenKey, "1");
+          setDoc(doc(db, "projectStats", proj.id), { views: increment(1) }, { merge: true }).catch(() => {});
+        }
+      }
+
+      // Author filter label
+      const authorParam = new URLSearchParams(window.location.search).get("author");
+      if (authorParam && projects.length > 0) {
+        document.querySelector(".page-header h1").textContent =
+          `${projects[0].author || "User"} ke Circuits`;
+        document.getElementById("totalText").textContent = "Is user ke saare public circuits";
+      }
+
+    } catch (err) {
+      console.error("[Explore]", err);
+      if (reset) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>Load nahi hua</h3><p style="color:#c0392b;font-family:monospace;font-size:11px">${err.message}</p><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button></div>`;
+      }
+    }
+
+    loading = false;
+  }
+
+  // ─── Sort filter buttons ──────────────────────────────────────────
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.sort === currentSort) return;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentSort = btn.dataset.sort;
+      loadCircuits(true);
+    });
+  });
+
+  // ─── Search ───────────────────────────────────────────────────────
+  document.getElementById("searchInput").addEventListener("input", function () {
+    searchQuery = this.value.toLowerCase().trim();
+    const grid  = document.getElementById("circuitGrid");
+    grid.querySelectorAll(".circuit-card").forEach(card => {
+      const name   = card.querySelector(".circuit-name")?.textContent?.toLowerCase() || "";
+      const author = card.querySelector(".circuit-author a")?.textContent?.toLowerCase() || "";
+      card.style.display = name.includes(searchQuery) || author.includes(searchQuery) ? "" : "none";
+    });
+    const visible = grid.querySelectorAll(".circuit-card:not([style*='none'])").length;
+    document.getElementById("showingCount").textContent = visible;
+  });
+
+  // ─── Load more ────────────────────────────────────────────────────
+  document.getElementById("loadMoreBtn").addEventListener("click", () => loadCircuits(false));
+
+  // ─── Init ─────────────────────────────────────────────────────────
+  loadCircuits(true);
+</script>
+</body>
+</html>

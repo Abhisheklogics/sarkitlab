@@ -1,37 +1,16 @@
 "use strict";
 
-// LDR (Light Dependent Resistor) — Photoresistor
-// Based on GL5528 datasheet (most common in kits)
-//
-// Real specs:
-//   Dark resistance:  ~1MΩ  (0 lux)
-//   10 lux:           ~50kΩ
-//   100 lux:          ~8kΩ
-//   1000 lux:         ~1kΩ
-//
-// Formula (from GL5528 datasheet curve fit):
-//   R = R_dark / (lux ^ gamma)
-//   R_dark = 37503, gamma = 0.699   ← same as VirtualLDR code
-//
-// Circuit model:
-//   LDR = variable resistor between pin A and pin B
-//   Resistance = f(lux) — updates every sim tick
-//   Used in voltage divider: VCC → LDR → GND → Analog pin reads midpoint
-//
-// Solver stamp:
-//   Simple resistor branch A↔B with R = f(lux)
-//   CircuitSolver does the voltage divider math automatically
-
-const R_DARK  = 37_503;
-const GAMMA   = 0.699;
-const R_MIN   =    100;   // minimum (very bright, 1000+ lux)
-const R_MAX   = 500_000;  // maximum (very dark, ~10 lux)
-const LUX_MIN =     10;
-const LUX_MAX =  1_000;
+const R_DARK   = 1_000_000;
+const GAMMA    = 0.699;
+const R_MIN    = 80;
+const R_MAX    = 1_000_000;
+const LUX_REF  = 10;
+const R_AT_REF = 50_000;
+const P_MAX    = 0.5;
 
 function _ldrR(lux) {
-  const safeLux = Math.max(0.1, lux);
-  const R       = R_DARK / Math.pow(safeLux, GAMMA);
+  const safeLux = Math.max(0.01, lux);
+  const R       = R_AT_REF * Math.pow(LUX_REF / safeLux, GAMMA);
   return Math.max(R_MIN, Math.min(R_MAX, R));
 }
 
@@ -48,48 +27,59 @@ export default class LDRModel {
     const R    = _ldrR(lux);
 
     electrical.circuits.push({
-      id:   comp.id,
+      id:   `${comp.id}_ldr`,
       type: "RESISTOR",
       a:    A,
       b:    B,
       ohms: R,
     });
 
-    comp._netA = A;
-    comp._netB = B;
-    comp._R    = R;
-    comp._lux  = lux;
+    comp._netA    = A;
+    comp._netB    = B;
+    comp._R       = R;
+    comp._lux     = lux;
   }
 
   static update(comp, electrical, solver) {
     const inst = comp.instance;
     if (!inst) return;
 
-    const branch = electrical.circuits.find(b => b.id === comp.id);
-    if (!branch) return;
-
     const Va = electrical.netVoltage.get(comp._netA) ?? 0;
     const Vb = electrical.netVoltage.get(comp._netB) ?? 0;
     const R  = comp._R ?? _ldrR(inst.lux ?? 300);
-    const I  = R > 0 ? Math.abs(Va - Vb) / R : 0;
+    const Vd = Math.abs(Va - Vb);
+    const I  = R > 0 ? Vd / R : 0;
     const P  = I * I * R;
 
-    // Push to instance for UI display
-    inst.voltage    = Math.abs(Va - Vb);
+    inst.voltage    = Vd;
     inst.current    = I;
     inst.resistance = R;
     inst.power      = P;
 
-    // onLuxChange callback — if connected to analog pin,
-    // sim engine reads inst.lux via LDR.getLux()
-    // No extra action needed — solver already computed correct voltage
+    if (P > P_MAX && !comp._burnWarned) {
+      comp._burnWarned = true;
+      console.warn(
+        `[LDRModel] Power dissipation ${P.toFixed(3)}W exceeds GL5528 max (0.5W).`
+      );
+    } else if (P <= P_MAX) {
+      comp._burnWarned = false;
+    }
+
+    const lux     = inst.lux ?? 300;
+    const newR    = _ldrR(lux);
+    if (Math.abs(newR - (comp._R ?? newR)) > 1) {
+      comp._R   = newR;
+      comp._lux = lux;
+      solver.simEngine?.resolveElectrical?.();
+    }
   }
 
   static reset(comp) {
-    comp._netA = null;
-    comp._netB = null;
-    comp._R    = null;
-    comp._lux  = 300;
+    comp._netA       = null;
+    comp._netB       = null;
+    comp._R          = null;
+    comp._lux        = 300;
+    comp._burnWarned = false;
 
     const inst = comp.instance;
     if (!inst) return;

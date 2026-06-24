@@ -9,9 +9,7 @@ const routes = {
   '/onboarding':     '/src/pages/onboarding.html',
   '/edit':           '/src/pages/edit.html',
   '/codes':          '/src/pages/codes.html',
-  '/user-profile':'/src/pages/user-profile.html',
-  '/circuit-view':'/src/pages/circuit-view.html'
-
+  '/explore':        '/src/pages/explore.html',
 };
 
 function pageRewritePlugin() {
@@ -32,16 +30,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main:       resolve(__dirname, 'index.html'),
-        register:   resolve(__dirname, 'src/pages/register.html'),
-        login:      resolve(__dirname, 'src/pages/login.html'),
-        dashboard:  resolve(__dirname, 'src/pages/dashboard.html'),
-        circuit:    resolve(__dirname, 'src/pages/circuit.html'),
-        onboarding: resolve(__dirname, 'src/pages/onboarding.html'),
-        edit:       resolve(__dirname, 'src/pages/edit.html'),
-        codes:      resolve(__dirname, 'src/pages/codes.html'),
-       
-'user-profile': resolve(__dirname, 'src/pages/user-profile.html'),
+        main:        resolve(__dirname, 'index.html'),
+        register:    resolve(__dirname, 'src/pages/register.html'),
+        login:       resolve(__dirname, 'src/pages/login.html'),
+        dashboard:   resolve(__dirname, 'src/pages/dashboard.html'),
+        circuit:     resolve(__dirname, 'src/pages/circuit.html'),
+        onboarding:  resolve(__dirname, 'src/pages/onboarding.html'),
+        edit:        resolve(__dirname, 'src/pages/edit.html'),
+        codes:       resolve(__dirname, 'src/pages/codes.html'),
+        explore:     resolve(__dirname, 'src/pages/explore.html'),
       },
     },
   },

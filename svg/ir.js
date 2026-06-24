@@ -512,36 +512,48 @@ export default class IRSensor {
         document.addEventListener("mouseup", this.mouseUp);
     }
 
-    mouseMove = (e) => {
-        if (!this.isDragging) return;
+   mouseMove = (e) => {
+    if (!this.isDragging) return;
 
-        const svgRect = this.svg.getBoundingClientRect();
-        const viewBox = this.svg.viewBox.baseVal;
+    const svgRect = this.svg.getBoundingClientRect();
+    const viewBox = this.svg.viewBox.baseVal;
 
-        const sensorRect = this.svg.querySelector("#sensorRect");
-        const x = parseFloat(sensorRect.getAttribute("x"));
-        const y = parseFloat(sensorRect.getAttribute("y"));
-        const width = parseFloat(sensorRect.getAttribute("width"));
-        const height = parseFloat(sensorRect.getAttribute("height"));
-        const r = parseFloat(this.circle.getAttribute("r"));
+    const sensorRect = this.svg.querySelector("#sensorRect");
+    const x = parseFloat(sensorRect.getAttribute("x"));
+    const y = parseFloat(sensorRect.getAttribute("y"));
+    const width = parseFloat(sensorRect.getAttribute("width"));
+    const height = parseFloat(sensorRect.getAttribute("height"));
 
-        const mouseX = (e.clientX - svgRect.left) * (viewBox.width / svgRect.width) + viewBox.x;
-        const mouseY = (e.clientY - svgRect.top) * (viewBox.height / svgRect.height) + viewBox.y;
+    const mouseX = (e.clientX - svgRect.left) * (viewBox.width / svgRect.width) + viewBox.x;
+    const mouseY = (e.clientY - svgRect.top) * (viewBox.height / svgRect.height) + viewBox.y;
 
-        const cx = mouseX - this.offsetX;
-        const cy = mouseY - this.offsetY;
+    const cx = mouseX - this.offsetX;
+    const cy = mouseY - this.offsetY;
 
-        this.circle.setAttribute("cx", cx);
-        this.circle.setAttribute("cy", cy);
-        if (
-            cx >= x && cx <= x + width &&
-            cy >= y && cy <= y + height
-        ) {
-            this.state = 0;   // inside → OFF
-        } else {
-            this.state = 1;   // outside → ON
-        }
+    this.circle.setAttribute("cx", cx);
+    this.circle.setAttribute("cy", cy);
+
+    const prevState = this.state;
+
+    if (
+        cx >= x && cx <= x + width &&
+        cy >= y && cy <= y + height
+    ) {
+        this.state = 1;   // ✅ inside box = object detected = OUTPUT HIGH
+    } else {
+        this.state = 0;   // ✅ outside = no object = OUTPUT LOW
     }
+
+    // ✅ digitalInputs update karo
+    if (this.digitalInputs && this.pins?.out != null) {
+        this.digitalInputs[this.pins.out] = this.state;
+    }
+
+    // ✅ sirf tab resolve karo jab state badla ho
+    if (prevState !== this.state) {
+        this._simEngine?.resolveElectrical?.();
+    }
+}
 
     mouseUp = (e) => {
         if (!this.isDragging) return;

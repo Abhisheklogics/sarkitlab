@@ -2,7 +2,6 @@
 
 const R_ON      = 1.2;
 const R_ON_TOT  = R_ON * 2;
-const R_OFF     = 1e7;
 const R_FLY     = 100.0;
 const V_CESAT   = 1.4;
 const TTL_HIGH  = 2.0;
@@ -14,11 +13,14 @@ const BRIDGES = [
   { key:"b2", en:"p9",  inA:"p10", inB:"p15", outA:"p11", outB:"p14" },
 ];
 
-function _push(electrical, id, a, b, ohms, vOffset) {
+function _pushR(electrical, id, a, b, ohms) {
   if (!a || !b || a === b) return;
-  const branch = { id, type: "RESISTOR", a, b, ohms };
-  if (vOffset !== undefined && vOffset !== 0) branch.vOffset = vOffset;
-  electrical.circuits.push(branch);
+  electrical.circuits.push({ id, type: "RESISTOR", a, b, ohms });
+}
+
+function _pushSrc(electrical, id, a, b, ohms, vOffset) {
+  if (!a || !b || a === b) return;
+  electrical.circuits.push({ id, type: "VOLTAGE_SOURCE", a, b, ohms, vOffset });
 }
 
 export default class MotorDriverModel {
@@ -47,8 +49,8 @@ export default class MotorDriverModel {
       for (const br of BRIDGES) {
         const outANet = solver.findNet(comp.id, br.outA);
         const outBNet = solver.findNet(comp.id, br.outB);
-        if (outANet) _push(electrical, `${comp.id}_${br.key}_offA`, outANet, gndNet, R_OFF);
-        if (outBNet) _push(electrical, `${comp.id}_${br.key}_offB`, outBNet, gndNet, R_OFF);
+        if (outANet) _pushR(electrical, `${comp.id}_${br.key}_offA`, outANet, gndNet, R_FLY);
+        if (outBNet) _pushR(electrical, `${comp.id}_${br.key}_offB`, outBNet, gndNet, R_FLY);
         comp._drvState[br.key] = { dir: "OFF", duty: 0, Vmot: 0, current: 0 };
       }
       return;
@@ -63,17 +65,17 @@ export default class MotorDriverModel {
 
       if (!outANet || !outBNet) continue;
 
-      const enV    = enNet  ? (electrical.netVoltage.get(enNet)  ?? 0) : 0;
-      const inAV   = inANet ? (electrical.netVoltage.get(inANet) ?? 0) : 0;
-      const inBV   = inBNet ? (electrical.netVoltage.get(inBNet) ?? 0) : 0;
+      const enV  = enNet  ? (electrical.netVoltage.get(enNet)  ?? 0) : 0;
+      const inAV = inANet ? (electrical.netVoltage.get(inANet) ?? 0) : 0;
+      const inBV = inBNet ? (electrical.netVoltage.get(inBNet) ?? 0) : 0;
 
-      const enabled = (enV - vgnd) >= TTL_HIGH;
+      const enabled = (enV  - vgnd) >= TTL_HIGH;
       const inAHi  = (inAV - vgnd) >= TTL_HIGH;
       const inBHi  = (inBV - vgnd) >= TTL_HIGH;
 
       if (!enabled) {
-        _push(electrical, `${comp.id}_${br.key}_flyA`, outANet, gndNet, R_FLY);
-        _push(electrical, `${comp.id}_${br.key}_flyB`, outBNet, gndNet, R_FLY);
+        _pushR(electrical, `${comp.id}_${br.key}_flyA`, outANet, gndNet, R_FLY);
+        _pushR(electrical, `${comp.id}_${br.key}_flyB`, outBNet, gndNet, R_FLY);
         comp._drvState[br.key] = { dir: "COAST", duty: 0, Vmot: 0, current: 0 };
         continue;
       }
@@ -81,25 +83,21 @@ export default class MotorDriverModel {
       const Vout = Math.max(0, vmotEff - V_CESAT);
 
       if (inAHi && !inBHi) {
-        _push(electrical, `${comp.id}_${br.key}_mot`, outANet, outBNet, R_ON_TOT, Vout);
-        _push(electrical, `${comp.id}_${br.key}_retA`, outANet, gndNet, R_OFF);
-        _push(electrical, `${comp.id}_${br.key}_retB`, outBNet, gndNet, R_OFF);
+        _pushSrc(electrical, `${comp.id}_${br.key}_mot`, outANet, outBNet, R_ON_TOT, Vout);
         comp._drvState[br.key] = { dir: "FORWARD", duty: 1, Vmot: Vout, current: 0 };
 
       } else if (!inAHi && inBHi) {
-        _push(electrical, `${comp.id}_${br.key}_mot`, outBNet, outANet, R_ON_TOT, Vout);
-        _push(electrical, `${comp.id}_${br.key}_retA`, outANet, gndNet, R_OFF);
-        _push(electrical, `${comp.id}_${br.key}_retB`, outBNet, gndNet, R_OFF);
+        _pushSrc(electrical, `${comp.id}_${br.key}_mot`, outBNet, outANet, R_ON_TOT, Vout);
         comp._drvState[br.key] = { dir: "REVERSE", duty: 1, Vmot: -Vout, current: 0 };
 
       } else if (inAHi && inBHi) {
-        _push(electrical, `${comp.id}_${br.key}_brakeA`, outANet, gndNet, R_ON);
-        _push(electrical, `${comp.id}_${br.key}_brakeB`, outBNet, gndNet, R_ON);
+        _pushR(electrical, `${comp.id}_${br.key}_brakeA`, outANet, gndNet, R_ON);
+        _pushR(electrical, `${comp.id}_${br.key}_brakeB`, outBNet, gndNet, R_ON);
         comp._drvState[br.key] = { dir: "BRAKE", duty: 1, Vmot: 0, current: 0 };
 
       } else {
-        _push(electrical, `${comp.id}_${br.key}_triA`, outANet, gndNet, R_FLY);
-        _push(electrical, `${comp.id}_${br.key}_triB`, outBNet, gndNet, R_FLY);
+        _pushR(electrical, `${comp.id}_${br.key}_flyA`, outANet, gndNet, R_FLY);
+        _pushR(electrical, `${comp.id}_${br.key}_flyB`, outBNet, gndNet, R_FLY);
         comp._drvState[br.key] = { dir: "COAST", duty: 0, Vmot: 0, current: 0 };
       }
     }
@@ -124,11 +122,18 @@ export default class MotorDriverModel {
         Math.abs(solver.getBranchCurrent(`${comp.id}_${br.key}_mot`) ?? 0).toFixed(4)
       );
 
+      if (state.current > I_MAX && !comp._burned) {
+        comp._burned = true;
+        comp.instance?.setBurned?.(true);
+        console.warn(`[MotorDriver] ${comp.id} overcurrent: ${(state.current*1000).toFixed(0)}mA`);
+      }
+
       comp.instance?.updateBridge?.(br.key, state);
     }
   }
 
   static reset(comp) {
     comp._drvState = {};
+    comp._burned   = false;
   }
 }

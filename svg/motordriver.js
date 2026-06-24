@@ -9,25 +9,12 @@ export default class MotorDriverIC {
 
     this.pinNames = {
       "L293D": [
-        "1,2EN",
-        "1A",
-        "1Y",
-        "GND",
-        "GND",
-        "2Y",
-        "2A",
-        "VCC2",
-        "3,4EN",
-        "3A",
-        "3Y",
-        "GND",
-        "GND",
-        "4Y",
-        "4A",
-        "VCC1",
+        "1,2EN","1A","1Y","GND","GND","2Y","2A","VCC2",
+        "3,4EN","3A","3Y","GND","GND","4Y","4A","VCC1",
       ],
     };
 
+    this._bridgeEls = {};
     this.svg = this._createSVG();
   }
 
@@ -36,7 +23,7 @@ export default class MotorDriverIC {
     const totalPins   = 16;
     const PIN_GAP     = 18;
     const PIN_OFFSET  = 15;
-    const IC_BODY_H   = 36;
+    const IC_BODY_H   = 70;
     const PIN_LEN     = 12;
     const PAD_V       = 16;
     const TOTAL_H     = IC_BODY_H + PIN_LEN * 2 + PAD_V * 2;
@@ -46,10 +33,10 @@ export default class MotorDriverIC {
     svg.setAttribute("width",   icWidth);
     svg.setAttribute("height",  TOTAL_H);
     svg.setAttribute("viewBox", `0 0 ${icWidth} ${TOTAL_H}`);
-    svg.style.overflow  = "visible";
-    svg.dataset.id      = this.id;
-    svg.dataset.type    = "motor-driver-ic";
-    svg.dataset.model   = this.model;
+    svg.style.overflow = "visible";
+    svg.dataset.id     = this.id;
+    svg.dataset.type   = "motor-driver-ic";
+    svg.dataset.model  = this.model;
 
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     defs.innerHTML = `
@@ -60,10 +47,6 @@ export default class MotorDriverIC {
         <feComposite operator="in" in="darkNoise" in2="SourceGraphic"/>
         <feBlend mode="multiply" in2="SourceGraphic"/>
       </filter>
-      <radialGradient id="heatGrad_${this.id}" cx="50%" cy="50%" r="50%">
-        <stop offset="0%"   stop-color="#ff0000"/>
-        <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
-      </radialGradient>
     `;
     svg.appendChild(defs);
 
@@ -87,7 +70,7 @@ export default class MotorDriverIC {
 
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
     label.setAttribute("x",           icWidth / 2);
-    label.setAttribute("y",           bodyY + IC_BODY_H / 2 + 4);
+    label.setAttribute("y",           bodyY + 14);
     label.setAttribute("text-anchor", "middle");
     label.setAttribute("fill",        "#9acd32");
     label.setAttribute("font-family", "Arial");
@@ -96,15 +79,62 @@ export default class MotorDriverIC {
     label.textContent = this.model;
     svg.appendChild(label);
 
+    const bridgeData = [
+      { key: "b1", label: "M1", cx: icWidth * 0.28, cy: bodyY + 36 },
+      { key: "b2", label: "M2", cx: icWidth * 0.72, cy: bodyY + 36 },
+    ];
+
+    for (const bd of bridgeData) {
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("x",      bd.cx - 18);
+      bg.setAttribute("y",      bodyY + 22);
+      bg.setAttribute("width",  "36");
+      bg.setAttribute("height", "38");
+      bg.setAttribute("rx",     "3");
+      bg.setAttribute("fill",   "#111");
+      svg.appendChild(bg);
+
+      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      arrow.setAttribute("x",           bd.cx);
+      arrow.setAttribute("y",           bd.cy + 2);
+      arrow.setAttribute("text-anchor", "middle");
+      arrow.setAttribute("font-size",   "16");
+      arrow.setAttribute("fill",        "#333");
+      arrow.textContent = "●";
+      this._bridgeEls[bd.key] = { arrow, bg };
+      svg.appendChild(arrow);
+
+      const mLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      mLabel.setAttribute("x",           bd.cx);
+      mLabel.setAttribute("y",           bodyY + 52);
+      mLabel.setAttribute("text-anchor", "middle");
+      mLabel.setAttribute("font-size",   "7");
+      mLabel.setAttribute("fill",        "#666");
+      mLabel.setAttribute("font-family", "monospace");
+      mLabel.textContent = bd.label;
+      svg.appendChild(mLabel);
+
+      const vText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      vText.setAttribute("x",           bd.cx);
+      vText.setAttribute("y",           bodyY + 62);
+      vText.setAttribute("text-anchor", "middle");
+      vText.setAttribute("font-size",   "6");
+      vText.setAttribute("fill",        "#444");
+      vText.setAttribute("font-family", "monospace");
+      vText.textContent = "0.0V";
+      this._bridgeEls[bd.key].vText = vText;
+      svg.appendChild(vText);
+    }
+
     const burnOverlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    burnOverlay.setAttribute("x",       "0");
-    burnOverlay.setAttribute("y",       bodyY);
-    burnOverlay.setAttribute("width",   icWidth);
-    burnOverlay.setAttribute("height",  IC_BODY_H);
-    burnOverlay.setAttribute("rx",      "3");
-    burnOverlay.setAttribute("fill",    `url(#heatGrad_${this.id})`);
-    burnOverlay.setAttribute("opacity", "0");
-    burnOverlay.setAttribute("pointer-events", "none");
+    burnOverlay.setAttribute("x",             "0");
+    burnOverlay.setAttribute("y",             bodyY);
+    burnOverlay.setAttribute("width",         icWidth);
+    burnOverlay.setAttribute("height",        IC_BODY_H);
+    burnOverlay.setAttribute("rx",            "3");
+    burnOverlay.setAttribute("fill",          "#ff2200");
+    burnOverlay.setAttribute("opacity",       "0");
+    burnOverlay.setAttribute("pointer-events","none");
     this._burnOverlay = burnOverlay;
     svg.appendChild(burnOverlay);
 
@@ -169,10 +199,10 @@ export default class MotorDriverIC {
     hit.setAttribute("r",     "6");
     hit.setAttribute("fill",  "transparent");
     hit.setAttribute("class", "connection-point");
-    hit.style.cursor   = "crosshair";
-    hit.dataset.id     = pinID;
-    hit.dataset.pin    = pinID;
-    hit.dataset.pinNum = pinNum;
+    hit.style.cursor    = "crosshair";
+    hit.dataset.id      = pinID;
+    hit.dataset.pin     = pinID;
+    hit.dataset.pinNum  = pinNum;
     hit.dataset.pinName = pinName;
 
     hit.addEventListener("mouseenter", () => {
@@ -197,6 +227,41 @@ export default class MotorDriverIC {
     });
 
     return hit;
+  }
+
+  updateBridge(key, state) {
+    const el = this._bridgeEls[key];
+    if (!el) return;
+
+    const { dir, Vmot, current } = state;
+
+    let arrowChar = "●";
+    let color     = "#333";
+
+    if (dir === "FORWARD") {
+      arrowChar = "▶";
+      color     = "#00cc44";
+    } else if (dir === "REVERSE") {
+      arrowChar = "◀";
+      color     = "#4488ff";
+    } else if (dir === "BRAKE") {
+      arrowChar = "■";
+      color     = "#ff4444";
+    } else if (dir === "COAST") {
+      arrowChar = "○";
+      color     = "#888";
+    } else if (dir === "OFF") {
+      arrowChar = "●";
+      color     = "#333";
+    }
+
+    el.arrow.textContent = arrowChar;
+    el.arrow.setAttribute("fill", color);
+
+    if (el.vText) {
+      el.vText.textContent = (Vmot ?? 0).toFixed(1) + "V";
+      el.vText.setAttribute("fill", Math.abs(Vmot ?? 0) > 0.5 ? "#9acd32" : "#444");
+    }
   }
 
   _showTooltip(text, x, hitY, side) {
@@ -253,7 +318,7 @@ export default class MotorDriverIC {
     if (!status) return;
     this._icBody.setAttribute("fill",   "#3a1a1a");
     this._icBody.setAttribute("filter", `url(#burnFilter_${this.id})`);
-    this._burnOverlay.setAttribute("opacity", "0.7");
+    this._burnOverlay.setAttribute("opacity", "0.5");
     this.isBurned = true;
   }
 
@@ -262,10 +327,9 @@ export default class MotorDriverIC {
     this._icBody.setAttribute("fill", "#222");
     this._icBody.removeAttribute("filter");
     this._burnOverlay.setAttribute("opacity", "0");
-  }
-
-  updateBridge(key, state) {
-    // Visual feedback future ke liye — abhi no-op
+    for (const key of Object.keys(this._bridgeEls)) {
+      this.updateBridge(key, { dir: "OFF", Vmot: 0, current: 0 });
+    }
   }
 
   getElement() { return this.svg; }

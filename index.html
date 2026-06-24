@@ -457,6 +457,76 @@
       .cta-section h2 { font-size: 32px; }
       .footer-grid { grid-template-columns: 1fr; gap: 32px; }
     }
+
+    .trending-section {
+  padding: 80px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.trending-header {
+  display: flex; align-items: baseline;
+  justify-content: space-between; margin-bottom: 32px;
+}
+.trending-header h2 {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700;
+  color: var(--ink-900); letter-spacing: -0.4px;
+}
+.trending-header a {
+  font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none;
+}
+.trending-header a:hover { text-decoration: underline; }
+.trending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+.trend-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: all var(--ease);
+  text-decoration: none;
+  display: block;
+}
+.trend-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(196,97,26,.08);
+  transform: translateY(-2px);
+}
+.trend-thumb {
+  height: 100px;
+  background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%);
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--border);
+}
+.trend-body { padding: 12px 14px; }
+.trend-name {
+  font-size: 13.5px; font-weight: 700;
+  color: var(--ink-900); margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.trend-meta {
+  display: flex; align-items: center;
+  justify-content: space-between; font-size: 11px; color: var(--ink-400);
+}
+.trend-stats { display: flex; align-items: center; gap: 10px; }
+.trend-stat  { display: flex; align-items: center; gap: 3px; }
+.trend-author { font-size: 11px; color: var(--ink-500); margin-top: 4px; }
+
+.trend-skel {
+  background: var(--cream-200);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg); overflow: hidden;
+}
+.skel-block {
+  background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
 </head>
 <body>
@@ -471,7 +541,8 @@
     </a>
     <nav class="nav-links">
       <a class="nav-link" href="#features">Features</a>
-      <a class="nav-link" href="#how">How it Works</a>
+     <a class="nav-link" href="#how">How it Works</a>
+<a class="nav-link" href="/explore">Explore</a>
      
     </nav>
     <div class="nav-right" id="navRight">
@@ -614,7 +685,44 @@
     </div>
   </div>
 </section>
-
+<section style="background:var(--bg-elevated);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);">
+  <div class="trending-section">
+    <div class="trending-header">
+      <h2>🔥 Trending Circuits</h2>
+      <a href="/explore">Browse all →</a>
+    </div>
+    <div class="trending-grid" id="trendingGrid">
+      <div class="trend-skel">
+        <div class="skel-block" style="height:100px"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <div class="skel-block" style="height:13px;width:70%;border-radius:4px"></div>
+          <div class="skel-block" style="height:11px;width:40%;border-radius:4px"></div>
+        </div>
+      </div>
+      <div class="trend-skel">
+        <div class="skel-block" style="height:100px"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <div class="skel-block" style="height:13px;width:60%;border-radius:4px"></div>
+          <div class="skel-block" style="height:11px;width:45%;border-radius:4px"></div>
+        </div>
+      </div>
+      <div class="trend-skel">
+        <div class="skel-block" style="height:100px"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <div class="skel-block" style="height:13px;width:75%;border-radius:4px"></div>
+          <div class="skel-block" style="height:11px;width:35%;border-radius:4px"></div>
+        </div>
+      </div>
+      <div class="trend-skel">
+        <div class="skel-block" style="height:100px"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <div class="skel-block" style="height:13px;width:55%;border-radius:4px"></div>
+          <div class="skel-block" style="height:11px;width:50%;border-radius:4px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="how-it-works" id="how">
   <div class="how-inner">
     <div class="how-header">
@@ -666,7 +774,7 @@
         <h4>Platform</h4>
         <div class="footer-links">
           <a href="/create-circuit">Circuit Editor</a>
-          <a href="/user-dashboard">Gallery</a>
+         <a href="/explore">Explore</a>
           <a href="#">Templates</a>
           <a href="#">Documentation</a>
         </div>
@@ -676,7 +784,7 @@
         <div class="footer-links">
           <a href="/register">Sign Up</a>
           <a href="/login">Log In</a>
-          <a href="/profile">Profile</a>
+         <a href="/user-dashboard">Dashboard</a>
         </div>
       </div>
       <div class="footer-col">
@@ -705,7 +813,7 @@
     const navRight = document.getElementById("navRight");
     navRight.innerHTML = `
       <a href="/user-dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
-      <a href="/user-profile?uid=${session.uid}" class="nav-user-chip">
+    <a href="/user-dashboard" class="nav-user-chip">
         <div class="avatar avatar-sm" style="background:var(--accent);color:#fff;font-family:var(--font-display);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${session.displayName?.charAt(0)?.toUpperCase() ?? "?"}</div>
         ${session.displayName}
       </a>
@@ -715,6 +823,105 @@
       btn.href = "/user-dashboard";
     });
   }
+  // --- Trending circuits ---
+async function loadTrending() {
+  const grid = document.getElementById("trendingGrid");
+  if (!grid) return;
+
+  try {
+    const { getFirestore, collection, getDocs, query, orderBy, limit, where }
+      = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const { app } = await import("./src/utils/auth.js");
+    const db = getFirestore(app);
+
+    // Step 1: top 6 by views from projectStats
+    const statsSnap = await getDocs(
+      query(collection(db, "projectStats"), orderBy("views", "desc"), limit(6))
+    );
+
+    if (statsSnap.empty) { grid.innerHTML = ""; return; }
+
+    const statsList = statsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const ids       = statsList.map(s => s.id);
+    const statsMap  = Object.fromEntries(statsList.map(s => [s.id, s]));
+
+    // Step 2: fetch those specific projects
+    const projSnaps = await Promise.all(
+      ids.map(id =>
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+          .then(({ getFirestore, doc, getDoc }) =>
+            getDoc(doc(getFirestore(app), "projects", id))
+          )
+      )
+    );
+
+    const projects = projSnaps
+      .filter(s => s.exists() && s.data().isPublic)
+      .map(s => ({ id: s.id, ...s.data(), stats: statsMap[s.id] || {} }));
+
+    if (!projects.length) { grid.innerHTML = ""; return; }
+
+    grid.innerHTML = "";
+
+    function slugify(n) {
+      return (n||"untitled").toLowerCase().trim()
+        .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").slice(0,60);
+    }
+    function timeAgo(ts) {
+      if (!ts) return "";
+      const ms   = typeof ts==="object"&&"toMillis"in ts ? ts.toMillis() : (typeof ts==="number"?ts:new Date(ts).getTime());
+      const diff = Date.now() - ms;
+      const mins = Math.floor(diff/60000);
+      if (mins<1)  return "just now";
+      if (mins<60) return mins+"m ago";
+      const hrs = Math.floor(mins/60);
+      if (hrs<24)  return hrs+"h ago";
+      const days = Math.floor(hrs/24);
+      if (days<30) return days+"d ago";
+      return new Date(ms).toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+    }
+
+    for (const proj of projects) {
+      const slug = proj.slug || slugify(proj.name || "");
+      const url  = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
+      const card = document.createElement("a");
+      card.href      = url;
+      card.className = "trend-card";
+      card.innerHTML = `
+        <div class="trend-thumb">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
+            <path d="M8 12h8M2 12h2M20 12h2"/>
+          </svg>
+        </div>
+        <div class="trend-body">
+          <div class="trend-name">${proj.name || "Untitled Circuit"}</div>
+         <div class="trend-author">by <a href="/explore?author=${proj.authorUid || ''}" style="color:var(--accent);text-decoration:none;font-weight:600" onclick="event.stopPropagation()">${proj.author || "Anonymous"}</a></div>
+          <div class="trend-meta">
+            <div class="trend-stats">
+              <span class="trend-stat">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${proj.stats.likes||0}
+              </span>
+              <span class="trend-stat">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                ${proj.stats.views||0}
+              </span>
+            </div>
+            <span>${timeAgo(proj.updatedAt||proj.timestamp)}</span>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    }
+
+  } catch (err) {
+    console.warn("[Trending] Failed:", err.message);
+    const grid = document.getElementById("trendingGrid");
+    if (grid) grid.innerHTML = "";
+  }
+}
+
+loadTrending();
 
 </script>
 

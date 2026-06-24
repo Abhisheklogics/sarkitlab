@@ -1,34 +1,23 @@
 "use strict";
 
-// SW-18010P spring switch behavior:
-//   Normal (still):    spring resting  → contact OPEN
-//   Vibrating:         spring bouncing → contact CLOSE/OPEN rapidly
-//
-// With INPUT_PULLUP (most common wiring):
-//   Still     → pin HIGH (1)
-//   Vibrating → pin LOW  (0) when contact closes
-//
-// With INPUT (pulldown or direct):
-//   Still     → pin LOW  (0)
-//   Vibrating → pin HIGH (1) when contact closes to VCC
-
-const R_VIB_LOAD  = 10_000;  // sensor power draw
-const R_VIB_ON    = 150;     // contact closed — low resistance path
-const R_VIB_FLOAT = 100_000; // contact open   — high resistance (not infinite, spring has some capacitance)
-const V_VCC       = 5.0;
-const V_MIN_POWER = 2.5;
+const R_VIB_LOAD       = 10_000;
+const R_VIB_ON         = 50;
+const R_VIB_OPEN       = 10_000_000;
+const R_VIB_RATTLE_MIN = 80;
+const R_VIB_RATTLE_MAX = 200_000;
+const V_VCC            = 5.0;
+const V_MIN_POWER      = 2.5;
+const RATTLE_MS        = 8;
 
 export default class VibrationSensorModel {
 
   static solve(comp, electrical, solver) {
     const nets = solver.getNets(comp, ["VCC", "GND", "OUT"]);
 
-    // Power consumption
     if (nets.VCC && nets.GND) {
       electrical.circuits.push({
         id: `${comp.id}_load`, type: "RESISTOR",
-        a: nets.VCC, b: nets.GND,
-        ohms: R_VIB_LOAD,
+        a: nets.VCC, b: nets.GND, ohms: R_VIB_LOAD,
       });
     }
 
@@ -36,42 +25,49 @@ export default class VibrationSensorModel {
 
     const isVibrating = comp.instance?.state === 1;
     const pinOUT      = comp.instance?.pinOUT;
-    const modeKey     = (pinOUT != null) ? `D${pinOUT}` : null;
+    const modeKey     = pinOUT != null ? `D${pinOUT}` : null;
     const mode        = modeKey
       ? (solver.simEngine?.pinStates?.[modeKey] ?? "INPUT")
       : "INPUT";
 
+    const now      = performance.now();
+    const lastEdge = comp._lastEdgeTime ?? 0;
+    const inRattle = (now - lastEdge) < RATTLE_MS;
+
+    let rContact;
+    if (isVibrating) {
+      rContact = inRattle
+        ? R_VIB_RATTLE_MIN + Math.random() * (R_VIB_RATTLE_MAX - R_VIB_RATTLE_MIN)
+        : R_VIB_ON + Math.random() * 150;
+    } else {
+      rContact = R_VIB_OPEN;
+    }
+
     if (mode === "INPUT_PULLUP") {
-      // Pullup mode:
-      //   Still     → OUT floating (pulled HIGH by Arduino internally)
-      //   Vibrating → OUT shorted to GND through spring contact
       electrical.circuits.push({
-        id   : `${comp.id}_out`,
-        type : "RESISTOR",
-        a    : nets.OUT,
-        b    : nets.GND,
-        ohms : isVibrating ? R_VIB_ON : R_VIB_FLOAT,
+        id:   `${comp.id}_out`,
+        type: "RESISTOR",
+        a:    nets.OUT,
+        b:    nets.GND,
+        ohms: rContact,
       });
     } else {
-      // Normal INPUT mode:
-      //   Still     → OUT near GND (floating low)
-      //   Vibrating → OUT driven HIGH through contact to VCC side
       if (isVibrating && nets.VCC) {
         electrical.circuits.push({
-          id      : `${comp.id}_out`,
-          type    : "RESISTOR",
-          a       : nets.OUT,
-          b       : nets.GND,
-          ohms    : R_VIB_ON,
-          vOffset : V_VCC,
+          id:      `${comp.id}_out`,
+          type:    "RESISTOR",
+          a:       nets.OUT,
+          b:       nets.GND,
+          ohms:    rContact,
+          vOffset: V_VCC,
         });
       } else {
         electrical.circuits.push({
-          id  : `${comp.id}_out`,
+          id:   `${comp.id}_out`,
           type: "RESISTOR",
-          a   : nets.OUT,
-          b   : nets.GND,
-          ohms: R_VIB_FLOAT,
+          a:    nets.OUT,
+          b:    nets.GND,
+          ohms: R_VIB_OPEN,
         });
       }
     }
@@ -98,22 +94,23 @@ export default class VibrationSensorModel {
       return;
     }
 
-    // Auto-detect Arduino pin connected to OUT
-    if ((inst.pinOUT == null) && nets.OUT) {
+    const prevState = comp._prevVibState ?? 0;
+    const currState = inst.state ?? 0;
+    if (currState !== prevState) {
+      comp._lastEdgeTime  = performance.now();
+      comp._prevVibState  = currState;
+    }
+
+    if (inst.pinOUT == null && nets.OUT) {
       VibrationSensorModel._autoDetectPin(inst, nets.OUT, solver);
     }
 
-    const hasArduinoPin = inst.pinOUT != null;
-
-    if (hasArduinoPin) {
-      // Wired to Arduino — stop auto-vibrate, let user/sim control
+    if (inst.pinOUT != null) {
       inst.stopAutoVibrate?.();
     } else {
-      // Not wired to Arduino — still vibrates visually when powered
       inst.startAutoVibrate?.();
     }
 
-    // Status LED update
     const led = comp.svg?.querySelector?.("#statusLED");
     if (led) {
       led.setAttribute("fill", inst.state === 1 ? "#ff1744" : "#330000");

@@ -1,8 +1,11 @@
 "use strict";
 
-const R_INTERNAL = 0.01;
-const R_ON       = 0.1;
-const R_OFF      = 1e9;
+const R_INTERNAL    = 0.01;
+const R_ON          = 0.05;
+const R_OPEN        = 10_000_000;
+const R_BOUNCE_LOW  = 5;
+const R_BOUNCE_HIGH = 500_000;
+const BOUNCE_MS     = 5;
 
 function pushBranch(electrical, branch) {
   if (branch.a == null || branch.b == null) return;
@@ -18,15 +21,12 @@ export const PushButtonModel = {
     const B1 = solver.findNet(comp.id, "B1");
     const B2 = solver.findNet(comp.id, "B2");
 
-    // A1-A2 same side internal short — only if on different nets
     if (A1 && A2 && A1 !== A2) {
       pushBranch(electrical, {
         id: `${comp.id}_intA`, type: "WIRE",
         a: A1, b: A2, ohms: R_INTERNAL,
       });
     }
-
-    // B1-B2 same side internal short — only if on different nets
     if (B1 && B2 && B1 !== B2) {
       pushBranch(electrical, {
         id: `${comp.id}_intB`, type: "WIRE",
@@ -34,34 +34,39 @@ export const PushButtonModel = {
       });
     }
 
-    // Contact side A vs side B
-    // Pick one representative from each side
     const sideA = A1 ?? A2;
     const sideB = B1 ?? B2;
-    if (!sideA || !sideB) return;
+    if (!sideA || !sideB || sideA === sideB) return;
 
-    // If A and B ended up on same net due to user wiring,
-    // still stamp contact — solver will see 0V diff, no current
-    const pressed = comp.instance?.active === true;
+    const pressed  = comp.instance?.active === true;
+    const now      = performance.now();
+    const lastEdge = comp._lastEdgeTime ?? 0;
+    const inBounce = (now - lastEdge) < BOUNCE_MS;
+
+    let rContact;
+    if (pressed) {
+      rContact = inBounce
+        ? (Math.random() > 0.5 ? R_BOUNCE_LOW : R_BOUNCE_HIGH)
+        : R_ON;
+    } else {
+      rContact = R_OPEN;
+    }
 
     pushBranch(electrical, {
       id:   `${comp.id}_contact`,
-      type: "SWITCH",
+      type: pressed ? "SWITCH" : "RESISTOR",
       a:    sideA,
       b:    sideB,
-      ohms: pressed ? R_ON : R_OFF,
+      ohms: rContact,
     });
-
-    if (comp.instance) comp.instance._nets = { sideA, sideB };
   },
 
   update(comp, electrical, solver) {
     const curr = comp.instance?.active === true;
     if (comp._prevActive !== curr) {
-      comp._prevActive = curr;
-      const engine = comp._engine
-                  ?? comp.instance?._engine
-                  ?? comp.instance?.simEngine;
+      comp._lastEdgeTime = performance.now();
+      comp._prevActive   = curr;
+      const engine = solver.simEngine ?? comp._engine ?? comp.instance?._engine;
       engine?.resolveElectrical?.();
     }
   },

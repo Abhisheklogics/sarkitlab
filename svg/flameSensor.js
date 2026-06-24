@@ -149,19 +149,20 @@ constructor(pins = {}, instanceName = null, registryId = null, digitalInputsRef 
 
 _setFlameLevel(intensity) {
     this.analogValue = intensity;
-    const prev       = this.isTriggered;
+    const prev = this.isTriggered;
 
     this.isTriggered = intensity > 500;
-    this.state       = this.isTriggered ? 0 : 1;
+
+    this.state = this.isTriggered ? 1 : 0;
 
     if (this.pinDOUT != null && this.digitalInputs)
-      this.digitalInputs[this.pinDOUT] = this.state;
+        this.digitalInputs[this.pinDOUT] = this.state;
 
     this._updateVisual();
 
     if (prev !== this.isTriggered)
-      this._simEngine?.resolveElectrical?.();
-  }
+        this._simEngine?.resolveElectrical?.();
+}
 
   reset() {
     this._simStarted   = false;

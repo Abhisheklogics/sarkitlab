@@ -80,13 +80,13 @@ VirtualCoinBattery.manifest = {
 };
 
 VirtualRegulator7805.manifest = {
-  id:               "voltage",
+  id:               "regulator7805",
   label:            "5V Regulator",
   group:            "Power",
   imageSrc:         "../images/voltageReg.png",
   cssClasses:       ["regulator"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  instanceNameBase: "reg",
+  instanceNameBase: "regulator7805",
   pins: [
     { id: "IN",  x: 20, y: 105, power: "VCC" },
     { id: "GND", x: 35, y: 105, power: "GND" },
@@ -176,8 +176,8 @@ VirtualLDR.manifest = {
   cssClasses:       ["ldr"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: true },
   pins: [
-    { id: "A", x: 20, y: 50, conductive: true },
-    { id: "B", x: 80, y: 50, conductive: true },
+    { id: "A", x: 45, y: 160, conductive: true },
+    { id: "B", x: 80, y: 160, conductive: true },
   ],
   factory: () => new VirtualLDR(),
 };
@@ -321,28 +321,33 @@ PushButtons.manifest = {
   imageSrc:         "../images/push.png",
   cssClasses:       ["pushbutton"],
   physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
- pins: [
-      { id: "A1", x: 28, y: 75 },
-      { id: "A2", x: 28, y: 20  },
-      { id: "B1", x: 80,y: 75 },
-      { id: "B2", x: 80, y: 20  },
-    ],
+pins: [
+  { id: "A1", x: 28, y: 110 },  // class se match
+  { id: "A2", x: 28, y: 20  },
+  { id: "B1", x: 92, y: 110 },  // 80 → 92
+  { id: "B2", x: 92, y: 20  },
+],
   factory: (ctx) => new PushButtons(ctx?.digitalInputs ?? {}),
 };
 
 ToggleSwitch.manifest = {
-  id:               "toggleSwitch",
-  label:            "Toggle Switch",
-  group:            "Sensors & Input",
-  imageSrc:         "../images/togle.png",
-  cssClasses:       ["toggleSwitch"],
-  physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
+  id         : "toggleSwitch",
+  label      : "Toggle Switch",
+  group      : "Sensors & Input",
+  imageSrc   : "../images/togle.png",
+  cssClasses : ["toggleSwitch"],
+  physics    : {
+    conductive         : true,
+    requiresClosedLoop : false,
+    requiresPolarity   : false,
+    allowsSeries       : false,
+  },
   pins: [
-    { id: "T1", x: 25, y: 120, conductive: true },
-    { id: "T2", x: 65, y: 120, conductive: true },
-    { id: "GND", x: 45, y: 120, conductive: true },
+    { id: "T1",  x: 25, y: 130, conductive: true },
+    { id: "COM", x: 50, y: 130, conductive: true },
+    { id: "T2",  x: 75, y: 130, conductive: true },
   ],
-  factory: (ctx) => new ToggleSwitch(ctx?.digitalInputs ?? {}),
+  factory: (ctx) => new ToggleSwitch(ctx ?? {}),
 };
 
 VirtualTiltSensor.manifest = {
@@ -397,10 +402,10 @@ SoundSensor.manifest = {
   cssClasses:       ["sound-sensor"],
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
   pins: [
-    { id: "VCC",  x: 20, y: 10, power: "VCC" },
-    { id: "GND",  x: 50, y: 10, power: "GND" },
-    { id: "DOUT", x: 80, y: 10, signal: true },
-    { id: "AOUT", x: 110, y: 10, signal: true },
+    { id: "VCC",  x: 16, y: 220, power: "VCC" },
+    { id: "GND",  x: 30, y: 220, power: "GND" },
+    { id: "DOUT", x: 43, y: 220, signal: true },
+    { id: "AOUT", x: 55, y: 220, signal: true },
   ],
   factory: (ctx) => new SoundSensor(ctx?.digitalInputs ?? {}),
 };
@@ -412,11 +417,11 @@ FlameSensor.manifest = {
   imageSrc:         "../images/flame.png",
   cssClasses:       ["flame-sensor"],
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  pins: [
-    { id: "VCC",  x: 20, y: 10, power: "VCC" },
-    { id: "GND",  x: 50, y: 10, power: "GND" },
-    { id: "DOUT", x: 80, y: 10, signal: true },
-    { id: "AOUT", x: 110, y: 10, signal: true },
+pins: [
+    { id: "VCC",  x: 16, y: 220, power: "VCC" },
+    { id: "GND",  x: 30, y: 220, power: "GND" },
+    { id: "DOUT", x: 43, y: 220, signal: true },
+    { id: "AOUT", x: 55, y: 220, signal: true },
   ],
   factory: (ctx) => new FlameSensor(ctx?.digitalInputs ?? {}),
 };

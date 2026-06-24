@@ -22,36 +22,30 @@ export default class Regulator7805Model {
     let vOutTarget, Rout;
 
     if (diff >= VREG + VDROPOUT) {
-      // Fully regulating — stiff voltage source
       vOutTarget = VREG;
       Rout       = ROUT_REG;
     } else if (diff >= VREG + VDROPOUT_MIN) {
-      // Dropout region — partial regulation
-      const ratio = (diff - (VREG + VDROPOUT_MIN)) / (VDROPOUT - VDROPOUT_MIN);
-      vOutTarget  = VREG * ratio;
-      Rout        = ROUT_DROPOUT;
+      const t    = (diff - (VREG + VDROPOUT_MIN)) / (VDROPOUT - VDROPOUT_MIN);
+      vOutTarget = VREG * t;
+      Rout       = ROUT_REG + (ROUT_DROPOUT - ROUT_REG) * (1 - t);
     } else {
-      // Off — input too low
       vOutTarget = 0;
       Rout       = ROUT_OFF;
     }
 
-    // Voltage source stamp: stiff R + correct vOffset
-    // Solver: V_out = vGnd + vOutTarget (independent of load)
     electrical.circuits.push({
       id:      `${comp.id}_out`,
       type:    "REGULATOR",
       a:       OUT,
       b:       GND,
       ohms:    Rout,
-      vOffset: vOutTarget,   // solver adds this as Vgnd + vOffset already
+      vOffset: vOutTarget,
     });
 
-    // Quiescent current draw from IN pin
     if (IN) {
       electrical.circuits.push({
         id:   `${comp.id}_iq`,
-        type: "WIRE",
+        type: "RESISTOR",
         a:    IN,
         b:    GND,
         ohms: RIQ,
@@ -66,6 +60,7 @@ export default class Regulator7805Model {
         diff,
         vOut:       vGnd + vOutTarget,
         regulating: diff >= VREG + VDROPOUT,
+        dropout:    diff >= VREG + VDROPOUT_MIN && diff < VREG + VDROPOUT,
       };
     }
   }
@@ -78,10 +73,22 @@ export default class Regulator7805Model {
     const vOut = OUT ? (electrical.netVoltage.get(OUT) ?? 0) : 0;
     const vGnd = GND ? (electrical.netVoltage.get(GND) ?? 0) : 0;
 
+    const outV = vOut - vGnd;
+
+    const branchId = `${comp.id}_out`;
+    const I = Math.abs(solver.getBranchCurrent(branchId) ?? 0);
+
+    inst._regState.vOutActual  = outV;
+    inst._regState.iOut        = I;
+    inst._regState.overCurrent = I > IOUT_MAX;
+
     inst.updatePhysics?.({
-      vOut:       vOut - vGnd,
+      vOut:       outV,
       regulating: inst._regState.regulating,
+      dropout:    inst._regState.dropout,
       vIn:        inst._regState.diff,
+      iOut:       I,
+      overCurrent: I > IOUT_MAX,
     });
   }
 }
