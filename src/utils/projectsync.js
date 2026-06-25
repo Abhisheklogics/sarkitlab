@@ -102,6 +102,7 @@ export async function saveProjectData(projectId, data) {
       timestamp:   enriched.timestamp   || Date.now(),
       components:  enriched.components  || [],
       wires:       enriched.wires       || [],
+      arduinoCode: enriched.arduinoCode || "",  // ✅ FIX
       updatedAt:   serverTimestamp(),
     };
 

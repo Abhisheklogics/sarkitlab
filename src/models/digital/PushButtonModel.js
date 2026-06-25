@@ -59,6 +59,9 @@ export const PushButtonModel = {
       b:    sideB,
       ohms: rContact,
     });
+
+    comp._sideA = sideA;
+    comp._sideB = sideB;
   },
 
   update(comp, electrical, solver) {
@@ -68,6 +71,14 @@ export const PushButtonModel = {
       comp._prevActive   = curr;
       const engine = solver.simEngine ?? comp._engine ?? comp.instance?._engine;
       engine?.resolveElectrical?.();
+    }
+
+    if (!comp._sideA || !comp._sideB) return;
+    const Va = electrical.netVoltage.get(comp._sideA) ?? 0;
+    const Vb = electrical.netVoltage.get(comp._sideB) ?? 0;
+    if (comp.instance) {
+      comp.instance._voltageA = Va;
+      comp.instance._voltageB = Vb;
     }
   },
 };

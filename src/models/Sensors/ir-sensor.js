@@ -1,74 +1,109 @@
 "use strict";
 
-const R_IR_LOAD = 10_000;
-const R_IR_OUT  = 100;
+const R_LOAD    = 10_000;
+const R_OUT_LOW = 1;
+const R_OUT_HIGH = 10_000;
+const R_OPEN    = 10_000_000;
+const V_MIN_POWER = 3.0;
 
 export default class IRSensorModel {
 
   static solve(comp, electrical, solver) {
     const nets = solver.getNets(comp, ["VCC", "GND", "OUT"]);
+    const { VCC, GND, OUT } = nets;
 
-    if (nets.VCC && nets.GND) {
+    if (!VCC || !GND) return;
+
+    const vcc     = electrical.netVoltage.get(VCC) ?? 0;
+    const powered = vcc >= V_MIN_POWER;
+
+    electrical.circuits.push({
+      id: `${comp.id}_load`, type: "RESISTOR",
+      a: VCC, b: GND,
+      ohms: powered ? R_LOAD : R_OPEN,
+    });
+
+    if (!OUT || !powered) return;
+
+    const state  = comp.instance?.state ?? 0;
+    const isHigh = state === 1;
+
+    electrical.circuits.push({
+      id: `${comp.id}_pu`, type: "PULLUP",
+      a: VCC, b: OUT, ohms: R_OUT_HIGH,
+    });
+
+    if (isHigh) {
       electrical.circuits.push({
-        id: `${comp.id}_load`, type: "RESISTOR",
-        a: nets.VCC, b: nets.GND, ohms: R_IR_LOAD,
+        id: `${comp.id}_out_leak`, type: "RESISTOR",
+        a: OUT, b: GND, ohms: R_OPEN,
+      });
+    } else {
+      electrical.circuits.push({
+        id: `${comp.id}_out_low`, type: "RESISTOR",
+        a: OUT, b: GND, ohms: R_OUT_LOW,
       });
     }
 
-    if (nets.OUT && nets.GND && nets.VCC) {
-      const vcc     = electrical.netVoltage.get(nets.VCC) ?? 0;
-      const gnd     = electrical.netVoltage.get(nets.GND) ?? 0;
-      const powered = (vcc - gnd) >= 3.0;
-      const isHigh  = powered && (comp.instance?.state === 1);
-
-      electrical.circuits.push({
-        id:      `${comp.id}_out`,
-        type:    "SENSOR_OUT",
-        a:       nets.OUT,
-        b:       isHigh ? nets.VCC : nets.GND,
-        ohms:    R_IR_OUT,
-        vOffset: isHigh ? (vcc - gnd) : 0,
-      });
-    }
-
-    if (comp.instance) comp.instance._nets = nets;
+    comp._nets    = nets;
+    comp._vcc     = vcc;
+    comp._powered = powered;
   }
 
   static update(comp, electrical, solver) {
     const inst = comp.instance;
-    if (!inst?._nets) return;
+    if (!inst) return;
 
-    const nets    = inst._nets;
+    const nets = comp._nets;
+    if (!nets) return;
+
     const vcc     = electrical.netVoltage.get(nets.VCC) ?? 0;
-    const gnd     = electrical.netVoltage.get(nets.GND) ?? 0;
-    const powered = (vcc - gnd) >= 3.0;
-
+    const powered = vcc >= V_MIN_POWER;
     inst._powered = powered;
-    if (!powered) return;
+
+    if (!powered) {
+      IRSensorModel._pushToArduino(nets.OUT, 0, solver);
+      return;
+    }
 
     if (nets.OUT) {
       const vOut   = electrical.netVoltage.get(nets.OUT) ?? 0;
-      const isHigh = (vOut - gnd) > (vcc - gnd) * 0.5;
-      IRSensorModel._updateArduinoPin(inst, nets.OUT, isHigh ? 1 : 0, solver);
+      const isHigh = vOut >= 2.5;
+      inst._outVoltage = vOut;
+      IRSensorModel._pushToArduino(nets.OUT, isHigh ? 1 : 0, solver);
+    }
+
+    const prevState = comp._prevState ?? -1;
+    const currState = inst.state ?? 0;
+    if (currState !== prevState) {
+      comp._prevState = currState;
+      solver.simEngine?.resolveElectrical?.();
     }
   }
 
-  static _updateArduinoPin(inst, outNet, val, solver) {
-    const arduino = solver.registry?.getAll?.()
-      .find(c => c.type?.toLowerCase().includes("arduino"));
+  static _pushToArduino(outNet, val, solver) {
+    if (!outNet) return;
+    const netlist = solver.wireSystem?.lastNetlist;
+    if (!netlist) return;
+
+    const arduino = solver.registry?.getAll?.().find(c =>
+      ["arduino","uno","mega","nano","micro","esp32","esp8266"]
+        .some(t => c.type?.toLowerCase().includes(t))
+    );
     if (!arduino) return;
 
-    const pins = solver.wireSystem?.lastNetlist?.nets?.get(outNet);
+    const pins = netlist.nets.get(outNet);
     if (!pins) return;
 
     for (const ref of pins) {
-      if (typeof ref === "string" && ref.startsWith(arduino.id + ":")) {
-        const pinStr = ref.split(":")[1];
-        const key    = isNaN(pinStr) ? pinStr : `D${Number(pinStr)}`;
-        if (solver.simEngine?.digitalInputs)
-          solver.simEngine.digitalInputs[key] = val;
-        break;
-      }
+      if (typeof ref !== "string") continue;
+      if (!ref.startsWith(arduino.id + ":")) continue;
+      const pinStr = ref.split(":")[1];
+      const pinNum = parseInt(pinStr, 10);
+      const key    = isNaN(pinNum) ? pinStr : `D${pinNum}`;
+      if (solver.simEngine?.digitalInputs)
+        solver.simEngine.digitalInputs[key] = val;
+      break;
     }
   }
 }

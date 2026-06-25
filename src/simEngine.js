@@ -607,58 +607,104 @@ _findDHTComponent(pin, instanceName) {
   }
 
   _substituteReadFunctions(expr, vars) {
-    const arduino = this._findArduinoComponent();
+  const arduino = this._findArduinoComponent();
+ 
+  expr = expr.replace(/\b([A-Za-z_]\w*)\b/g, (match, name) => {
+    const v = vars[name] ?? this.globalVars[name];
+    return (v !== undefined && typeof v !== "object" && !Array.isArray(v))
+      ? String(v) : match;
+  });
+ 
+  expr = expr.replace(/digitalRead\s*\(\s*([^)]+)\s*\)/g, (_, pinExpr) => {
+    const pin  = this._resolvePin(pinExpr.trim(), vars);
+    const key  = `D${pin}`;
+    const mode = this.pinStates[key];
+ 
+    if (!mode) {
+      this._throw(`digitalRead(${pin}): pinMode() not set.`, { context: "digitalRead" });
+    }
+    if (mode === PIN_MODES.OUTPUT) {
+      this._throw(`digitalRead(${pin}): Pin is OUTPUT.`, { context: "digitalRead" });
+    }
+ 
+    if (!arduino) {
+      return mode === PIN_MODES.INPUT_PULLUP ? "1" : "0";
+    }
+ 
+    const pinStr = this._pinStr(pin);
+    const netId  = this.circuitSolver.findNet(arduino.id, pinStr)
+                ?? this.circuitSolver.findNet(arduino.id, String(pin))
+                ?? this.circuitSolver.findNet(arduino.id, `D${pin}`);
+ 
+    if (!netId) {
+      return mode === PIN_MODES.INPUT_PULLUP ? "1" : "0";
+    }
+ 
+    const voltage = this.electricalState.netVoltage.get(netId) ?? 0;
+    return voltage >= 2.5 ? "1" : "0";
+  });
+ 
+  expr = expr.replace(/analogRead\s*\(\s*([^)]+)\s*\)/g, (_, pinExpr) => {
+    const pin = this._resolvePin(pinExpr.trim(), vars);
+    const key = `D${pin}`;
+ 
+    if (!this.pinStates[key] && pin >= 14 && pin <= 19) {
+      this.pinStates[key] = PIN_MODES.INPUT;
+    }
+    const resolvedMode = this.pinStates[key];
+    if (!resolvedMode) {
+      this._throw(`analogRead(${pin}): pinMode() not set.`, { context: "analogRead" });
+    }
+    if (resolvedMode === PIN_MODES.OUTPUT) {
+      this._throw(`analogRead(${pin}): Pin is OUTPUT.`, { context: "analogRead" });
+    }
+ 
+    if (!arduino) return "0";
+ 
+    const pinStr = this._pinStr(pin);
+    const netId  = this.circuitSolver.findNet(arduino.id, pinStr)
+                ?? this.circuitSolver.findNet(arduino.id, String(pin))
+                ?? this.circuitSolver.findNet(arduino.id, `A${pin - 14}`);
+ 
+    if (!netId) return "0";
+ 
+    const voltage = this.electricalState.netVoltage.get(netId) ?? 0;
+    const maxVal  = (1 << (this.simState.analogResolution ?? 10)) - 1;
+    const vRef    = (this.board === "esp32" || this.board === "esp8266") ? 3.3 : 5.0;
+    return String(Math.max(0, Math.min(maxVal, Math.round((voltage / vRef) * maxVal))));
+  });
+ 
+  return expr;
+}
+ 
 
-    expr = expr.replace(/\b([A-Za-z_]\w*)\b/g, (match, name) => {
-      const v = vars[name] ?? this.globalVars[name];
-      return (v !== undefined && typeof v !== "object" && !Array.isArray(v)) ? String(v) : match;
-    });
+_resolvePin(pin, vars = this.globalVars) {
+  if (pin === null || pin === undefined) return null;
+  let p = String(pin).trim();
+ 
+  if (vars[p]               !== undefined) p = String(vars[p]);
+  else if (this.globalVars[p] !== undefined) p = String(this.globalVars[p]);
+ 
+  if (/^A[0-5]$/i.test(p)) return 14 + parseInt(p.slice(1), 10);
+ 
+  const espMatch = p.match(/^(?:GPIO|D)(\d+)$/i);
+  if (espMatch) return Number(espMatch[1]);
+ 
+  if (!isNaN(p) && p !== "") return Number(p);
+  return p;
+}
 
-    expr = expr.replace(/digitalRead\s*\(\s*([^)]+)\s*\)/g, (_, pinExpr) => {
-      const pin  = this._resolvePin(pinExpr.trim(), vars);
-      const key  = `D${pin}`;
-      const mode = this.pinStates[key];
-      if (!mode) this._throw(`digitalRead(${pin}): pinMode() not set.`, { context: "digitalRead" });
-      if (mode === PIN_MODES.OUTPUT) this._throw(`digitalRead(${pin}): Pin is OUTPUT.`, { context: "digitalRead" });
-      const netId = arduino ? this.circuitSolver.findNet(arduino.id, this._pinStr(pin)) : null;
-      if (!netId) return mode === PIN_MODES.INPUT_PULLUP ? "1" : "0";
-      return (this.electricalState.netVoltage.get(netId) ?? 0) >= 2.5 ? "1" : "0";
-    });
-
-    expr = expr.replace(/analogRead\s*\(\s*([^)]+)\s*\)/g, (_, pinExpr) => {
-      const pin = this._resolvePin(pinExpr.trim(), vars);
-      const key = `D${pin}`;
-      if (!this.pinStates[key] && pin >= 14 && pin <= 19) this.pinStates[key] = PIN_MODES.INPUT;
-      const resolvedMode = this.pinStates[key];
-      if (!resolvedMode) this._throw(`analogRead(${pin}): pinMode() not set.`, { context: "analogRead" });
-      if (resolvedMode === PIN_MODES.OUTPUT) this._throw(`analogRead(${pin}): Pin is OUTPUT.`, { context: "analogRead" });
-      const netId = arduino ? this.circuitSolver.findNet(arduino.id, this._pinStr(pin)) : null;
-      if (!netId) return "0";
-      const voltage = this.electricalState.netVoltage.get(netId) ?? 0;
-      const maxVal  = (1 << (this.simState.analogResolution ?? 10)) - 1;
-      const vRef    = this.board === "esp32" || this.board === "esp8266" ? 3.3 : 5.0;
-      return String(Math.max(0, Math.min(maxVal, Math.round((voltage / vRef) * maxVal))));
-    });
-
-    return expr;
-  }
-
-  _resolvePin(pin, vars = this.globalVars) {
-    if (pin === null || pin === undefined) return null;
-    let p = String(pin).trim();
-    if (vars[p]               !== undefined) p = String(vars[p]);
-    else if (this.globalVars[p] !== undefined) p = String(this.globalVars[p]);
-    if (/^A[0-5]$/i.test(p)) return 14 + parseInt(p.slice(1), 10);
-    const espMatch = p.match(/^(?:GPIO|D)(\d+)$/i);
-    if (espMatch) return Number(espMatch[1]);
-    if (!isNaN(p) && p !== "") return Number(p);
-    return p;
-  }
-
-  _pinStr(pin) {
-    if (typeof pin === "number" && pin >= 14 && pin <= 19) return `A${pin - 14}`;
+_pinStr(pin) {
+  if (typeof pin === "number") {
+    if (pin >= 14 && pin <= 19) return `A${pin - 14}`;
     return String(pin);
   }
+  const s = String(pin).trim();
+  if (/^A[0-5]$/i.test(s)) return s.toUpperCase();
+  const n = parseInt(s, 10);
+  if (!isNaN(n) && n >= 14 && n <= 19) return `A${n - 14}`;
+  return s;
+}
 
   _findArduinoComponent() {
     if (this._arduinoCache) return this._arduinoCache;

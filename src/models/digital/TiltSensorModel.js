@@ -15,9 +15,9 @@ export const TiltSensorModel = {
 
   solve(comp, electrical, solver) {
     const pinA = solver.findNet(comp.id, "OUT")
+              ?? solver.findNet(comp.id, "SIG")
               ?? solver.findNet(comp.id, "P1")
               ?? solver.findNet(comp.id, "T1")
-              ?? solver.findNet(comp.id, "SIG")
               ?? solver.findNet(comp.id, "A")
               ?? solver.findNet(comp.id, "1");
 
@@ -25,7 +25,8 @@ export const TiltSensorModel = {
               ?? solver.findNet(comp.id, "P2")
               ?? solver.findNet(comp.id, "T2")
               ?? solver.findNet(comp.id, "B")
-              ?? solver.findNet(comp.id, "2");
+              ?? solver.findNet(comp.id, "2")
+              ?? solver.findNet(comp.id, "NEG");
 
     if (!pinA || !pinB || pinA === pinB) return;
 
@@ -54,6 +55,9 @@ export const TiltSensorModel = {
       b:    pinB,
       ohms: rContact,
     });
+
+    comp._pinA = pinA;
+    comp._pinB = pinB;
   },
 
   update(comp, electrical, solver) {
@@ -64,6 +68,14 @@ export const TiltSensorModel = {
       comp._prevActive   = curr;
       const engine = solver.simEngine ?? comp._engine ?? comp.instance?._engine;
       engine?.resolveElectrical?.();
+    }
+
+    if (!comp._pinA || !comp._pinB) return;
+    const Va = electrical.netVoltage.get(comp._pinA) ?? 0;
+    const Vb = electrical.netVoltage.get(comp._pinB) ?? 0;
+    if (comp.instance) {
+      comp.instance._voltageOUT = Va;
+      comp.instance._voltageGND = Vb;
     }
   },
 };

@@ -13,22 +13,39 @@ export default class VibrationSensorModel {
 
   static solve(comp, electrical, solver) {
     const nets = solver.getNets(comp, ["VCC", "GND", "OUT"]);
+    const VCC  = nets["VCC"];
+    const GND  = nets["GND"];
+    const OUT  = nets["OUT"];
 
-    if (nets.VCC && nets.GND) {
+    if (VCC && GND) {
       electrical.circuits.push({
         id: `${comp.id}_load`, type: "RESISTOR",
-        a: nets.VCC, b: nets.GND, ohms: R_VIB_LOAD,
+        a: VCC, b: GND, ohms: R_VIB_LOAD,
       });
     }
 
-    if (!nets.OUT || !nets.GND) return;
+    if (!OUT || !GND) return;
 
-    const isVibrating = comp.instance?.state === 1;
-    const pinOUT      = comp.instance?.pinOUT;
-    const modeKey     = pinOUT != null ? `D${pinOUT}` : null;
-    const mode        = modeKey
+    const vcc     = VCC ? (electrical.netVoltage.get(VCC) ?? 0) : V_VCC;
+    const powered = VCC ? (vcc >= V_MIN_POWER) : true;
+
+    const isVibrating = comp.instance?.state   === 1
+                     || comp.instance?.active  === true
+                     || comp.instance?.vibrating === true;
+
+    const pinOUT  = comp.instance?.pinOUT;
+    const modeKey = pinOUT != null ? `D${pinOUT}` : null;
+    const mode    = modeKey
       ? (solver.simEngine?.pinStates?.[modeKey] ?? "INPUT")
       : "INPUT";
+
+    if (!powered) {
+      electrical.circuits.push({
+        id: `${comp.id}_out`, type: "RESISTOR",
+        a: OUT, b: GND, ohms: R_VIB_OPEN,
+      });
+      return;
+    }
 
     const now      = performance.now();
     const lastEdge = comp._lastEdgeTime ?? 0;
@@ -47,45 +64,43 @@ export default class VibrationSensorModel {
       electrical.circuits.push({
         id:   `${comp.id}_out`,
         type: "RESISTOR",
-        a:    nets.OUT,
-        b:    nets.GND,
+        a:    OUT,
+        b:    GND,
         ohms: rContact,
       });
     } else {
-      if (isVibrating && nets.VCC) {
+      if (isVibrating && VCC) {
         electrical.circuits.push({
           id:      `${comp.id}_out`,
           type:    "RESISTOR",
-          a:       nets.OUT,
-          b:       nets.GND,
+          a:       OUT,
+          b:       GND,
           ohms:    rContact,
-          vOffset: V_VCC,
+          vOffset: vcc * 0.95,
         });
       } else {
         electrical.circuits.push({
           id:   `${comp.id}_out`,
           type: "RESISTOR",
-          a:    nets.OUT,
-          b:    nets.GND,
+          a:    OUT,
+          b:    GND,
           ohms: R_VIB_OPEN,
         });
       }
     }
 
-    if (comp.instance) comp.instance._nets = nets;
+    comp._outNet = OUT;
+    comp._gndNet = GND;
+    comp._vccNet = VCC;
+    comp._mode   = mode;
   }
 
   static update(comp, electrical, solver) {
     const inst = comp.instance;
     if (!inst) return;
 
-    const nets = inst._nets;
-    if (!nets) return;
-
-    const vcc     = electrical.netVoltage.get(nets.VCC) ?? 0;
-    const gnd     = electrical.netVoltage.get(nets.GND) ?? 0;
-    const powered = (vcc - gnd) >= V_MIN_POWER;
-
+    const vcc     = electrical.netVoltage.get(comp._vccNet) ?? 0;
+    const powered = comp._vccNet ? (vcc >= V_MIN_POWER) : true;
     inst._powered = powered;
 
     if (!powered) {
@@ -95,14 +110,16 @@ export default class VibrationSensorModel {
     }
 
     const prevState = comp._prevVibState ?? 0;
-    const currState = inst.state ?? 0;
+    const currState = inst.state ?? (inst.active ? 1 : 0);
     if (currState !== prevState) {
-      comp._lastEdgeTime  = performance.now();
-      comp._prevVibState  = currState;
+      comp._lastEdgeTime = performance.now();
+      comp._prevVibState = currState;
+      const engine = solver.simEngine ?? comp._engine ?? inst._engine;
+      engine?.resolveElectrical?.();
     }
 
-    if (inst.pinOUT == null && nets.OUT) {
-      VibrationSensorModel._autoDetectPin(inst, nets.OUT, solver);
+    if (inst.pinOUT == null && comp._outNet) {
+      VibrationSensorModel._autoDetectPin(inst, comp._outNet, solver);
     }
 
     if (inst.pinOUT != null) {
@@ -113,13 +130,14 @@ export default class VibrationSensorModel {
 
     const led = comp.svg?.querySelector?.("#statusLED");
     if (led) {
-      led.setAttribute("fill", inst.state === 1 ? "#ff1744" : "#330000");
+      led.setAttribute("fill", currState === 1 ? "#ff1744" : "#330000");
     }
   }
 
   static _autoDetectPin(inst, outNet, solver) {
     const arduino = solver.registry?.getAll?.()
-      .find(c => c.type?.toLowerCase().includes("arduino"));
+      .find(c => ["arduino","uno","mega","nano","micro","esp32","esp8266"]
+        .some(t => c.type?.toLowerCase().includes(t)));
     if (!arduino) return;
 
     const pins = solver.wireSystem?.lastNetlist?.nets?.get(outNet);
@@ -128,7 +146,8 @@ export default class VibrationSensorModel {
     for (const ref of pins) {
       if (typeof ref === "string" && ref.startsWith(arduino.id + ":")) {
         const pinStr = ref.split(":")[1];
-        inst.setOutputPin?.(isNaN(pinStr) ? pinStr : Number(pinStr));
+        const pinNum = parseInt(pinStr, 10);
+        inst.setOutputPin?.(isNaN(pinNum) ? pinStr : pinNum);
         break;
       }
     }

@@ -457,13 +457,13 @@ IRSensor.manifest = {
 };
 
 VirtualNPNTransistor.manifest = {
-  id:               "npn",
+  id:               "npnTransistor",
   label:            "NPN BJT",
   group:            "Misc",
   imageSrc:         "../images/npn.png",
   cssClasses:       ["npn-transistor"],
   physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  instanceNameBase: "npn",
+  instanceNameBase: "npnTransistor",
   pins: [
     { id: "B", x: 20, y: 50, signal: true },
     { id: "C", x: 60, y: 10, conductive: true },

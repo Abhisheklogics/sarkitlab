@@ -3,17 +3,17 @@
 const V_CC  = 5.0;
 const V_33  = 3.3;
 
-const R_OUT_HIGH_BASE = 35;
-const R_OUT_LOW_BASE  = 35;
+const R_OUT_HIGH_BASE = 25;
+const R_OUT_LOW_BASE  =  20;
 const R_OUT_CLAMP     = 200;
 const V_SAT_HIGH      = 0.06;
 const V_SAT_LOW       = 0.06;
 
 const R_PULLUP        = 35_000;
 const R_PULLDOWN      = 35_000;
-const R_HIGH_Z        = 100e6;
-const R_FLOAT_ANCHOR  = 10_000_000;
-const R_LEAKAGE       = 5_000_000;
+const R_HIGH_Z = 1e9;
+const R_FLOAT_ANCHOR = 1e12;
+const R_LEAKAGE = 100e6;
 
 const DIODE_IS = 1e-12;
 const DIODE_N  = 1.0;
@@ -399,3 +399,232 @@ export default class ArduinoModel {
     return false;
   }
 }
+
+
+
+
+
+
+// Create a SPICE-grade engineering simulation model for a generic NPN Bipolar Junction Transistor suitable for educational and engineering circuit simulation.
+
+// The transistor must behave like a real BC547 or 2N2222 rather than an ideal switch.
+
+// ### Implement
+
+// 1. Full transistor physics
+
+//    Implement Ebers–Moll / Gummel–Poon behavior with forward-active, saturation, cutoff, and reverse-active regions, including continuous transitions between regions.
+
+// 2. Base-emitter junction
+
+//    Use the exponential diode equation, with VBE typically around 0.65–0.75 V and realistic temperature dependence.
+
+// 3. Collector current
+
+//    Compute collector current from actual base current, with realistic beta variation between devices.
+
+// 4. Beta roll-off
+
+//    Reduce gain at both very low and very high collector currents to match BC547/2N2222 curves.
+
+// 5. Saturation behavior
+
+//    Model VCE(sat) ≈ 0.1–0.3 V, stored charge, and slower turn-off after deep saturation.
+
+// 6. Early effect
+
+//    Make collector current depend slightly on VCE using an Early voltage model.
+
+// 7. Leakage currents
+
+//    Include collector-emitter and base-emitter leakage with temperature dependence. Leakage may produce a tiny current but must never behave like a valid drive signal.
+
+// 8. Reverse operation
+
+//    Implement reverse beta and reverse-active behavior instead of treating reverse connection as an ideal open circuit.
+
+// 9. Junction capacitances
+
+//    Include voltage-dependent Cbe and Cbc, plus realistic switching delays.
+
+// 10. Charge storage
+
+// ```
+// Model turn-on delay, turn-off delay, and saturation storage effects.
+// ```
+
+// 11. Thermal physics
+
+// ```
+// Include power dissipation, thermal resistance, thermal capacitance, junction temperature, and thermal runaway behavior.
+// ```
+
+// 12. Breakdown effects
+
+// ```
+// Model VBE reverse breakdown (~5 V), VCEO breakdown, and avalanche behavior.
+// ```
+
+// 13. Safe operating area
+
+// ```
+// Enforce maximum collector current, power dissipation, junction temperature, and SOA warnings.
+// ```
+
+// 14. Real-circuit requirements
+
+// ```
+// *   Conduction must be determined by actual base current, not merely by checking whether VBE exceeds a threshold.
+// ```
+
+// ```
+// *   Very large base resistances (for example tens or hundreds of megaohms) must produce only leakage-level collector current.
+    
+// *   A floating base must not reliably turn the transistor on.
+    
+// *   Deep saturation must reduce switching speed.
+    
+// *   Switching and amplification must both work realistically.
+    
+// ```
+
+// Prioritize physical realism and numerical stability over simplified digital-switch approximations.
+
+
+
+
+
+
+// Create a highly realistic engineering-grade simulation model of an Arduino Uno based on the ATmega328P microcontroller.
+
+// The model must reproduce real electrical behavior rather than ideal digital behavior.
+
+// ### Implement
+
+// 1. GPIO output driver
+
+//    * Real source resistance for OUTPUT HIGH.
+
+//    * Real sink resistance for OUTPUT LOW.
+
+//    * Voltage sag under load.
+
+//    * Current-dependent output voltage drop.
+
+//    * Source/sink asymmetry matching ATmega328P behavior.
+// 2. Pin current limits
+
+//    * 20 mA recommended operating current per pin.
+
+//    * 40 mA absolute maximum per pin.
+
+//    * 200 mA total MCU current limit.
+
+//    * Overcurrent warnings and realistic clamping behavior.
+// 3. INPUT mode
+
+//    * True high-impedance behavior.
+
+//    * Input leakage below 1 µA.
+
+//    * Floating pins must not be forced to an arbitrary voltage source.
+
+//    * Floating pins may drift due to leakage, capacitance, and environmental noise.
+
+//    * Digital reads on floating pins may vary unpredictably.
+// 4. INPUT_PULLUP mode
+
+//    * Internal pull-up between 20 kΩ and 50 kΩ.
+
+//    * Process variation between instances.
+
+//    * Pin reads HIGH when left unconnected.
+// 5. Analog pins
+
+//    * 10-bit ADC.
+
+//    * AREF support.
+
+//    * Quantization error.
+
+//    * Thermal and conversion noise.
+
+//    * Floating analog inputs must produce unstable readings.
+// 6. ESD protection
+
+//    * Upper clamp diode to VCC.
+
+//    * Lower clamp diode to GND.
+
+//    * Forward conduction around 0.6–0.7 V.
+// 7. PWM behavior
+
+//    * Real ATmega328P PWM frequencies.
+
+//    * Average-voltage mode and switching-waveform mode.
+
+//    * Correct timer-based behavior.
+// 8. Brown-out and startup
+
+//    * 1.8 V, 2.7 V, and 4.3 V thresholds.
+
+//    * Hysteresis.
+
+//    * Power-on reset.
+
+//    * Bootloader delay.
+
+//    * Tri-stated pins during reset.
+// 9. Power integrity
+
+//    * Supply rail sag.
+
+//    * Decoupling capacitor interaction.
+
+//    * Ground bounce approximation.
+
+//    * Transient current spikes.
+// 10. Thermal behavior
+
+// ```
+// *   Junction temperature.
+// ```
+
+// ```
+// *   Self-heating.
+    
+// *   Thermal warnings.
+    
+// ```
+
+// 11.  Failure modes
+
+// ```
+// *   Overvoltage.
+    
+// *   Reverse-current injection.
+    
+// *   Latch-up warnings.
+    
+// *   Overcurrent damage accumulation.
+    
+// ```
+
+// 12.  Real-behavior requirements
+
+// ```
+// *   INPUT pins must not source or sink meaningful current.
+    
+// *   INPUT\_PULLUP must behave like a weak resistor to VCC.
+    
+// *   Floating digital inputs must sometimes read HIGH and sometimes LOW.
+    
+// *   Floating analog inputs must produce noisy, drifting ADC values.
+    
+// *   PWM pins must reproduce real Uno frequencies and duty-cycle behavior.
+    
+// *   Pin voltage must droop under heavy load instead of remaining ideal.
+    
+// ```
+
+// Target behavior should match a real Arduino Uno with an ATmega328P as closely as practical while remaining numerically stable in a nodal circuit solver.

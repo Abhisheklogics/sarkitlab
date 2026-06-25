@@ -123,6 +123,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
   letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
 /* Simulation page body (circuit editor) — adds these via inline <style>:
@@ -196,7 +197,7 @@ img { max-width: 100%; display: block; }
   padding: 7px 12px;
   border-radius: var(--r-sm);
   transition: all var(--ease);
-  text-decoration: none;
+  
 }
 .nav-link:hover  { color: var(--ink-800); background: var(--cream-200); }
 .nav-link.active { color: var(--ink-900); font-weight: 600; background: var(--cream-200); }
@@ -225,6 +226,7 @@ nav {
   top: 0;
   z-index: 500;
   flex-shrink: 0;
+ 
 }
 
 .nav-left {
