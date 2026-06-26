@@ -561,7 +561,8 @@ export function makeLoaderSpawner(
   startDragFn,
   openResistorEditor,
   digitalInputs,
-  digitalOutputs
+  digitalOutputs,
+  simEngine
 ) {
   const ctx = { digitalInputs, digitalOutputs };
 
@@ -610,6 +611,7 @@ export function makeLoaderSpawner(
     }
 
     const svg = instance.getElement?.();
+   
     if (!svg) {
       console.error(`[ComponentLoader] getElement() returned nothing for "${type}"`);
       return false;

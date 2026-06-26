@@ -11,7 +11,9 @@ export default class ToggleSwitch {
       signalPins: ["T1", "COM"],
       gndPins   : ["T2"],
     };
- 
+ this._voltageCOM = 0;
+this._voltageT1  = 0;
+this._voltageT2  = 0;
     this.svg = this._createSVG();
     this._attachEvents();
   }
@@ -46,13 +48,14 @@ export default class ToggleSwitch {
     return svg;
   }
  
-  _attachEvents() {
-    this.svg.addEventListener("pointerdown", e => {
-      e.stopPropagation();
-      this.active = !this.active;
-      this._updateVisual();
-    });
-  }
+ _attachEvents() {
+  this.svg.addEventListener("pointerdown", e => {
+    e.stopPropagation();
+    this.active = !this.active;
+    this._updateVisual();
+    this._simEngine?.resolveElectrical?.();
+  });
+}
  
   _updateVisual() {
     const lever = this.svg.querySelector("#lever");
@@ -68,9 +71,8 @@ export default class ToggleSwitch {
   }
  
   getActiveShorts() {
-    if (this.active) return [["COM", "T1"]];
-    return [["COM", "T2"]];
-  }
+  return [];
+}
  
   isActive()   { return this.active ? 1 : 0; }
   getElement() { return this.svg; }

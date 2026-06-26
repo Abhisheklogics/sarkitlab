@@ -1,11 +1,12 @@
 "use strict";
 
+const R_CLOSED      = 0.1;
+const R_OPEN        = 1e9;
 const R_INTERNAL    = 0.01;
-const R_ON          = 0.05;
-const R_OPEN        = 10_000_000;
-const R_BOUNCE_LOW  = 5;
-const R_BOUNCE_HIGH = 500_000;
+const R_BOUNCE_LOW  = 15.0;
+const R_BOUNCE_HIGH = 1e5;
 const BOUNCE_MS     = 5;
+const BOUNCE_FLIP_MS = 0.8;
 
 function pushBranch(electrical, branch) {
   if (branch.a == null || branch.b == null) return;
@@ -16,45 +17,46 @@ function pushBranch(electrical, branch) {
 export const PushButtonModel = {
 
   solve(comp, electrical, solver) {
-    const A1 = solver.findNet(comp.id, "A1");
-    const A2 = solver.findNet(comp.id, "A2");
-    const B1 = solver.findNet(comp.id, "B1");
-    const B2 = solver.findNet(comp.id, "B2");
+    const a1 = solver.findNet(comp.id, "A1");
+    const a2 = solver.findNet(comp.id, "A2");
+    const b1 = solver.findNet(comp.id, "B1");
+    const b2 = solver.findNet(comp.id, "B2");
 
-    if (A1 && A2 && A1 !== A2) {
+    if (a1 && a2 && a1 !== a2) {
       pushBranch(electrical, {
         id: `${comp.id}_intA`, type: "WIRE",
-        a: A1, b: A2, ohms: R_INTERNAL,
+        a: a1, b: a2, ohms: R_INTERNAL,
       });
     }
-    if (B1 && B2 && B1 !== B2) {
+
+    if (b1 && b2 && b1 !== b2) {
       pushBranch(electrical, {
         id: `${comp.id}_intB`, type: "WIRE",
-        a: B1, b: B2, ohms: R_INTERNAL,
+        a: b1, b: b2, ohms: R_INTERNAL,
       });
     }
 
-    const sideA = A1 ?? A2;
-    const sideB = B1 ?? B2;
+    const sideA = a1 ?? a2;
+    const sideB = b1 ?? b2;
+
     if (!sideA || !sideB || sideA === sideB) return;
 
-    const pressed  = comp.instance?.active === true;
-    const now      = performance.now();
-    const lastEdge = comp._lastEdgeTime ?? 0;
-    const inBounce = (now - lastEdge) < BOUNCE_MS;
+    const pressed    = comp.instance?.active === true;
+    const inBounce   = comp._inBounce  ?? false;
+    const bounceHigh = comp._bounceHigh ?? false;
 
     let rContact;
     if (pressed) {
       rContact = inBounce
-        ? (Math.random() > 0.5 ? R_BOUNCE_LOW : R_BOUNCE_HIGH)
-        : R_ON;
+        ? (bounceHigh ? R_BOUNCE_HIGH : R_BOUNCE_LOW)
+        : R_CLOSED;
     } else {
       rContact = R_OPEN;
     }
 
     pushBranch(electrical, {
       id:   `${comp.id}_contact`,
-      type: pressed ? "SWITCH" : "RESISTOR",
+      type: "RESISTOR",
       a:    sideA,
       b:    sideB,
       ohms: rContact,
@@ -66,11 +68,27 @@ export const PushButtonModel = {
 
   update(comp, electrical, solver) {
     const curr = comp.instance?.active === true;
+    const now  = performance.now();
+
     if (comp._prevActive !== curr) {
-      comp._lastEdgeTime = performance.now();
+      comp._lastEdgeTime = now;
       comp._prevActive   = curr;
-      const engine = solver.simEngine ?? comp._engine ?? comp.instance?._engine;
+      comp._inBounce     = true;
+      comp._bounceHigh   = false;
+      comp._nextFlipTime = now + BOUNCE_FLIP_MS;
+      const engine = solver.simEngine ?? comp.instance?._engine;
       engine?.resolveElectrical?.();
+    }
+
+    if (comp._inBounce) {
+      const elapsed = now - (comp._lastEdgeTime ?? now);
+      if (elapsed >= BOUNCE_MS) {
+        comp._inBounce   = false;
+        comp._bounceHigh = false;
+      } else if (now >= (comp._nextFlipTime ?? now)) {
+        comp._bounceHigh   = !comp._bounceHigh;
+        comp._nextFlipTime = now + BOUNCE_FLIP_MS * (1.5 + Math.random());
+      }
     }
 
     if (!comp._sideA || !comp._sideB) return;
@@ -79,6 +97,7 @@ export const PushButtonModel = {
     if (comp.instance) {
       comp.instance._voltageA = Va;
       comp.instance._voltageB = Vb;
+      comp.instance._inBounce = comp._inBounce ?? false;
     }
   },
 };

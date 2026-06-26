@@ -27,187 +27,85 @@
     }
     body { font-family: var(--font-body); background: var(--bg); color: var(--ink-700); min-height: 100vh; }
 
-    .nav {
-      height: var(--nav-h); background: var(--bg-el);
-      border-bottom: 1px solid var(--border); position: sticky;
-      top: 0; z-index: 200; box-shadow: var(--shadow-xs);
-    }
-    .nav-inner {
-      max-width: 1200px; margin: 0 auto; padding: 0 24px;
-      height: 100%; display: flex; align-items: center; gap: 12px;
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 9px;
-      font-family: var(--font-display); font-size: 19px; font-weight: 700;
-      color: var(--ink-900); text-decoration: none; letter-spacing: -0.02em; flex-shrink: 0;
-    }
-    .nav-logo-icon {
-      width: 32px; height: 32px; background: var(--accent);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;
-    }
+    .nav { height: var(--nav-h); background: var(--bg-el); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; box-shadow: var(--shadow-xs); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; gap: 12px; }
+    .nav-logo { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--ink-900); text-decoration: none; letter-spacing: -0.02em; flex-shrink: 0; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; }
     .nav-logo span { color: var(--accent); }
     .nav-center { flex: 1; display: flex; align-items: center; justify-content: center; }
-    .nav-search {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 99px; padding: 7px 16px; width: 320px;
-      transition: border-color var(--ease), box-shadow var(--ease);
-    }
+    .nav-search { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px; width: 320px; transition: border-color var(--ease), box-shadow var(--ease); }
     .nav-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.1); }
-    .nav-search input {
-      border: none; background: transparent; font-family: var(--font-body);
-      font-size: 13px; color: var(--ink-900); outline: none; width: 100%;
-    }
+    .nav-search input { border: none; background: transparent; font-family: var(--font-body); font-size: 13px; color: var(--ink-900); outline: none; width: 100%; }
     .nav-search input::placeholder { color: var(--ink-300); }
     .nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-    .nav-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 14px; border-radius: var(--r-md);
-      font-family: var(--font-body); font-size: 13px; font-weight: 600;
-      cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all var(--ease);
-    }
+    .nav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-md); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: all var(--ease); }
     .btn-ghost { background: transparent; border-color: var(--border); color: var(--ink-700); }
     .btn-ghost:hover { background: var(--bg); }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-dark); }
 
-    .page-header {
-      background: var(--bg-el); border-bottom: 1px solid var(--border-soft);
-      padding: 32px 24px 24px;
-    }
+    .page-header { background: var(--bg-el); border-bottom: 1px solid var(--border-soft); padding: 32px 24px 24px; }
     .page-header-inner { max-width: 1200px; margin: 0 auto; }
-    .page-header h1 {
-      font-family: var(--font-display); font-size: 32px; font-weight: 700;
-      color: var(--ink-900); margin-bottom: 6px; letter-spacing: -0.4px;
-    }
+    .page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--ink-900); margin-bottom: 6px; letter-spacing: -0.4px; }
     .page-header p { font-size: 14px; color: var(--ink-400); margin-bottom: 20px; }
 
-    .filter-bar {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    }
-    .filter-btn {
-      padding: 6px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
-      font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border);
-      background: transparent; color: var(--ink-500); transition: all var(--ease);
-    }
+    .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--ink-500); transition: all var(--ease); }
     .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     .page-body { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
 
-    .stats-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px;
-    }
+    .stats-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .stats-bar-text { font-size: 13px; color: var(--ink-400); }
     .stats-bar-text strong { color: var(--ink-700); }
 
-    .circuit-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 18px;
-    }
+    .index-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--r-md); padding: 12px 16px; font-size: 12.5px; color: #92400e; margin-bottom: 16px; display: none; align-items: center; gap: 10px; }
+    .index-notice.show { display: flex; }
+    .index-notice a { color: #c4611a; font-weight: 600; text-decoration: underline; }
 
-    .circuit-card {
-      background: var(--bg-el); border: 1px solid var(--border);
-      border-radius: var(--r-lg); overflow: hidden;
-      transition: all var(--ease); display: flex; flex-direction: column;
-    }
+    .circuit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+
+    .circuit-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; transition: all var(--ease); display: flex; flex-direction: column; }
     .circuit-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.07); transform: translateY(-2px); }
 
-    .circuit-thumb {
-      height: 120px;
-      background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%);
-      display: flex; align-items: center; justify-content: center;
-      border-bottom: 1px solid var(--border-soft); color: var(--border);
-      cursor: pointer; text-decoration: none;
-    }
+    .circuit-thumb { height: 120px; background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-soft); color: var(--border); cursor: pointer; text-decoration: none; }
 
     .circuit-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
 
-    .circuit-name {
-      font-size: 14px; font-weight: 700; color: var(--ink-900);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-decoration: none; cursor: pointer;
-    }
+    .circuit-name { font-size: 14px; font-weight: 700; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; cursor: pointer; }
     .circuit-name:hover { color: var(--accent); }
 
-    .circuit-author {
-      font-size: 12px; color: var(--ink-400);
-      display: flex; align-items: center; gap: 4px;
-    }
-    .circuit-author a {
-      color: var(--accent); font-weight: 600; text-decoration: none;
-    }
+    .circuit-author { font-size: 12px; color: var(--ink-400); display: flex; align-items: center; gap: 4px; }
+    .circuit-author a { color: var(--accent); font-weight: 600; text-decoration: none; }
     .circuit-author a:hover { text-decoration: underline; }
 
-    .circuit-footer {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border-soft);
-    }
+    .circuit-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border-soft); }
     .circuit-stats { display: flex; align-items: center; gap: 10px; }
 
-    .like-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: transparent; border: 1px solid var(--border);
-      border-radius: 99px; padding: 4px 10px; cursor: pointer;
-      font-size: 12px; color: var(--ink-400); font-family: var(--font-body);
-      transition: all .15s;
-    }
+    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); border-radius: 99px; padding: 4px 10px; cursor: pointer; font-size: 12px; color: var(--ink-400); font-family: var(--font-body); transition: all .15s; }
     .like-btn:hover { border-color: #e05b5b; color: #e05b5b; }
     .like-btn.liked { border-color: #e05b5b; color: #e05b5b; background: #fff0f0; }
 
-    .view-stat {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 12px; color: var(--ink-400);
-    }
-
-    .open-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 5px 10px; border-radius: var(--r-sm);
-      background: var(--accent); color: #fff; font-size: 12px;
-      font-weight: 600; font-family: var(--font-body);
-      text-decoration: none; border: none; cursor: pointer; transition: background var(--ease);
-    }
-    .open-btn:hover { background: var(--accent-dark); }
+    .view-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-400); }
 
     .meta-time { font-size: 11px; color: var(--ink-300); }
 
-    .shimmer {
-      background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%);
-      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm);
-    }
+    .shimmer { background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm); }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .skel-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
 
     .load-more-wrap { text-align: center; margin-top: 36px; }
-    .load-more-btn {
-      padding: 10px 28px; border-radius: var(--r-md);
-      border: 1px solid var(--border); background: var(--bg-el);
-      font-size: 13px; font-weight: 600; font-family: var(--font-body);
-      color: var(--ink-700); cursor: pointer; transition: all var(--ease);
-    }
+    .load-more-btn { padding: 10px 28px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg-el); font-size: 13px; font-weight: 600; font-family: var(--font-body); color: var(--ink-700); cursor: pointer; transition: all var(--ease); }
     .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
     .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .empty-state {
-      text-align: center; padding: 80px 24px;
-      display: flex; flex-direction: column; align-items: center; gap: 12px;
-    }
-    .empty-icon {
-      width: 56px; height: 56px; border-radius: 50%;
-      background: var(--bg); display: flex; align-items: center;
-      justify-content: center; color: var(--ink-300);
-    }
+    .empty-state { text-align: center; padding: 80px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .empty-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--ink-300); }
     .empty-state h3 { font-size: 15px; font-weight: 700; color: var(--ink-700); }
     .empty-state p { font-size: 13px; color: var(--ink-400); max-width: 240px; line-height: 1.6; }
 
-    .toast {
-      position: fixed; bottom: 22px; right: 22px; padding: 10px 18px;
-      border-radius: var(--r-md); font-size: 13px; font-weight: 600;
-      font-family: var(--font-body); opacity: 0; transform: translateY(6px);
-      transition: all .22s; z-index: 9999; pointer-events: none; box-shadow: var(--shadow-md);
-    }
+    .toast { position: fixed; bottom: 22px; right: 22px; padding: 10px 18px; border-radius: var(--r-md); font-size: 13px; font-weight: 600; font-family: var(--font-body); opacity: 0; transform: translateY(6px); transition: all .22s; z-index: 9999; pointer-events: none; box-shadow: var(--shadow-md); }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.ok  { background: #14532d; color: #fff; }
     .toast.err { background: #7f1d1d; color: #fff; }
@@ -250,20 +148,24 @@
     <h1>Explore Circuits</h1>
     <p id="totalText">Community ke saare public circuits ek jagah</p>
     <div class="filter-bar">
-      <button class="filter-btn active" data-sort="views">🔥 Most Viewed</button>
+      <button class="filter-btn active" data-sort="newest">🆕 Newest</button>
+      <button class="filter-btn" data-sort="views">🔥 Most Viewed</button>
       <button class="filter-btn" data-sort="likes">❤️ Most Liked</button>
-      <button class="filter-btn" data-sort="newest">🆕 Newest</button>
     </div>
   </div>
 </div>
 
 <div class="page-body">
+  <div class="index-notice" id="indexNotice">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Firestore index ban raha hai — abhi newest sort se dekho. <a href="https://console.firebase.google.com/project/sarkitlab/firestore/indexes" target="_blank">Index status check karo →</a></span>
+  </div>
+
   <div class="stats-bar">
     <div class="stats-bar-text">Showing <strong id="showingCount">—</strong> circuits</div>
   </div>
 
   <div class="circuit-grid" id="circuitGrid">
-    <!-- Skeleton -->
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>
@@ -288,7 +190,6 @@
   const db      = getFirestore(app);
   const session = getSession();
 
-  // Nav update if logged in
   if (session) {
     document.getElementById("navRight").innerHTML = `
       <a class="nav-btn btn-ghost" href="/user-dashboard">Dashboard</a>
@@ -305,6 +206,11 @@
   function slugify(n) {
     return (n || "untitled").toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 60);
+  }
+
+  function buildCircuitUrl(proj) {
+    const slug = proj.slug || slugify(proj.name || "");
+    return `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
   }
 
   function timeAgo(ts) {
@@ -325,39 +231,36 @@
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
-  // ─── State ───────────────────────────────────────────────────────
-  let currentSort   = "views";
-  let lastDoc       = null;
-  let allProjects   = [];
-  let likedSet      = new Set();
-  const PAGE_SIZE   = 12;
-  let loading       = false;
-  let searchQuery   = "";
+  let currentSort = "newest";
+  let lastDoc     = null;
+  let allProjects = [];
+  let likedSet    = new Set();
+  const PAGE_SIZE = 12;
+  let loading     = false;
+  let searchQuery = "";
+  const authorFilter = new URLSearchParams(window.location.search).get("author");
 
-  // ─── Fetch liked set for current user ────────────────────────────
+  const SKELETONS = `
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
+    <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>`;
+
   async function fetchLikedSet(projectIds) {
     if (!session?.uid || !projectIds.length) return;
     for (let i = 0; i < projectIds.length; i += 30) {
       const chunk = projectIds.slice(i, i + 30);
       try {
-        const snap = await getDocs(
-          query(collection(db, "projectStats"), where("__name__", "in", chunk))
-        );
-        snap.forEach(d => {
-          if (d.data()?.likedBy?.[session.uid]) likedSet.add(d.id);
-        });
+        const snap = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", chunk)));
+        snap.forEach(d => { if (d.data()?.likedBy?.[session.uid]) likedSet.add(d.id); });
       } catch {}
     }
   }
 
-  // ─── Build card HTML ─────────────────────────────────────────────
   function buildCard(proj) {
-    const slug     = proj.slug || slugify(proj.name || "");
-    const url      = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
-    const liked    = likedSet.has(proj.id);
-    const likes    = proj._likes || 0;
-    const views    = proj._views || 0;
-    const authorUid = proj.authorUid || "";
+    const url    = buildCircuitUrl(proj);
+    const liked  = likedSet.has(proj.id);
+    const likes  = proj._likes || 0;
+    const views  = proj._views || 0;
 
     const card = document.createElement("div");
     card.className  = "circuit-card";
@@ -372,8 +275,7 @@
       <div class="circuit-body">
         <a href="${url}" class="circuit-name">${esc(proj.name || "Untitled Circuit")}</a>
         <div class="circuit-author">
-          by
-          <a href="/explore?author=${authorUid}">${esc(proj.author || "Anonymous")}</a>
+          by <a href="/explore?author=${esc(proj.authorUid || "")}">${esc(proj.author || "Anonymous")}</a>
         </div>
         <div class="circuit-footer">
           <div class="circuit-stats">
@@ -392,7 +294,6 @@
     return card;
   }
 
-  // ─── Attach like handlers ─────────────────────────────────────────
   function attachLikeHandlers(container) {
     container.querySelectorAll(".like-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
@@ -402,7 +303,6 @@
         const countEl  = btn.querySelector(".like-count");
         const cur      = parseInt(countEl.textContent) || 0;
 
-        // Optimistic
         btn.dataset.liked = String(!wasLiked);
         btn.classList.toggle("liked", !wasLiked);
         btn.querySelector("svg").setAttribute("fill", !wasLiked ? "currentColor" : "none");
@@ -411,11 +311,10 @@
 
         try {
           await setDoc(doc(db, "projectStats", id), {
-            likes:                        increment(!wasLiked ? 1 : -1),
-            [`likedBy.${session.uid}`]:   !wasLiked,
+            likes:                      increment(!wasLiked ? 1 : -1),
+            [`likedBy.${session.uid}`]: !wasLiked,
           }, { merge: true });
         } catch {
-          // Rollback
           btn.dataset.liked = String(wasLiked);
           btn.classList.toggle("liked", wasLiked);
           btn.querySelector("svg").setAttribute("fill", wasLiked ? "currentColor" : "none");
@@ -427,17 +326,75 @@
     });
   }
 
-  // ─── Load circuits ────────────────────────────────────────────────
+  async function loadNewest(reset) {
+    let constraints = [
+      where("isPublic", "==", true),
+      orderBy("timestamp", "desc"),
+      limit(PAGE_SIZE),
+    ];
+    if (authorFilter) constraints = [where("authorUid", "==", authorFilter), ...constraints];
+    if (lastDoc) constraints.push(startAfter(lastDoc));
+
+    try {
+      const snap = await getDocs(query(collection(db, "projects"), ...constraints));
+      lastDoc = snap.docs[snap.docs.length - 1] || null;
+
+      const ids = snap.docs.map(d => d.id);
+      const statsMap = {};
+      for (let i = 0; i < ids.length; i += 30) {
+        try {
+          const ss = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i+30))));
+          ss.forEach(d => { statsMap[d.id] = d.data(); });
+        } catch {}
+      }
+
+      return snap.docs.map(d => {
+        const s = statsMap[d.id] || {};
+        return { id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 };
+      });
+    } catch (err) {
+      if (err.code === "failed-precondition" || err.message?.includes("index")) {
+        document.getElementById("indexNotice").classList.add("show");
+        throw err;
+      }
+      throw err;
+    }
+  }
+
+  async function loadByStats(field, reset) {
+    const statsQ = lastDoc
+      ? query(collection(db, "projectStats"), orderBy(field, "desc"), startAfter(lastDoc), limit(PAGE_SIZE))
+      : query(collection(db, "projectStats"), orderBy(field, "desc"), limit(PAGE_SIZE));
+
+    const statsSnap = await getDocs(statsQ);
+    if (statsSnap.empty) return [];
+
+    lastDoc = statsSnap.docs[statsSnap.docs.length - 1];
+    const statsMap = {};
+    statsSnap.docs.forEach(d => { statsMap[d.id] = d.data(); });
+
+    const ids      = statsSnap.docs.map(d => d.id);
+    const projDocs = await Promise.all(ids.map(id => getDoc(doc(db, "projects", id))));
+
+    const projects = [];
+    projDocs.forEach(d => {
+      if (!d.exists()) return;
+      const data = d.data();
+      if (!data.isPublic) return;
+      if (authorFilter && data.authorUid !== authorFilter) return;
+      const s = statsMap[d.id] || {};
+      projects.push({ id: d.id, ...data, _likes: s.likes || 0, _views: s.views || 0 });
+    });
+    return projects;
+  }
+
   async function loadCircuits(reset = false) {
     if (loading) return;
     loading = true;
     const grid = document.getElementById("circuitGrid");
 
     if (reset) {
-      grid.innerHTML = `
-        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
-        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
-        <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>`;
+      grid.innerHTML = SKELETONS;
       allProjects = [];
       lastDoc     = null;
       likedSet    = new Set();
@@ -447,79 +404,21 @@
     try {
       let projects = [];
 
-      if (currentSort === "views" || currentSort === "likes") {
-        // Step 1: projectStats se top IDs le (ordered by views/likes)
-        const field     = currentSort === "views" ? "views" : "likes";
-        const statsQ    = lastDoc
-          ? query(collection(db, "projectStats"), orderBy(field, "desc"), startAfter(lastDoc), limit(PAGE_SIZE))
-          : query(collection(db, "projectStats"), orderBy(field, "desc"), limit(PAGE_SIZE));
-        const statsSnap = await getDocs(statsQ);
-
-        if (statsSnap.empty) {
-          loading = false;
-          if (reset) grid.innerHTML = "";
-          document.getElementById("loadMoreWrap").style.display = "none";
-          return;
-        }
-
-        lastDoc = statsSnap.docs[statsSnap.docs.length - 1];
-        const statsMap = {};
-        statsSnap.docs.forEach(d => { statsMap[d.id] = d.data(); });
-
-        // Step 2: un IDs ke projects fetch karo
-        const ids      = statsSnap.docs.map(d => d.id);
-        const projDocs = await Promise.all(ids.map(id => getDoc(doc(db, "projects", id))));
-
-        projDocs.forEach(d => {
-          if (d.exists() && d.data().isPublic) {
-            const s = statsMap[d.id] || {};
-            projects.push({ id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 });
-          }
-        });
-
+      if (currentSort === "newest") {
+        projects = await loadNewest(reset);
       } else {
-        // Newest — projects collection se directly
-        const authorFilter = new URLSearchParams(window.location.search).get("author");
-        let constraints = [where("isPublic", "==", true), orderBy("timestamp", "desc"), limit(PAGE_SIZE)];
-        if (authorFilter) constraints.unshift(where("authorUid", "==", authorFilter));
-        if (lastDoc) constraints.push(startAfter(lastDoc));
-
-        const snap = await getDocs(query(collection(db, "projects"), ...constraints));
-        lastDoc = snap.docs[snap.docs.length - 1] || null;
-
-        const ids = snap.docs.map(d => d.id);
-
-        // Batch stats
-        const statsMap = {};
-        for (let i = 0; i < ids.length; i += 30) {
-          try {
-            const ss = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i+30))));
-            ss.forEach(d => { statsMap[d.id] = d.data(); });
-          } catch {}
-        }
-
-        snap.docs.forEach(d => {
-          const s = statsMap[d.id] || {};
-          projects.push({ id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 });
-        });
+        const field = currentSort === "views" ? "views" : "likes";
+        projects = await loadByStats(field, reset);
       }
 
-      // Fetch liked status
-      await fetchLikedSet(projects.map(p => p.id));
-
-      // Author filter (client side for views/likes sort)
-      const authorFilter = new URLSearchParams(window.location.search).get("author");
-      if (authorFilter && currentSort !== "newest") {
-        projects = projects.filter(p => p.authorUid === authorFilter);
-      }
-
-      // Search filter
       if (searchQuery) {
         projects = projects.filter(p =>
           (p.name || "").toLowerCase().includes(searchQuery) ||
           (p.author || "").toLowerCase().includes(searchQuery)
         );
       }
+
+      await fetchLikedSet(projects.map(p => p.id));
 
       allProjects = [...allProjects, ...projects];
       document.getElementById("showingCount").textContent = allProjects.length;
@@ -537,18 +436,12 @@
         return;
       }
 
-      projects.forEach(proj => {
-        const card = buildCard(proj);
-        grid.appendChild(card);
-      });
-
+      projects.forEach(proj => grid.appendChild(buildCard(proj)));
       attachLikeHandlers(grid);
 
-      // Show/hide load more
       document.getElementById("loadMoreWrap").style.display =
         projects.length >= PAGE_SIZE ? "block" : "none";
 
-      // Record views (sirf ek baar per session)
       for (const proj of projects) {
         if (proj.authorUid === session?.uid) continue;
         const seenKey = `sks_viewed_${session?.uid || "anon"}_${proj.id}`;
@@ -558,52 +451,65 @@
         }
       }
 
-      // Author filter label
-      const authorParam = new URLSearchParams(window.location.search).get("author");
-      if (authorParam && projects.length > 0) {
-        document.querySelector(".page-header h1").textContent =
-          `${projects[0].author || "User"} ke Circuits`;
+      if (authorFilter && projects.length > 0) {
+        document.querySelector(".page-header h1").textContent = `${projects[0].author || "User"} ke Circuits`;
         document.getElementById("totalText").textContent = "Is user ke saare public circuits";
       }
 
     } catch (err) {
-      console.error("[Explore]", err);
-      if (reset) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>Load nahi hua</h3><p style="color:#c0392b;font-family:monospace;font-size:11px">${err.message}</p><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button></div>`;
+      console.error("[Explore]", err.code, err.message);
+      if (reset && !allProjects.length) {
+        if (err.code === "failed-precondition" || err.message?.includes("index")) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1">
+              <div class="empty-icon" style="background:#fffbeb;color:#b45309">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <h3>Index build ho raha hai</h3>
+              <p>Firebase index 2-3 minute mein ready hoga. Tab tak "Newest" tab use karo.</p>
+              <button onclick="document.querySelector('[data-sort=newest]').click()" style="margin-top:8px;padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600;">Newest dekho →</button>
+            </div>`;
+        } else {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1">
+              <h3>Load nahi hua</h3>
+              <p style="color:#c0392b;font-family:monospace;font-size:11px">${esc(err.message)}</p>
+              <button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button>
+            </div>`;
+        }
       }
     }
 
     loading = false;
   }
 
-  // ─── Sort filter buttons ──────────────────────────────────────────
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       if (btn.dataset.sort === currentSort) return;
       document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentSort = btn.dataset.sort;
+      document.getElementById("indexNotice").classList.remove("show");
       loadCircuits(true);
     });
   });
 
-  // ─── Search ───────────────────────────────────────────────────────
   document.getElementById("searchInput").addEventListener("input", function () {
     searchQuery = this.value.toLowerCase().trim();
     const grid  = document.getElementById("circuitGrid");
+    let visible = 0;
     grid.querySelectorAll(".circuit-card").forEach(card => {
       const name   = card.querySelector(".circuit-name")?.textContent?.toLowerCase() || "";
       const author = card.querySelector(".circuit-author a")?.textContent?.toLowerCase() || "";
-      card.style.display = name.includes(searchQuery) || author.includes(searchQuery) ? "" : "none";
+      const show   = name.includes(searchQuery) || author.includes(searchQuery);
+      card.style.display = show ? "" : "none";
+      if (show) visible++;
     });
-    const visible = grid.querySelectorAll(".circuit-card:not([style*='none'])").length;
     document.getElementById("showingCount").textContent = visible;
   });
 
-  // ─── Load more ────────────────────────────────────────────────────
   document.getElementById("loadMoreBtn").addEventListener("click", () => loadCircuits(false));
 
-  // ─── Init ─────────────────────────────────────────────────────────
   loadCircuits(true);
 </script>
 </body>

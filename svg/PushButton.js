@@ -18,10 +18,12 @@ export default class PushButtons {
       { id: "B2", x: 92,  y: 20  },
     ];
 
-    this._pointerUpHandler = () => {
-      this.active = false;
-      this._updateVisual();
-    };
+  
+this._pointerUpHandler = () => {
+  this.active = false;
+  this._updateVisual();
+  this._simEngine?.resolveElectrical?.();
+};
 
     this.svg = this._createSVG();
     this._attachEvents();
@@ -53,15 +55,19 @@ export default class PushButtons {
     return svg;
   }
 
-  _attachEvents() {
-    this.svg.addEventListener("pointerdown", e => {
-      e.stopPropagation();
-      this.active = true;
-      this._updateVisual();
-    });
-    window.addEventListener("pointerup",     this._pointerUpHandler);
-    window.addEventListener("pointercancel", this._pointerUpHandler);
-  }
+ // PushButton.js
+_attachEvents() {
+  this.svg.addEventListener("pointerdown", e => {
+    e.stopPropagation();
+    this.active = true;
+    this._updateVisual();
+    this._simEngine?.resolveElectrical?.();
+  });
+  window.addEventListener("pointerup",     this._pointerUpHandler);
+  window.addEventListener("pointercancel", this._pointerUpHandler);
+}
+
+
 
   _updateVisual() {
     const cap = this.svg.querySelector("#btncap");
@@ -70,11 +76,9 @@ export default class PushButtons {
     cap.setAttribute("fill", this.active ? "#9c9c9c" : "#d6d6d6");
   }
 
-  getActiveShorts() {
-    const shorts = [["A1","A2"],["B1","B2"]];
-    if (this.active) { shorts.push(["A1","B1"]); shorts.push(["A2","B2"]); }
-    return shorts;
-  }
+ getActiveShorts() {
+  return [["A1","A2"], ["B1","B2"]];
+}
 
   isActive()   { return this.active ? 1 : 0; }
   getElement() { return this.svg; }

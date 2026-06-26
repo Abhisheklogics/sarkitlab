@@ -9,6 +9,7 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
   serverTimestamp,
   increment,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -85,6 +86,7 @@ export async function saveProjectData(projectId, data) {
   };
 
   saveLocal(projectId, enriched);
+  _updateLocalList(session.uid, projectId, enriched.name, enriched.slug, enriched.timestamp);
 
   if (!navigator.onLine) {
     addToQueue({ projectId, data: enriched, queuedAt: Date.now() });
@@ -102,7 +104,7 @@ export async function saveProjectData(projectId, data) {
       timestamp:   enriched.timestamp   || Date.now(),
       components:  enriched.components  || [],
       wires:       enriched.wires       || [],
-      arduinoCode: enriched.arduinoCode || "",  // ✅ FIX
+      arduinoCode: enriched.arduinoCode || "",
       updatedAt:   serverTimestamp(),
     };
 
@@ -146,16 +148,17 @@ export async function syncPendingProjects() {
     try {
       const d = item.data;
       await setDoc(doc(db, PROJECTS_COLLECTION, item.projectId), {
-        name:       d.name       || "Untitled Circuit",
-        slug:       d.slug       || "",
-        version:    d.version    || 3,
-        isPublic:   d.isPublic   ?? true,
-        author:     d.author     || session.displayName || "Anonymous",
-        authorUid:  session.uid,
-        timestamp:  d.timestamp  || Date.now(),
-        components: d.components || [],
-        wires:      d.wires      || [],
-        updatedAt:  serverTimestamp(),
+        name:        d.name        || "Untitled Circuit",
+        slug:        d.slug        || "",
+        version:     d.version     || 3,
+        isPublic:    d.isPublic    ?? true,
+        author:      d.author      || session.displayName || "Anonymous",
+        authorUid:   session.uid,
+        timestamp:   d.timestamp   || Date.now(),
+        components:  d.components  || [],
+        wires:       d.wires       || [],
+        arduinoCode: d.arduinoCode || "",
+        updatedAt:   serverTimestamp(),
       }, { merge: true });
 
       const local = loadLocal(item.projectId);
@@ -173,14 +176,17 @@ export async function getUserProjects(uid) {
 
   if (navigator.onLine) {
     try {
-      const q    = query(collection(db, PROJECTS_COLLECTION), where("authorUid", "==", uid));
+      const q    = query(
+        collection(db, PROJECTS_COLLECTION),
+        where("authorUid", "==", uid),
+        orderBy("updatedAt", "desc")
+      );
       const snap = await getDocs(q);
       const projects = snap.docs.map(d => ({
         id: d.id,
         ...sanitizeForStorage(d.data()),
         source: "cloud",
       }));
-      projects.sort((a, b) => (b.updatedAt || b.timestamp || 0) - (a.updatedAt || a.timestamp || 0));
       return projects;
     } catch (err) {
       console.warn("[Sync] Firestore getUserProjects failed:", err.code, err.message);
@@ -227,6 +233,7 @@ export async function deleteProjectData(projectId) {
   const session = getSession();
   try { localStorage.removeItem(localKey(projectId)); } catch {}
   try { localStorage.removeItem(`sks_stats_${projectId}`); } catch {}
+  try { localStorage.removeItem(`project_${projectId}`); } catch {}
   removeFromQueue(projectId);
 
   if (session?.uid) {
@@ -268,28 +275,28 @@ export async function toggleLikeProject(projectId) {
 
 export async function recordProjectView(projectId, viewerUid) {
   const session = getSession();
- 
+
   const seenKey = `sks_viewed_${viewerUid || "anon"}_${projectId}`;
   if (sessionStorage.getItem(seenKey)) return;
- 
+
   const localData = loadLocal(projectId);
   if (session?.uid && localData?.authorUid && session.uid === localData.authorUid) return;
- 
+
   if (navigator.onLine && session?.uid) {
     try {
       const snap = await getDoc(doc(db, "projects", projectId));
       if (snap.exists() && snap.data().authorUid === session.uid) return;
     } catch {}
   }
- 
+
   sessionStorage.setItem(seenKey, "1");
- 
+
   const statsKey = `sks_stats_${projectId}`;
   let stats = {};
   try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
   stats.views = (stats.views || 0) + 1;
   try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
- 
+
   if (navigator.onLine) {
     try {
       await setDoc(doc(db, STATS_COLLECTION, projectId), { views: increment(1) }, { merge: true });
@@ -297,19 +304,6 @@ export async function recordProjectView(projectId, viewerUid) {
       console.warn("[Sync] View sync failed:", err.message);
     }
   }
-}
- 
-
-async function _getProjectOwner(projectId) {
-  const local = loadLocal(projectId);
-  if (local?.authorUid) return local.authorUid;
-  if (navigator.onLine) {
-    try {
-      const snap = await getDoc(doc(db, PROJECTS_COLLECTION, projectId));
-      if (snap.exists()) return snap.data().authorUid || null;
-    } catch {}
-  }
-  return null;
 }
 
 export async function getProjectStats(projectId) {

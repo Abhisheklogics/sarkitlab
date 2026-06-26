@@ -19,9 +19,7 @@
     <div class="nav-sep"></div>
     <div class="project-name-wrapper" id="projectNameWrapper">
       <span id="projectNameDisplay" class="project-name-text">Untitled Circuit</span>
-      <button class="btn-rename-inline" id="renameInlineBtn" title="Rename circuit">
-        <i class="fas fa-pen"></i>
-      </button>
+      <button class="btn-rename-inline" id="renameInlineBtn" title="Rename circuit"><i class="fas fa-pen"></i></button>
     </div>
     <div class="nav-sep"></div>
     <button id="undoBtn" class="btn-nav btn-icon-only" title="Undo (Ctrl+Z)" disabled>
@@ -54,7 +52,7 @@
     <button id="deleteBtn" class="btn-nav del-btn" title="Delete selected">
       <i class="fas fa-trash"></i>
     </button>
-    <button class="btn-nav" id="viewProfileBtn" title="View Profile / Dashboard" style="display:flex;align-items:center;gap:5px;" onclick="window.location.href='/explore'">
+    <button class="btn-nav" onclick="window.location.href='/explore'" style="display:flex;align-items:center;gap:5px;">
       <i class="fas fa-circle-user"></i><span class="btn-label"> Profile</span>
     </button>
     <div class="nav-sep"></div>
@@ -81,9 +79,7 @@
       </filter>
     </defs>
   </svg>
-
   <div id="codeInput"></div>
-
   <div class="mainBox">
     <h3>
       <i class="fas fa-cubes"></i> Components
@@ -93,40 +89,16 @@
       <i class="fas fa-search sidebar-search-icon"></i>
       <input id="compSearch" type="text" placeholder="Search components…" class="sidebar-search-input" />
     </div>
-
     <div class="components-grid">
-
       <div class="comp-group">Microcontroller</div>
-      <div class="component-card">
-        <img id="arduino" class="comp-img" src="../images/ArduinoUno.svg.png" alt="Arduino" draggable="false" />
-        <div class="component-label">Arduino UNO</div>
-      </div>
-
+      <div class="component-card"><img id="arduino" class="comp-img" src="../images/ArduinoUno.svg.png" alt="Arduino" draggable="false" /><div class="component-label">Arduino UNO</div></div>
       <div class="comp-group">Basic</div>
-      <div class="component-card">
-        <img id="led" class="comp-img" src="../images/led.png" alt="LED" style="filter:brightness(0);" draggable="false" />
-        <div class="component-label">LED</div>
-      </div>
-      <div class="component-card">
-        <img id="resistor" class="comp-img" src="../images/res.png" alt="Resistor" draggable="false" />
-        <div class="component-label">Resistor</div>
-      </div>
-      <div class="component-card">
-        <img id="diode" class="comp-img" src="../images/zener.png" alt="Diode" draggable="false" />
-        <div class="component-label">Diode</div>
-      </div>
-
+      <div class="component-card"><img id="led" class="comp-img" src="../images/led.png" alt="LED" style="filter:brightness(0);" draggable="false" /><div class="component-label">LED</div></div>
+      <div class="component-card"><img id="resistor" class="comp-img" src="../images/res.png" alt="Resistor" draggable="false" /><div class="component-label">Resistor</div></div>
+      <div class="component-card"><img id="diode" class="comp-img" src="../images/zener.png" alt="Diode" draggable="false" /><div class="component-label">Diode</div></div>
       <div class="comp-group">Misc</div>
-      <div class="component-card">
-        <img id="breadboard" class="comp-img" src="../images/breadbord.png" alt="Breadboard" draggable="false" />
-        <div class="component-label">Breadboard</div>
-      </div>
-     
-      <div class="component-card">
-        <img id="driver" class="comp-img" src="../images/driver.png" alt="Motor Driver" draggable="false" />
-        <div class="component-label">Motor Driver</div>
-      </div>
-
+      <div class="component-card"><img id="breadboard" class="comp-img" src="../images/breadbord.png" alt="Breadboard" draggable="false" /><div class="component-label">Breadboard</div></div>
+      <div class="component-card"><img id="driver" class="comp-img" src="../images/driver.png" alt="Motor Driver" draggable="false" /><div class="component-label">Motor Driver</div></div>
       <div class="comp-group">Logic Gates</div>
       <div class="component-card"><img id="gate2" class="comp-img" src="images/gate2.png" alt="OR" draggable="false" /><div class="component-label">OR Gate</div></div>
       <div class="component-card"><img id="gate3" class="comp-img" src="images/gate3.png" alt="AND" draggable="false" /><div class="component-label">AND Gate</div></div>
@@ -134,12 +106,10 @@
       <div class="component-card"><img id="gate4" class="comp-img" src="images/gate4.png" alt="NAND" draggable="false" /><div class="component-label">NAND Gate</div></div>
       <div class="component-card"><img id="gate5" class="comp-img" src="images/gate5.png" alt="NOR" draggable="false" /><div class="component-label">NOR Gate</div></div>
       <div class="component-card"><img id="gate1" class="comp-img" src="images/gate1.png" alt="XOR" draggable="false" /><div class="component-label">XOR Gate</div></div>
-
       <div class="comp-group">ICs</div>
       <div class="component-card"><img id="gate6" class="comp-img" src="images/gate6.png" alt="74HC83" draggable="false" /><div class="component-label">74HC83 Adder</div></div>
       <div class="component-card"><img id="gate7" class="comp-img" src="images/gate7.png" alt="74HC148" draggable="false" /><div class="component-label">74HC148 Enc.</div></div>
       <div class="component-card"><img id="gate8" class="comp-img" src="images/gate8.png" alt="74HC153" draggable="false" /><div class="component-label">74HC153 Mux</div></div>
-
       <div class="comp-group">Gas Sensors</div>
       <div class="component-card"><img id="MQ-2"   class="comp-img" src="images/mq2.jpg"   alt="MQ-2"   draggable="false" /><div class="component-label">MQ-2 Smoke</div></div>
       <div class="component-card"><img id="MQ-3"   class="comp-img" src="images/mq3.jpg"   alt="MQ-3"   draggable="false" /><div class="component-label">MQ-3 Alcohol</div></div>
@@ -151,7 +121,6 @@
       <div class="component-card"><img id="MQ-9"   class="comp-img" src="images/mq9.jpg"   alt="MQ-9"   draggable="false" /><div class="component-label">MQ-9 CO/Comb</div></div>
       <div class="component-card"><img id="MQ-131" class="comp-img" src="images/mq131.jpg" alt="MQ-131" draggable="false" /><div class="component-label">MQ-131 O₃</div></div>
       <div class="component-card"><img id="MQ-135" class="comp-img" src="images/mq135.jpg" alt="MQ-135" draggable="false" /><div class="component-label">MQ-135 Air</div></div>
-
     </div>
   </div>
 </div>
@@ -160,30 +129,23 @@
   <div>
     <h4><i class="fas fa-sliders" style="color:#4f46e5;margin-right:8px;"></i>Resistance (Ohms)</h4>
     <select id="resSelect">
-      <option value="100">100 Ω</option>
-      <option value="220" selected>220 Ω</option>
-      <option value="330">330 Ω</option>
-      <option value="1000">1 kΩ</option>
-      <option value="2000">2 kΩ</option>
-      <option value="3000">3 kΩ</option>
-      <option value="10000">10 kΩ</option>
-      <option value="100000">100 kΩ</option>
+      <option value="100">100 Ω</option><option value="220" selected>220 Ω</option>
+      <option value="330">330 Ω</option><option value="1000">1 kΩ</option>
+      <option value="2000">2 kΩ</option><option value="3000">3 kΩ</option>
+      <option value="10000">10 kΩ</option><option value="100000">100 kΩ</option>
       <option value="custom">Custom…</option>
     </select>
     <input id="customRes" type="number" min="1" placeholder="Enter Ω" style="display:none;" />
     <button id="applyRes">Apply</button>
   </div>
 </div>
-
 <div id="resEditor" style="display:none;"></div>
 
 <div id="shareCircuitModal" class="modal-overlay" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
       <span><i class="fas fa-share-nodes" style="color:#4f46e5;"></i> Share Circuit</span>
-      <button class="modal-close-btn" onclick="document.getElementById('shareCircuitModal').style.display='none'">
-        <i class="fas fa-xmark"></i>
-      </button>
+      <button class="modal-close-btn" onclick="document.getElementById('shareCircuitModal').style.display='none'"><i class="fas fa-xmark"></i></button>
     </div>
     <p class="modal-sub">Anyone with this link can view this circuit.</p>
     <div class="share-link-row">
@@ -197,7 +159,7 @@
       <button id="shareTG" class="share-platform-btn tg"><i class="fab fa-telegram"></i> Telegram</button>
     </div>
     <div class="modal-footer">
-      <label class="public-toggle-row" id="publicToggleRow">
+      <label class="public-toggle-row">
         <span>Make this circuit public</span>
         <label class="toggle-switch">
           <input type="checkbox" id="publicToggleCheck" />
@@ -212,9 +174,7 @@
   <div class="modal-box" style="max-width:380px;">
     <div class="modal-header">
       <span><i class="fas fa-pen" style="color:#4f46e5;"></i> Rename Circuit</span>
-      <button class="modal-close-btn" onclick="document.getElementById('renameModal').style.display='none'">
-        <i class="fas fa-xmark"></i>
-      </button>
+      <button class="modal-close-btn" onclick="document.getElementById('renameModal').style.display='none'"><i class="fas fa-xmark"></i></button>
     </div>
     <input type="text" id="renameModalInput" placeholder="Circuit name…" maxlength="60" class="modal-input" />
     <div class="modal-actions">
@@ -225,12 +185,23 @@
 </div>
 
 <script>
-  function slugify(name) {
-    return (name || "untitled").toLowerCase().trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 60);
+(function () {
+
+  function slugify(n) {
+    return (n || "untitled").toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 60);
+  }
+
+  function getSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem("sks_session") || "null");
+      if (!s?.uid || Date.now() > s.expiresAt) return null;
+      return s;
+    } catch { return null; }
+  }
+
+  function getProjectId() {
+    return new URLSearchParams(window.location.search).get("project");
   }
 
   function updateURL(name, projectId) {
@@ -242,9 +213,154 @@
     } catch {}
   }
 
+  window._toast = function (msg, isError, isWarn) {
+    let t = document.getElementById("_ctoast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "_ctoast";
+      Object.assign(t.style, {
+        position:"fixed",bottom:"24px",right:"24px",zIndex:"99999",
+        borderRadius:"10px",padding:"10px 20px",fontSize:"13px",
+        fontFamily:"'DM Sans',sans-serif",boxShadow:"0 4px 20px rgba(0,0,0,.15)",
+        transition:"opacity .3s",opacity:"0",pointerEvents:"none",
+      });
+      document.body.appendChild(t);
+    }
+    t.textContent      = msg;
+    t.style.background = isError ? "#fef2f2" : isWarn ? "#fffbeb" : "#f0fdf4";
+    t.style.color      = isError ? "#dc2626"  : isWarn ? "#b45309" : "#15803d";
+    t.style.border     = `1px solid ${isError ? "#fecaca" : isWarn ? "#fde68a" : "#86efac"}`;
+    t.style.opacity    = "1";
+    clearTimeout(t._tid);
+    t._tid = setTimeout(() => { t.style.opacity = "0"; }, 2800);
+  };
+
+  function setSaveStatus(state) {
+    const pill = document.getElementById("saveStatus");
+    if (!pill) return;
+    const cfg = {
+      unsaved: ["#9ca3af", "Unsaved"],
+      saving:  ["#b45309", "Saving…"],
+      local:   ["#b45309", "Saved locally"],
+      synced:  ["#16a34a", "Saved ✓"],
+    }[state] || ["#9ca3af", "Unsaved"];
+    pill.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cfg[0]};display:inline-block;margin-right:5px;flex-shrink:0;"></span>${cfg[1]}`;
+  }
+
+  let _dirty      = false;
+  let _autoTimer  = null;
+
+  function _localKey(id) { return `sks_proj_${id}`; }
+
+  function _writeLocal(projectId, payload) {
+    try {
+      const key      = _localKey(projectId);
+      const existing = JSON.parse(localStorage.getItem(key) || "{}");
+      const data     = { ...existing, ...payload, localUpdatedAt: Date.now(), _needsSync: true };
+      localStorage.setItem(key, JSON.stringify(data));
+
+      const session = getSession();
+      if (session?.uid) {
+        const lk   = `all_projects_${session.uid}`;
+        let list   = JSON.parse(localStorage.getItem(lk) || "[]");
+        const idx  = list.findIndex(p => p.id === projectId);
+        const entry = {
+          id:   projectId,
+          name: data.name || "Untitled Circuit",
+          slug: data.slug || slugify(data.name || ""),
+          date: data.timestamp || Date.now(),
+        };
+        if (idx !== -1) list[idx] = entry; else list.push(entry);
+        localStorage.setItem(lk, JSON.stringify(list));
+      }
+      return data;
+    } catch (e) {
+      console.warn("[AutoSave] local write failed:", e);
+      return null;
+    }
+  }
+
+  async function _pushFirebase(projectId, data) {
+    try {
+      const { getFirestore, doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const { app } = await import("/src/utils/auth.js");
+      const session  = getSession();
+      await setDoc(doc(getFirestore(app), "projects", projectId), {
+        ...data,
+        authorUid:  session?.uid          || data.authorUid || null,
+        author:     session?.displayName  || data.author    || "Anonymous",
+        updatedAt:  serverTimestamp(),
+        _needsSync: false,
+      }, { merge: true });
+
+      const key  = _localKey(projectId);
+      const cur  = JSON.parse(localStorage.getItem(key) || "{}");
+      localStorage.setItem(key, JSON.stringify({ ...cur, _needsSync: false, syncedAt: Date.now() }));
+      return true;
+    } catch (e) {
+      console.warn("[AutoSave] Firebase push failed:", e.code, e.message);
+      return false;
+    }
+  }
+
+  function _doSave() {
+    if (!_dirty) return;
+    const projectId = getProjectId();
+    if (!projectId) return;
+
+    const payload = window._getCircuitPayload?.();
+    if (!payload) return;
+
+    setSaveStatus("saving");
+    const saved = _writeLocal(projectId, payload);
+    if (!saved) { setSaveStatus("unsaved"); return; }
+
+    _dirty = false;
+    setSaveStatus("local");
+
+    if (navigator.onLine) {
+      _pushFirebase(projectId, saved).then(ok => {
+        if (ok) setSaveStatus("synced");
+      });
+    }
+  }
+
+  window._notifyCircuitChanged = function () {
+    _dirty = true;
+    setSaveStatus("unsaved");
+    clearTimeout(_autoTimer);
+    _autoTimer = setTimeout(_doSave, 4000);
+  };
+
+  window.addEventListener("online", async () => {
+    const projectId = getProjectId();
+    if (!projectId) return;
+    try {
+      const data = JSON.parse(localStorage.getItem(_localKey(projectId)) || "null");
+      if (!data?._needsSync) return;
+      setSaveStatus("saving");
+      window._toast("Back online — syncing circuit…", false, true);
+      const ok = await _pushFirebase(projectId, data);
+      if (ok) {
+        setSaveStatus("synced");
+        window._toast("Circuit synced to cloud ✓");
+      } else {
+        setSaveStatus("local");
+        window._toast("Sync failed — will retry", false, true);
+      }
+    } catch {}
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") _doSave();
+  });
+
+  window.addEventListener("beforeunload", () => { if (_dirty) _doSave(); });
+
   document.getElementById("renameInlineBtn")?.addEventListener("click", () => {
-    const current = document.getElementById("projectNameDisplay")?.textContent || "";
-    document.getElementById("renameModalInput").value = current;
+    document.getElementById("renameModalInput").value =
+      document.getElementById("projectNameDisplay")?.textContent || "";
     document.getElementById("renameModal").style.display = "flex";
     setTimeout(() => document.getElementById("renameModalInput").select(), 50);
   });
@@ -252,52 +368,32 @@
   document.getElementById("renameModalOk")?.addEventListener("click", async () => {
     const name = document.getElementById("renameModalInput").value.trim();
     if (!name) return;
-
-    const params    = new URLSearchParams(window.location.search);
-    const projectId = params.get("project");
-
+    const projectId = getProjectId();
     document.getElementById("projectNameDisplay").textContent = name;
     document.title = `${name} — SarkitLab`;
     document.getElementById("renameModal").style.display = "none";
     updateURL(name, projectId);
-    window._toast?.("Renamed ✓");
-
+    window._toast("Renamed ✓");
     if (!projectId) return;
 
-    const keys = [`sks_proj_${projectId}`, `project_${projectId}`];
-    for (const key of keys) {
+    for (const key of [`sks_proj_${projectId}`, `project_${projectId}`]) {
       const raw = localStorage.getItem(key);
-      if (raw) {
-        try {
-          const d = JSON.parse(raw);
-          d.name = name; d.slug = slugify(name);
-          localStorage.setItem(key, JSON.stringify(d));
-        } catch {}
-      }
+      if (!raw) continue;
+      try { const d = JSON.parse(raw); d.name = name; d.slug = slugify(name); localStorage.setItem(key, JSON.stringify(d)); } catch {}
     }
-
-    try {
-      const session = JSON.parse(localStorage.getItem("sarkitshala_session") || "{}");
-      const uid = session.uid || localStorage.getItem("currentUser");
-      if (uid) {
-        const lk   = `all_projects_${uid}`;
-        const list = JSON.parse(localStorage.getItem(lk) || "[]");
-        const idx  = list.findIndex(p => p.id === projectId);
-        if (idx !== -1) {
-          list[idx].name = name; list[idx].slug = slugify(name);
-          localStorage.setItem(lk, JSON.stringify(list));
-        }
-      }
-    } catch {}
-
+    const session = getSession();
+    if (session?.uid) {
+      const lk   = `all_projects_${session.uid}`;
+      const list = JSON.parse(localStorage.getItem(lk) || "[]");
+      const idx  = list.findIndex(p => p.id === projectId);
+      if (idx !== -1) { list[idx].name = name; list[idx].slug = slugify(name); localStorage.setItem(lk, JSON.stringify(list)); }
+    }
     if (navigator.onLine) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
         const { app } = await import("/src/utils/auth.js");
         await updateDoc(doc(getFirestore(app), "projects", projectId), { name, slug: slugify(name) });
-      } catch (err) {
-        console.warn("[Rename] Firestore update failed:", err);
-      }
+      } catch (e) { console.warn("[Rename]", e); }
     }
   });
 
@@ -307,50 +403,35 @@
   });
 
   document.getElementById("shareCircuitBtn")?.addEventListener("click", () => {
-    const params    = new URLSearchParams(window.location.search);
-    const projectId = params.get("project");
+    const projectId = getProjectId();
     const name      = document.getElementById("projectNameDisplay")?.textContent || "circuit";
     const url       = new URL(window.location.href);
     if (projectId) url.searchParams.set("project", projectId);
     url.searchParams.set("name", slugify(name));
-    const shareUrl = url.toString();
-
+    url.searchParams.set("autorun", "1");
+    const shareUrl  = url.toString();
     document.getElementById("shareCircuitUrl").value = shareUrl;
-
     const enc = encodeURIComponent;
-    document.getElementById("shareWA").onclick = () =>
-      window.open(`https://wa.me/?text=${enc(`Check out my circuit "${name}" on SarkitLab: ${shareUrl}`)}`);
-    document.getElementById("shareTW").onclick = () =>
-      window.open(`https://twitter.com/intent/tweet?text=${enc(`Check out my circuit "${name}" on SarkitLab!`)}&url=${enc(shareUrl)}`);
-    document.getElementById("shareLI").onclick = () =>
-      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${enc(shareUrl)}`);
-    document.getElementById("shareTG").onclick = () =>
-      window.open(`https://t.me/share/url?url=${enc(shareUrl)}&text=${enc(`Check out "${name}" on SarkitLab!`)}`);
-
+    document.getElementById("shareWA").onclick = () => window.open(`https://wa.me/?text=${enc(`Check out my circuit "${name}" on SarkitLab: ${shareUrl}`)}`);
+    document.getElementById("shareTW").onclick = () => window.open(`https://twitter.com/intent/tweet?text=${enc(`"${name}" on SarkitLab!`)}&url=${enc(shareUrl)}`);
+    document.getElementById("shareLI").onclick = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${enc(shareUrl)}`);
+    document.getElementById("shareTG").onclick = () => window.open(`https://t.me/share/url?url=${enc(shareUrl)}&text=${enc(`Check out "${name}" on SarkitLab!`)}`);
     if (projectId) {
       const raw = localStorage.getItem(`sks_proj_${projectId}`) || localStorage.getItem(`project_${projectId}`);
-      if (raw) {
-        try { document.getElementById("publicToggleCheck").checked = !!JSON.parse(raw).isPublic; } catch {}
-      }
+      if (raw) { try { document.getElementById("publicToggleCheck").checked = !!JSON.parse(raw).isPublic; } catch {} }
     }
-
     document.getElementById("shareCircuitModal").style.display = "flex";
   });
 
-  document.getElementById("publicToggleCheck")?.addEventListener("change", async function() {
-    const params    = new URLSearchParams(window.location.search);
-    const projectId = params.get("project");
+  document.getElementById("publicToggleCheck")?.addEventListener("change", async function () {
+    const projectId = getProjectId();
     if (!projectId) return;
     const isPublic = this.checked;
-
-    const keys = [`sks_proj_${projectId}`, `project_${projectId}`];
-    for (const key of keys) {
+    for (const key of [`sks_proj_${projectId}`, `project_${projectId}`]) {
       const raw = localStorage.getItem(key);
-      if (raw) {
-        try { const d = JSON.parse(raw); d.isPublic = isPublic; localStorage.setItem(key, JSON.stringify(d)); } catch {}
-      }
+      if (!raw) continue;
+      try { const d = JSON.parse(raw); d.isPublic = isPublic; localStorage.setItem(key, JSON.stringify(d)); } catch {}
     }
-
     if (navigator.onLine) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
@@ -358,8 +439,7 @@
         await updateDoc(doc(getFirestore(app), "projects", projectId), { isPublic });
       } catch {}
     }
-
-    window._toast?.(isPublic ? "Circuit is now public!" : "Made private");
+    window._toast(isPublic ? "Circuit is now public!" : "Made private");
   });
 
   document.getElementById("copyCircuitLink")?.addEventListener("click", () => {
@@ -376,66 +456,32 @@
     const svg = document.getElementById("svg1");
     if (!svg) return;
     try {
-      const svgStr  = new XMLSerializer().serializeToString(svg);
-      const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-      const url     = URL.createObjectURL(svgBlob);
-      const img     = new Image();
+      const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
+      const img  = new Image();
       img.onload = () => {
-        const canvas  = document.createElement("canvas");
-        const rect    = svg.getBoundingClientRect();
-        canvas.width  = rect.width  * 2;
-        canvas.height = rect.height * 2;
+        const canvas = document.createElement("canvas");
+        const rect   = svg.getBoundingClientRect();
+        canvas.width = rect.width * 2; canvas.height = rect.height * 2;
         const ctx = canvas.getContext("2d");
-        ctx.scale(2, 2);
-        ctx.fillStyle = "#edf0f7";
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        const a    = document.createElement("a");
+        ctx.scale(2, 2); ctx.fillStyle = "#edf0f7"; ctx.fillRect(0, 0, rect.width, rect.height);
+        ctx.drawImage(img, 0, 0); URL.revokeObjectURL(url);
+        const a = document.createElement("a");
         const name = document.getElementById("projectNameDisplay")?.textContent || "circuit";
-        a.download = `${name.replace(/\s+/g, "_")}.png`;
-        a.href     = canvas.toDataURL("image/png");
-        a.click();
-        window._toast?.("PNG downloaded ✓");
+        a.download = `${name.replace(/\s+/g, "_")}.png`; a.href = canvas.toDataURL("image/png"); a.click();
+        window._toast("PNG downloaded ✓");
       };
       img.src = url;
-    } catch (err) {
-      console.error("[PNG Export]", err);
-      window._toast?.("PNG export failed", true);
-    }
+    } catch (e) { window._toast("PNG export failed", true); }
   });
 
-  document.querySelectorAll(".modal-overlay").forEach(overlay => {
-    overlay.addEventListener("click", e => {
-      if (e.target === overlay) overlay.style.display = "none";
-    });
+  document.querySelectorAll(".modal-overlay").forEach(o => {
+    o.addEventListener("click", e => { if (e.target === o) o.style.display = "none"; });
   });
 
-  window._toast = function(msg, isError = false) {
-    let t = document.getElementById("circuit-toast");
-    if (!t) {
-      t = document.createElement("div");
-      t.id = "circuit-toast";
-      Object.assign(t.style, {
-        position: "fixed", bottom: "24px", right: "24px", zIndex: "99999",
-        borderRadius: "10px", padding: "10px 20px", fontSize: "13px",
-        fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(0,0,0,.15)",
-        transition: "opacity .3s", opacity: "0", pointerEvents: "none",
-        display: "flex", alignItems: "center", gap: "8px",
-      });
-      document.body.appendChild(t);
-    }
-    t.textContent      = msg;
-    t.style.background = isError ? "#fef2f2" : "#f0fdf4";
-    t.style.color      = isError ? "#dc2626"  : "#15803d";
-    t.style.border     = isError ? "1px solid #fecaca" : "1px solid #86efac";
-    t.style.opacity    = "1";
-    clearTimeout(t._tid);
-    t._tid = setTimeout(() => (t.style.opacity = "0"), 2500);
-  };
+})();
 </script>
 
 <script type="module" src="../../index.js"></script>
-
 </body>
 </html>

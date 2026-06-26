@@ -11,44 +11,21 @@
   <link rel="stylesheet" href="../../style.css"/>
   <style>
     :root {
-      --nav-h: 56px;
-      --accent: #c4611a;
-      --accent-dk: #a34f13;
-      --accent-lt: #fff2e8;
-      --ink-900: #111318;
-      --ink-700: #383d47;
-      --ink-500: #6b7280;
-      --ink-400: #9ca3af;
-      --ink-300: #d1d5db;
-      --bg: #f7f8fa;
-      --bg-card: #ffffff;
-      --border: #e4e6ea;
-      --border-soft: #eceef2;
-      --green: #16a34a;
-      --green-bg: #f0fdf4;
-      --green-bd: #bbf7d0;
-      --red: #dc2626;
-      --red-bg: #fef2f2;
-      --blue: #1d4ed8;
-      --blue-bg: #eff6ff;
-      --font: 'Inter', system-ui, sans-serif;
-      --mono: 'JetBrains Mono', monospace;
-      --r: 8px; --r-lg: 14px; --r-xl: 18px; --r-full: 9999px;
-      --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
-      --shadow-sm: 0 1px 6px rgba(0,0,0,.07);
-      --shadow-md: 0 4px 16px rgba(0,0,0,.09);
-      --ease: .15s cubic-bezier(.4,0,.2,1);
+      --nav-h:56px;--accent:#c4611a;--accent-dk:#a34f13;--accent-lt:#fff2e8;
+      --ink-900:#111318;--ink-700:#383d47;--ink-500:#6b7280;--ink-400:#9ca3af;--ink-300:#d1d5db;
+      --bg:#f7f8fa;--bg-card:#ffffff;--border:#e4e6ea;--border-soft:#eceef2;
+      --green:#16a34a;--green-bg:#f0fdf4;--green-bd:#bbf7d0;--red:#dc2626;--red-bg:#fef2f2;
+      --blue:#1d4ed8;--blue-bg:#eff6ff;
+      --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+      --r:8px;--r-lg:14px;--r-xl:18px;--r-full:9999px;
+      --shadow-xs:0 1px 2px rgba(0,0,0,.05);--shadow-sm:0 1px 6px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.09);
+      --ease:.15s cubic-bezier(.4,0,.2,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:var(--font);background:var(--bg);color:var(--ink-700);min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased;}
     a{color:inherit;text-decoration:none;}
     button{font-family:var(--font);cursor:pointer;}
 
-    /* SYNC BANNER */
-    .sync-banner{background:#fffbeb;border-bottom:1px solid #fde68a;color:#92400e;padding:8px 20px;font-size:12px;font-weight:500;display:none;align-items:center;gap:10px;justify-content:center;}
-    .sync-banner.show{display:flex;}
-
-    /* NAV */
     .nav{height:var(--nav-h);background:var(--bg-card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;box-shadow:var(--shadow-xs);}
     .nav-inner{max-width:1200px;margin:0 auto;padding:0 20px;height:100%;display:flex;align-items:center;gap:8px;}
     .nav-logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--ink-900);flex-shrink:0;letter-spacing:-.3px;}
@@ -72,10 +49,8 @@
     .nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer;border:2px solid #fff;box-shadow:var(--shadow-xs);}
     .nav-avatar img{width:100%;height:100%;object-fit:cover;}
 
-    /* PAGE LAYOUT */
     .page{max-width:1200px;margin:0 auto;padding:24px 20px;display:grid;grid-template-columns:252px 1fr;gap:20px;align-items:start;}
 
-    /* PROFILE CARD */
     .profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-sm);position:sticky;top:calc(var(--nav-h) + 16px);}
     .profile-cover{height:48px;background:linear-gradient(120deg,#c4611a 0%,#e07b39 55%,#f5b97a 100%);}
     .profile-body{padding:0 16px 16px;}
@@ -89,10 +64,8 @@
     .stat-val{font-size:18px;font-weight:700;color:var(--ink-900);display:block;line-height:1;margin-bottom:3px;}
     .stat-lbl{font-size:9.5px;color:var(--ink-400);font-weight:600;letter-spacing:.05em;text-transform:uppercase;}
 
-    /* MAIN COL */
     .main-col{display:flex;flex-direction:column;gap:16px;}
 
-    /* SUMMARY CARDS */
     .summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
     .summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-xs);}
     .summary-icon{width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -102,7 +75,6 @@
     .summary-text strong{display:block;font-size:20px;font-weight:700;color:var(--ink-900);line-height:1;margin-bottom:2px;}
     .summary-text span{font-size:11px;color:var(--ink-400);font-weight:500;}
 
-    /* CIRCUITS PANEL */
     .circuits-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-sm);}
     .panel-header{padding:13px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;}
     .panel-title{font-size:11px;font-weight:700;color:var(--ink-500);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
@@ -125,6 +97,7 @@
     .meta-time{font-size:11px;color:var(--ink-400);}
     .stat-cell{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:13px;font-weight:600;color:var(--ink-700);}
     .stat-cell svg{color:var(--ink-300);}
+    .stat-cell.dimmed{opacity:.35;}
     .row-actions{display:flex;align-items:center;justify-content:flex-end;gap:2px;}
     .row-btn{width:28px;height:28px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-400);transition:all var(--ease);}
     .row-btn:hover{background:var(--bg);color:var(--ink-900);}
@@ -134,12 +107,10 @@
     .view-link-btn{width:28px;height:28px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-400);transition:all var(--ease);text-decoration:none;}
     .view-link-btn:hover{background:var(--accent-lt);color:var(--accent);}
 
-    /* SHIMMER */
     .shimmer{background:linear-gradient(90deg,#eceef2 25%,#e4e6ea 50%,#eceef2 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--r);}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
     .skel-row{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;flex-direction:column;gap:8px;}
 
-    /* EMPTY */
     .empty-state{padding:52px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
     .empty-icon{width:48px;height:48px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink-300);margin-bottom:4px;border:1px solid var(--border);}
     .empty-state h3{font-size:14px;font-weight:600;color:var(--ink-700);}
@@ -147,7 +118,6 @@
     .empty-cta{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;font-family:var(--font);margin-top:4px;transition:background var(--ease);}
     .empty-cta:hover{background:var(--accent-dk);}
 
-    /* DELETE MODAL */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px);}
     .modal-bg.open{opacity:1;pointer-events:all;}
     .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;width:360px;max-width:92vw;transform:translateY(10px);transition:transform .2s;box-shadow:var(--shadow-md);}
@@ -156,42 +126,22 @@
     .modal h3{font-size:15px;font-weight:700;color:var(--ink-900);margin-bottom:6px;}
     .modal p{font-size:13px;color:var(--ink-500);line-height:1.6;}
     .modal-btns{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
-    .modal-cancel{padding:7px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--ink-700);transition:background var(--ease);}
+    .modal-cancel{padding:7px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--ink-700);}
     .modal-cancel:hover{background:var(--border-soft);}
-    .modal-confirm{padding:7px 16px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background var(--ease);}
+    .modal-confirm{padding:7px 16px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
     .modal-confirm:hover{background:#b91c1c;}
 
-    /* TOAST */
     .toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:var(--r-lg);font-size:12.5px;font-weight:600;font-family:var(--font);opacity:0;transform:translateY(6px);transition:all .22s;z-index:9999;pointer-events:none;box-shadow:var(--shadow-md);}
     .toast.show{opacity:1;transform:translateY(0);}
     .toast.ok{background:#14532d;color:#fff;}
     .toast.err{background:#7f1d1d;color:#fff;}
     .toast.warn{background:#78350f;color:#fff;}
 
-    /* RESPONSIVE */
-    @media(max-width:900px){
-      .page{grid-template-columns:1fr;}
-      .profile-card{position:static;}
-      .summary-row{grid-template-columns:1fr 1fr;}
-      .nav-center{display:none;}
-    }
-    @media(max-width:640px){
-      .page{padding:12px;}
-      .summary-row{grid-template-columns:1fr;}
-      .table-head{display:none;}
-      .circuit-row{grid-template-columns:1fr auto;}
-      .circuit-row .stat-cell{display:none;}
-      .nav-btn span{display:none;}
-      .nav-btn{padding:6px 8px;}
-    }
+    @media(max-width:900px){.page{grid-template-columns:1fr;}.profile-card{position:static;}.summary-row{grid-template-columns:1fr 1fr;}.nav-center{display:none;}}
+    @media(max-width:640px){.page{padding:12px;}.summary-row{grid-template-columns:1fr;}.table-head{display:none;}.circuit-row{grid-template-columns:1fr auto;}.circuit-row .stat-cell{display:none;}.nav-btn span{display:none;}.nav-btn{padding:6px 8px;}}
   </style>
 </head>
 <body>
-
-<div class="sync-banner" id="syncBanner">
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-  <span id="syncBannerText">Syncing offline circuits…</span>
-</div>
 
 <nav class="nav">
   <div class="nav-inner">
@@ -204,14 +154,12 @@
       </div>
       Sarkit<span>Lab</span>
     </a>
-
     <div class="nav-center">
       <div class="nav-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         <input type="text" id="searchInput" placeholder="Search circuits…"/>
       </div>
     </div>
-
     <div class="nav-right">
       <a class="nav-btn btn-primary-nav" href="/create-circuit">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -237,9 +185,7 @@
     <div class="profile-card">
       <div class="profile-cover"></div>
       <div class="profile-body">
-        <div class="profile-av-wrap">
-          <div class="av-lg" id="profileAvatar"></div>
-        </div>
+        <div class="profile-av-wrap"><div class="av-lg" id="profileAvatar"></div></div>
         <div class="profile-name" id="profileName">—</div>
         <div class="profile-email" id="profileEmail"></div>
         <div class="stat-grid">
@@ -262,15 +208,15 @@
       </div>
       <div class="summary-card">
         <div class="summary-icon green">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
-        <div class="summary-text"><strong id="sumPublic">0</strong><span>Public</span></div>
+        <div class="summary-text"><strong id="sumLikes">0</strong><span>Public Likes</span></div>
       </div>
       <div class="summary-card">
         <div class="summary-icon blue">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <div class="summary-text"><strong id="sumLikes">0</strong><span>Total Likes</span></div>
+        <div class="summary-text"><strong id="sumViews">0</strong><span>Public Views</span></div>
       </div>
     </div>
 
@@ -285,14 +231,12 @@
           New
         </a>
       </div>
-
       <div class="table-head">
         <div class="th">Circuit</div>
         <div class="th r">Likes</div>
         <div class="th r">Views</div>
         <div class="th r">Actions</div>
       </div>
-
       <div id="projList">
         <div class="skel-row"><div class="shimmer" style="height:13px;width:52%"></div><div class="shimmer" style="height:11px;width:30%"></div></div>
         <div class="skel-row"><div class="shimmer" style="height:13px;width:67%"></div><div class="shimmer" style="height:11px;width:25%"></div></div>
@@ -327,7 +271,7 @@
     getDocs, deleteDoc, doc, updateDoc, setDoc,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const db = getFirestore(app);
+  const db      = getFirestore(app);
   const session = getSession();
   if (!session) { window.location.replace("/login"); }
   const uid = session.uid;
@@ -356,19 +300,28 @@
   function timeAgo(ts) {
     const ms = tsMillis(ts);
     if (!ms) return "";
-    const diff = Date.now() - ms;
-    const mins = Math.floor(diff / 60000);
+    const diff = Date.now() - ms, mins = Math.floor(diff / 60000);
     if (mins < 1) return "just now";
     if (mins < 60) return mins + "m ago";
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return hrs + "h ago";
     const days = Math.floor(hrs / 24);
     if (days < 30) return days + "d ago";
-    return new Date(ms).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(ms).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
   }
 
   function esc(s) {
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function slugify(name) {
+    return (name || "untitled").toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").slice(0,60);
+  }
+
+  function buildCircuitUrl(proj) {
+    const slug = proj.slug || slugify(proj.name || "untitled");
+    return `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
   }
 
   function makeAv(el, name, photoURL) {
@@ -381,32 +334,27 @@
     } else { el.textContent = initials(name); }
   }
 
-  function slugify(name) {
-    return (name || "untitled").toLowerCase().trim()
-      .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").slice(0,60);
-  }
-
-  function buildViewUrl(proj) {
-    const slug = proj.slug || slugify(proj.name || "untitled");
-    return `/create-circuit?project=${proj.id}&name=${encodeURIComponent(slug)}&autorun=1`;
-  }
-
   async function loadProfile() {
     const profile = await getUserProfile(uid).catch(() => null) || session;
-    const name = profile.displayName || session.displayName || "User";
-    const email = profile.email || session.email || "";
-    const photo = profile.photoURL || session.photoURL || null;
+    const name    = profile.displayName || session.displayName || "User";
+    const email   = profile.email       || session.email       || "";
+    const photo   = profile.photoURL    || session.photoURL    || null;
     makeAv(document.getElementById("profileAvatar"), name, photo);
-    makeAv(document.getElementById("navAvatar"), name, photo);
-    document.getElementById("profileName").textContent = name;
+    makeAv(document.getElementById("navAvatar"),     name, photo);
+    document.getElementById("profileName").textContent  = name;
     document.getElementById("profileEmail").textContent = email;
-    unsubFollowers = listenFollowerCount(uid, count => { document.getElementById("statFollowers").textContent = count; });
-    unsubFollowing = listenFollowingCount(uid, count => { document.getElementById("statFollowing").textContent = count; });
+
+    unsubFollowers = listenFollowerCount(uid, count => {
+      document.getElementById("statFollowers").textContent = count;
+    });
+    unsubFollowing = listenFollowingCount(uid, count => {
+      document.getElementById("statFollowing").textContent = count;
+    });
   }
 
   function localProjects() {
     const list = JSON.parse(localStorage.getItem(`all_projects_${uid}`) || "[]");
-    const out = [];
+    const out  = [];
     for (const p of list) {
       const raw = localStorage.getItem(`sks_proj_${p.id}`) || localStorage.getItem(`project_${p.id}`);
       if (!raw) continue;
@@ -416,86 +364,25 @@
     return out;
   }
 
-  async function syncOfflineToCloud() {
-    if (!navigator.onLine) return;
-    const list = JSON.parse(localStorage.getItem(`all_projects_${uid}`) || "[]");
-    if (!list.length) return;
-    const toSync = list.filter(p => !!(localStorage.getItem(`sks_proj_${p.id}`) || localStorage.getItem(`project_${p.id}`)));
-    if (!toSync.length) return;
-    const banner = document.getElementById("syncBanner");
-    const bannerText = document.getElementById("syncBannerText");
-    banner.classList.add("show");
-    bannerText.textContent = `Syncing ${toSync.length} circuit${toSync.length > 1 ? "s" : ""}…`;
-    let synced = 0;
-    const newList = [...list];
-    for (const p of toSync) {
-      try {
-        const rawKey = localStorage.getItem(`sks_proj_${p.id}`) ? `sks_proj_${p.id}` : `project_${p.id}`;
-        const data = JSON.parse(localStorage.getItem(rawKey));
-        await setDoc(doc(db, "projects", p.id), { ...data, authorUid: uid, syncedAt: Date.now() });
-        localStorage.removeItem(rawKey);
-        localStorage.removeItem(`sks_proj_${p.id}`);
-        const idx = newList.findIndex(x => x.id === p.id);
-        if (idx !== -1) newList[idx] = { id: p.id, name: data.name, slug: data.slug, date: data.timestamp };
-        synced++;
-        bannerText.textContent = `${synced}/${toSync.length} synced…`;
-      } catch (err) { console.error(`[Sync] Failed for ${p.id}:`, err); }
-    }
-    localStorage.setItem(`all_projects_${uid}`, JSON.stringify(newList));
-    if (synced > 0) {
-      bannerText.textContent = `✓ ${synced} circuit${synced > 1 ? "s" : ""} synced`;
-      setTimeout(() => banner.classList.remove("show"), 3000);
-      loadProjects();
-    } else { banner.classList.remove("show"); }
-  }
-
-  window.addEventListener("online", syncOfflineToCloud);
-  if (navigator.onLine) setTimeout(syncOfflineToCloud, 2000);
-
-  const STATS_CACHE_TTL = 5 * 60 * 1000;
-
-  async function batchFetchStats(projectIds) {
-    if (!projectIds.length) return {};
-    const cacheKey = `statsCache_${uid}`;
-    const now = Date.now();
-    try {
-      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
-      if (cached && (now - cached.ts) < STATS_CACHE_TTL && projectIds.every(id => id in cached.data)) return cached.data;
-    } catch {}
-    const stats = {};
-    for (let i = 0; i < projectIds.length; i += 30) {
-      const chunk = projectIds.slice(i, i + 30);
-      try {
-        const snap = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", chunk)));
-        snap.forEach(d => { stats[d.id] = d.data(); });
-      } catch (err) { console.error("[Stats] Batch fetch:", err); }
-    }
-    try { sessionStorage.setItem(cacheKey, JSON.stringify({ ts: now, data: stats })); } catch {}
-    return stats;
-  }
-
-  function invalidateStatsCache() { try { sessionStorage.removeItem(`statsCache_${uid}`); } catch {} }
-
   const I = {
     heart: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    eye: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
-    eyeOff: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
-    open: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+    eye:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eyeOff:`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
     globe: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+    open:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
     trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>`,
   };
 
   let deleteTarget = null;
 
   async function renderProjects(projects, fromLocal) {
-    const listEl = document.getElementById("projList");
-    const total = projects.length;
-    const pubCnt = projects.filter(p => p.isPublic).length;
-    document.getElementById("projCount").textContent = total;
-    document.getElementById("statTotal").textContent = total;
+    const listEl  = document.getElementById("projList");
+    const total   = projects.length;
+    const pubCnt  = projects.filter(p => p.isPublic).length;
+    document.getElementById("projCount").textContent  = total;
+    document.getElementById("statTotal").textContent  = total;
     document.getElementById("statPublic").textContent = pubCnt;
-    document.getElementById("sumTotal").textContent = total;
-    document.getElementById("sumPublic").textContent = pubCnt;
+    document.getElementById("sumTotal").textContent   = total;
 
     if (!total) {
       listEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg></div><h3>No circuits yet</h3><p>Create your first circuit and save it here.</p><a class="empty-cta" href="/create-circuit">Create Circuit</a></div>`;
@@ -506,14 +393,15 @@
 
     for (const proj of projects) {
       const isPublic = !!proj.isPublic;
-      const isLocal = fromLocal || proj.source === "local";
-      const ts = proj.updatedAt || proj.localUpdatedAt || proj.timestamp;
-      const editUrl = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(proj.slug || slugify(proj.name || ""))}`;
-      const viewUrl = buildViewUrl(proj);
+      const isLocal  = fromLocal || proj.source === "local";
+      const ts       = proj.updatedAt || proj.localUpdatedAt || proj.timestamp;
+      const editUrl  = `/create-circuit?project=${proj.id}&name=${encodeURIComponent(proj.slug || slugify(proj.name || ""))}`;
+      const viewUrl  = buildCircuitUrl(proj);
+
       const row = document.createElement("div");
-      row.className = "circuit-row";
+      row.className  = "circuit-row";
       row.dataset.id = proj.id;
-      row.innerHTML = `
+      row.innerHTML  = `
         <div>
           <a class="circuit-name-link" href="${editUrl}">${esc(proj.name || "Untitled Circuit")}</a>
           <div class="circuit-meta">
@@ -522,13 +410,15 @@
             ${isLocal ? `<span class="badge badge-offline">offline</span>` : ""}
           </div>
         </div>
-        <div class="stat-cell" id="likes-${proj.id}">${I.heart} <span>—</span></div>
-        <div class="stat-cell" id="views-${proj.id}">${I.eye} <span>—</span></div>
+        <div class="stat-cell ${isPublic ? "" : "dimmed"}" id="likes-${proj.id}">${I.heart} <span>—</span></div>
+        <div class="stat-cell ${isPublic ? "" : "dimmed"}" id="views-${proj.id}">${I.eye} <span>—</span></div>
         <div class="row-actions">
           <button class="vis-toggle" id="vis-${proj.id}" data-id="${proj.id}" data-public="${isPublic}" title="${isPublic ? "Make private" : "Make public"}">
             ${isPublic ? I.eye + " Pub" : I.eyeOff + " Priv"}
           </button>
-          ${isPublic ? `<a class="view-link-btn" href="${viewUrl}" title="Public view" target="_blank">${I.globe}</a>` : `<span style="width:28px"></span>`}
+          ${isPublic
+            ? `<a class="view-link-btn" href="${viewUrl}" title="View on Explore" target="_blank">${I.globe}</a>`
+            : `<span style="width:28px"></span>`}
           <button class="row-btn" title="Edit" onclick="window.location.href='${editUrl}'">${I.open}</button>
           <button class="row-btn danger" data-id="${proj.id}" data-name="${esc(proj.name || "Untitled")}" title="Delete">${I.trash}</button>
         </div>`;
@@ -545,51 +435,86 @@
 
     listEl.querySelectorAll(".vis-toggle").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const id = btn.dataset.id;
+        const id     = btn.dataset.id;
         const nowPub = btn.dataset.public !== "true";
         try {
           await updateDoc(doc(db, "projects", id), { isPublic: nowPub });
           btn.dataset.public = String(nowPub);
+
           const badge = document.getElementById("badge-" + id);
           if (badge) { badge.textContent = nowPub ? "Public" : "Private"; badge.className = "badge " + (nowPub ? "badge-public" : "badge-private"); }
+
           btn.innerHTML = nowPub ? I.eye + " Pub" : I.eyeOff + " Priv";
+
+          const likesEl = document.getElementById("likes-" + id);
+          const viewsEl = document.getElementById("views-" + id);
+          if (likesEl) likesEl.className = `stat-cell ${nowPub ? "" : "dimmed"}`;
+          if (viewsEl) viewsEl.className = `stat-cell ${nowPub ? "" : "dimmed"}`;
+
           const viewSlot = btn.nextElementSibling;
           if (viewSlot) {
-            const proj = projects.find(p => p.id === id);
-            const viewUrl = proj ? buildViewUrl(proj) : "#";
-            viewSlot.outerHTML = nowPub ? `<a class="view-link-btn" href="${viewUrl}" title="Public view" target="_blank">${I.globe}</a>` : `<span style="width:28px"></span>`;
+            const proj   = projects.find(p => p.id === id);
+            const vUrl   = proj ? buildCircuitUrl(proj) : "#";
+            viewSlot.outerHTML = nowPub
+              ? `<a class="view-link-btn" href="${vUrl}" title="View on Explore" target="_blank">${I.globe}</a>`
+              : `<span style="width:28px"></span>`;
           }
-          document.getElementById("sumPublic").textContent = document.querySelectorAll(".badge-public").length;
+
           document.getElementById("statPublic").textContent = document.querySelectorAll(".badge-public").length;
+
+          for (const key of [`sks_proj_${id}`, `project_${id}`]) {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            try { const d = JSON.parse(raw); d.isPublic = nowPub; localStorage.setItem(key, JSON.stringify(d)); } catch {}
+          }
+
           toast(nowPub ? "Circuit is now public" : "Circuit is now private", "ok");
         } catch { toast("Could not update visibility", "err"); }
       });
     });
 
     if (!fromLocal && projects.length > 0) {
-      const stats = await batchFetchStats(projects.map(p => p.id));
-      let totalLikes = 0;
-      for (const proj of projects) {
-        const d = stats[proj.id] || {};
-        totalLikes += (d.likes || 0);
-        const lEl = document.getElementById("likes-" + proj.id);
-        const vEl = document.getElementById("views-" + proj.id);
-        if (lEl) lEl.innerHTML = I.heart + " <span>" + (d.likes || 0) + "</span>";
-        if (vEl) vEl.innerHTML = I.eye + " <span>" + (d.views || 0) + "</span>";
+      const publicIds = projects.filter(p => p.isPublic).map(p => p.id);
+      let totalLikes = 0, totalViews = 0;
+
+      for (let i = 0; i < publicIds.length; i += 30) {
+        const chunk = publicIds.slice(i, i + 30);
+        try {
+          const snap = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", chunk)));
+          snap.forEach(d => {
+            const data  = d.data();
+            totalLikes += (data.likes || 0);
+            totalViews += (data.views || 0);
+            const lEl = document.getElementById("likes-" + d.id);
+            const vEl = document.getElementById("views-" + d.id);
+            if (lEl) lEl.innerHTML = I.heart + " <span>" + (data.likes || 0) + "</span>";
+            if (vEl) vEl.innerHTML = I.eye   + " <span>" + (data.views || 0) + "</span>";
+          });
+        } catch (e) { console.warn("[Stats]", e); }
       }
+
       document.getElementById("sumLikes").textContent = totalLikes;
+      document.getElementById("sumViews").textContent = totalViews;
+
+      const privateIds = projects.filter(p => !p.isPublic).map(p => p.id);
+      for (const id of privateIds) {
+        const lEl = document.getElementById("likes-" + id);
+        const vEl = document.getElementById("views-" + id);
+        if (lEl) lEl.innerHTML = I.heart + " <span>—</span>";
+        if (vEl) vEl.innerHTML = I.eye   + " <span>—</span>";
+      }
     }
   }
 
   async function loadProjects() {
     const listEl = document.getElementById("projList");
     try {
-      const snap = await getDocs(query(collection(db, "projects"), where("authorUid", "==", uid)));
+      const snap     = await getDocs(query(collection(db, "projects"), where("authorUid", "==", uid)));
       const projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       projects.sort((a, b) => tsMillis(b.updatedAt || b.timestamp) - tsMillis(a.updatedAt || a.timestamp));
       renderProjects(projects, false);
     } catch (err) {
-      console.error("[Dashboard] Firestore query failed:", err.code, err.message);
+      console.error("[Dashboard] Firestore failed:", err.code, err.message);
       const local = localProjects();
       if (local.length > 0) {
         toast("Showing offline data", "warn");
@@ -600,7 +525,7 @@
     }
   }
 
-  document.getElementById("searchInput")?.addEventListener("input", function() {
+  document.getElementById("searchInput")?.addEventListener("input", function () {
     const q = this.value.toLowerCase();
     document.querySelectorAll(".circuit-row").forEach(row => {
       const name = row.querySelector(".circuit-name-link")?.textContent?.toLowerCase() || "";
@@ -620,10 +545,9 @@
       await deleteDoc(doc(db, "projects", id));
       localStorage.removeItem(`sks_proj_${id}`);
       localStorage.removeItem(`project_${id}`);
-      const lk = `all_projects_${uid}`;
+      const lk   = `all_projects_${uid}`;
       const list = JSON.parse(localStorage.getItem(lk) || "[]").filter(p => p.id !== id);
       localStorage.setItem(lk, JSON.stringify(list));
-      invalidateStatsCache();
       toast(`"${name}" deleted`, "ok");
       loadProjects();
     } catch { toast("Could not delete. Please try again.", "err"); }

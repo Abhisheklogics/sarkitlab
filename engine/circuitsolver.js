@@ -638,20 +638,67 @@ export default class CircuitSolver {
     return 1.0/totalG;
   }
 
-  _buildAliases(raw) {
+ _buildAliases(raw) {
     const s = raw.trim();
+
+    // Exact match hamesha include hota hai
     const aliases = new Set([s, s.toLowerCase(), s.toUpperCase()]);
+
+    // Pure numeric pin numbers ke liye D/A/P prefix variants
     const num = Number(s);
     if (Number.isFinite(num) && Number.isInteger(num) && num >= 0) {
-      aliases.add(`D${num}`); aliases.add(`d${num}`); aliases.add(`P${num}`); aliases.add(`p${num}`);
-      if (num>=14&&num<=19) { aliases.add(`A${num-14}`); aliases.add(`a${num-14}`); }
-      if (num>=0 &&num<=5)  { aliases.add(`A${num}`);    aliases.add(`a${num}`);    }
+      aliases.add(`D${num}`);
+      aliases.add(`d${num}`);
+      aliases.add(`P${num}`);
+      aliases.add(`p${num}`);
+      // Arduino analog mapping: pins 14-19 = A0-A5
+      if (num >= 14 && num <= 19) {
+        aliases.add(`A${num - 14}`);
+        aliases.add(`a${num - 14}`);
+      }
+      // Pins 0-5 can also be A0-A5 on analog-only lookup
+      if (num >= 0 && num <= 5) {
+        aliases.add(`A${num}`);
+        aliases.add(`a${num}`);
+      }
     }
-    if (/^[Dd]\d+$/.test(s)) aliases.add(s.slice(1));
+
+    // "D14" → "14" style (strip D/d prefix only if rest is a number)
+    if (/^[Dd]\d+$/.test(s)) {
+      aliases.add(s.slice(1));
+    }
+
+    // "A0" → "14", "A1" → "15", etc.
     const aMatch = s.match(/^[Aa](\d+)$/);
-    if (aMatch) { const n=parseInt(aMatch[1],10); if(n<=5){aliases.add(String(14+n));aliases.add(`D${14+n}`);aliases.add(`d${14+n}`);} }
-    const pa = { VCC:["VCC","Vcc","vcc","VDD","Vdd","vdd","POWER","5V","3V3","3.3V","VBAT"], GND:["GND","gnd","Gnd","VSS","vss","GROUND","0V","NEG"], VIN:["VIN","Vin","vin","IN+"], OUT:["OUT","out","Out","OUTPUT","output"] };
-    for (const [,group] of Object.entries(pa)) { if (group.includes(s)) group.forEach(a=>aliases.add(a)); }
+    if (aMatch) {
+      const n = parseInt(aMatch[1], 10);
+      if (n <= 5) {
+        aliases.add(String(14 + n));
+        aliases.add(`D${14 + n}`);
+        aliases.add(`d${14 + n}`);
+      }
+    }
+
+    // Power/signal rail aliases — sirf exact known names ke liye
+    // IMPORTANT: "C", "COM", "T1", "T2", "A1", "A2", "B1", "B2" jaisi
+    // generic pin names ko KABHI bhi yahan group mein mat daalo.
+    // Sirf woh names jinka ek hi meaning hai globally.
+    const POWER_ALIASES = {
+      VCC:  ["VCC", "Vcc", "vcc", "VDD", "Vdd", "vdd", "5V", "3V3", "3.3V", "VBAT"],
+      GND:  ["GND", "gnd", "Gnd", "VSS", "vss", "GROUND", "0V"],
+      VIN:  ["VIN", "Vin", "vin"],
+      OUT:  ["OUT", "out", "Out", "OUTPUT", "output"],
+      NEG:  ["NEG", "neg", "Neg", "NEGATIVE"],
+      POS:  ["POS", "pos", "Pos", "POSITIVE"],
+    };
+
+    for (const [, group] of Object.entries(POWER_ALIASES)) {
+      if (group.includes(s)) {
+        group.forEach(a => aliases.add(a));
+        break; // ek group match hone ke baad ruko — cross-group contamination rokne ke liye
+      }
+    }
+
     return aliases;
   }
 }

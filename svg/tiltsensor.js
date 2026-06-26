@@ -11,7 +11,8 @@ export default class VirtualTiltSensor {
       signalPins: ["OUT"],
       gndPins   : ["GND"],
     };
-
+this._voltageOUT = 0;
+this._voltageGND = 0;
     this.svg = this._createSVG();
     this._attachEvents();
   }
@@ -38,14 +39,15 @@ export default class VirtualTiltSensor {
     return svg;
   }
 
-  _attachEvents() {
-    this.svg.addEventListener("pointerdown", e => {
-      e.stopPropagation();
-      this.tilted = !this.tilted;
-      this.active = this.tilted;
-      this._updateVisual();
-    });
-  }
+_attachEvents() {
+  this.svg.addEventListener("pointerdown", e => {
+    e.stopPropagation();
+    this.tilted = !this.tilted;
+    this.active = this.tilted;
+    this._updateVisual();
+    this._simEngine?.resolveElectrical?.();
+  });
+}
 
   _updateVisual() {
     const sensor = this.svg.querySelector("#sensor");
@@ -64,10 +66,9 @@ export default class VirtualTiltSensor {
     }
   }
 
-  getActiveShorts() {
-    if (this.tilted) return [];
-    return [["OUT","GND"]];
-  }
+getActiveShorts() {
+  return [];
+}
 
   isActive()   { return this.tilted ? 1 : 0; }
   getElement() { return this.svg; }

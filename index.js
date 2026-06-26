@@ -78,7 +78,8 @@ const loaderSpawn = makeLoaderSpawner(
   spawner.getDragHandlers().startDrag,
   openResistorEditor,
   digitalInputs,
-  digitalOutputs
+  digitalOutputs,
+  () => engine 
 );
 
 const GATE_MAP = {
@@ -591,6 +592,7 @@ function resetAllComponents() {
 
     const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
     if (SWITCH_TYPES.has(comp.type)) {
+      
       if (comp.instance._engineLinked) {
         const curActive = comp.instance.active;
         const curTilted = comp.instance.tilted;
@@ -675,6 +677,7 @@ simulationBtn?.addEventListener("click", async () => {
       registry.getAll().forEach(comp => {
         if (!comp.instance) return;
         const inst = comp.instance;
+        
 
         if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
           inst.simEngine     = engine;
