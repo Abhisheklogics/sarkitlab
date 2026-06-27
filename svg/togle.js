@@ -1,23 +1,25 @@
 "use strict";
- 
+
 export default class ToggleSwitch {
   constructor(ctx = {}) {
-    this.active        = false;
-    this.instance      = this;
+    this.active         = false;
+    this.instance       = this;
+    this._simEngine     = null;
     this._digitalInputs = ctx.digitalInputs ?? ctx ?? {};
- 
+    this._voltageCOM    = 0;
+    this._voltageT1     = 0;
+    this._voltageT2     = 0;
+
     this.meta = {
       category  : "digital-input",
       signalPins: ["T1", "COM"],
       gndPins   : ["T2"],
     };
- this._voltageCOM = 0;
-this._voltageT1  = 0;
-this._voltageT2  = 0;
+
     this.svg = this._createSVG();
     this._attachEvents();
   }
- 
+
   _createSVG() {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width",   "100");
@@ -32,31 +34,27 @@ this._voltageT2  = 0;
       <text id="sw-label" x="50" y="108"
             text-anchor="middle" font-size="9"
             fill="#888" font-family="monospace">OFF</text>
- 
       <line x1="25" y1="90" x2="25" y2="130" stroke="#aaa" stroke-width="2"/>
       <line x1="50" y1="90" x2="50" y2="130" stroke="#aaa" stroke-width="2"/>
       <line x1="75" y1="90" x2="75" y2="130" stroke="#aaa" stroke-width="2"/>
- 
       <circle cx="25" cy="130" r="3" fill="#cfcfcf"/>
       <circle cx="50" cy="130" r="3" fill="#f0a500"/>
       <circle cx="75" cy="130" r="3" fill="#cfcfcf"/>
- 
       <text x="25"  y="125" text-anchor="middle" font-size="7" fill="#666" font-family="monospace">T1</text>
       <text x="50"  y="125" text-anchor="middle" font-size="7" fill="#f0a500" font-family="monospace">COM</text>
       <text x="75"  y="125" text-anchor="middle" font-size="7" fill="#666" font-family="monospace">T2</text>
     `;
     return svg;
   }
- 
- _attachEvents() {
-  this.svg.addEventListener("pointerdown", e => {
-    e.stopPropagation();
-    this.active = !this.active;
-    this._updateVisual();
-    this._simEngine?.resolveElectrical?.();
-  });
-}
- 
+
+  _attachEvents() {
+    this.svg.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      this.active = !this.active;
+      this._updateVisual();
+    });
+  }
+
   _updateVisual() {
     const lever = this.svg.querySelector("#lever");
     const label = this.svg.querySelector("#sw-label");
@@ -69,14 +67,14 @@ this._voltageT2  = 0;
       label.setAttribute("fill", this.active ? "#00e676" : "#888");
     }
   }
- 
+
   getActiveShorts() {
-  return [];
-}
- 
+    return [];
+  }
+
   isActive()   { return this.active ? 1 : 0; }
   getElement() { return this.svg; }
- 
+
   updateVisual(state) {
     this.active = !!state;
     this._updateVisual();

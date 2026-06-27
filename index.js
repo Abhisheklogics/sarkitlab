@@ -590,21 +590,29 @@ function resetAllComponents() {
       }
     }
 
-    const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
-    if (SWITCH_TYPES.has(comp.type)) {
-      
-      if (comp.instance._engineLinked) {
-        const curActive = comp.instance.active;
-        const curTilted = comp.instance.tilted;
-        Object.defineProperty(comp.instance, "active", { value: curActive, writable: true, configurable: true });
-        if ("tilted" in comp.instance) {
-          Object.defineProperty(comp.instance, "tilted", { value: curTilted, writable: true, configurable: true });
-        }
-        comp.instance._engineLinked = false;
-      }
-      comp.instance._simEngine = null;
-      comp._simEngine          = null;
+   const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
+if (SWITCH_TYPES.has(comp.type)) {
+  if (comp.instance._engineLinked) {
+    const curActive = comp.instance.active;
+    const curTilted = comp.instance.tilted;
+    Object.defineProperty(comp.instance, "active", {
+      value: curActive,
+      writable: true,
+      configurable: true,
+    });
+    if ("tilted" in comp.instance) {
+      Object.defineProperty(comp.instance, "tilted", {
+        value: curTilted,
+        writable: true,
+        configurable: true,
+      });
     }
+    comp.instance._engineLinked = false;
+  }
+  comp.instance._engine    = null;
+  comp.instance._simEngine = null;
+  comp._simEngine          = null;
+}
   });
 
   digitalOutputs = {};
@@ -746,43 +754,46 @@ simulationBtn?.addEventListener("click", async () => {
           }
         }
 
-        if (SWITCH_TYPES.has(comp.type)) {
-          inst._simEngine = engine;
-          comp._simEngine = engine;
-          if (comp.svg) comp.svg._simEngine = engine;
+if (SWITCH_TYPES.has(comp.type)) {
+  inst._engine    = engine;
+  inst._simEngine = engine;
+  comp._simEngine = engine;
+  if (comp.svg) comp.svg._simEngine = engine;
 
-          if (!inst._engineLinked) {
-            inst._engineLinked = true;
-            let active = inst.active ?? false;
-            const ad = Object.getOwnPropertyDescriptor(inst, "active");
-            if (!ad?.set) {
-              Object.defineProperty(inst, "active", {
-                get: () => active,
-                set: val => {
-                  const changed = val !== active;
-                  active = val;
-                  if (changed) queueMicrotask(() => engine.resolveElectrical?.());
-                },
-                configurable: true,
-              });
-            }
-            if ("tilted" in inst) {
-              let tilted = inst.tilted ?? false;
-              const td = Object.getOwnPropertyDescriptor(inst, "tilted");
-              if (!td?.set) {
-                Object.defineProperty(inst, "tilted", {
-                  get: () => tilted,
-                  set: val => {
-                    const changed = val !== tilted;
-                    tilted = val;
-                    if (changed) queueMicrotask(() => engine.resolveElectrical?.());
-                  },
-                  configurable: true,
-                });
-              }
-            }
-          }
-        }
+  if (!inst._engineLinked) {
+    inst._engineLinked = true;
+
+    let active = inst.active ?? false;
+    const ad = Object.getOwnPropertyDescriptor(inst, "active");
+    if (!ad?.set) {
+      Object.defineProperty(inst, "active", {
+        get: () => active,
+        set: val => {
+          const changed = val !== active;
+          active = val;
+          if (changed) queueMicrotask(() => engine.resolveElectrical?.());
+        },
+        configurable: true,
+      });
+    }
+
+    if ("tilted" in inst) {
+      let tilted = inst.tilted ?? false;
+      const td = Object.getOwnPropertyDescriptor(inst, "tilted");
+      if (!td?.set) {
+        Object.defineProperty(inst, "tilted", {
+          get: () => tilted,
+          set: val => {
+            const changed = val !== tilted;
+            tilted = val;
+            if (changed) queueMicrotask(() => engine.resolveElectrical?.());
+          },
+          configurable: true,
+        });
+      }
+    }
+  }
+}
       });
 
       if (emptyCode) {
@@ -817,3 +828,7 @@ simulationBtn?.addEventListener("click", async () => {
     stopSimulation();
   }
 });
+
+
+
+

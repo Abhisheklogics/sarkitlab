@@ -5,6 +5,7 @@ export default class PushButtons {
   constructor() {
     this.active   = false;
     this.instance = this;
+    this._simEngine = null;
 
     this.meta = {
       category  : "digital-input",
@@ -18,12 +19,10 @@ export default class PushButtons {
       { id: "B2", x: 92,  y: 20  },
     ];
 
-  
-this._pointerUpHandler = () => {
-  this.active = false;
-  this._updateVisual();
-  this._simEngine?.resolveElectrical?.();
-};
+    this._pointerUpHandler = () => {
+      this.active = false;
+      this._updateVisual();
+    };
 
     this.svg = this._createSVG();
     this._attachEvents();
@@ -37,7 +36,6 @@ this._pointerUpHandler = () => {
     svg.style.overflow   = "visible";
     svg.style.cursor     = "pointer";
     svg.style.userSelect = "none";
-
     svg.innerHTML = `
       <rect x="30" y="20" width="60" height="60" rx="8"
             fill="#2f2f2f" stroke="#1a1a1a" stroke-width="3"/>
@@ -55,19 +53,15 @@ this._pointerUpHandler = () => {
     return svg;
   }
 
- // PushButton.js
-_attachEvents() {
-  this.svg.addEventListener("pointerdown", e => {
-    e.stopPropagation();
-    this.active = true;
-    this._updateVisual();
-    this._simEngine?.resolveElectrical?.();
-  });
-  window.addEventListener("pointerup",     this._pointerUpHandler);
-  window.addEventListener("pointercancel", this._pointerUpHandler);
-}
-
-
+  _attachEvents() {
+    this.svg.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      this.active = true;
+      this._updateVisual();
+    });
+    window.addEventListener("pointerup",     this._pointerUpHandler);
+    window.addEventListener("pointercancel", this._pointerUpHandler);
+  }
 
   _updateVisual() {
     const cap = this.svg.querySelector("#btncap");
@@ -76,9 +70,9 @@ _attachEvents() {
     cap.setAttribute("fill", this.active ? "#9c9c9c" : "#d6d6d6");
   }
 
- getActiveShorts() {
-  return [["A1","A2"], ["B1","B2"]];
-}
+  getActiveShorts() {
+    return [];
+  }
 
   isActive()   { return this.active ? 1 : 0; }
   getElement() { return this.svg; }

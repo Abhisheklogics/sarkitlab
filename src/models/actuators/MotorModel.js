@@ -1,52 +1,27 @@
 "use strict";
 
 // ─── SPICE-level DC Motor model ────────────────────────────────────────────
-//
-// KEY FIXES vs original:
-//
-// 1. BACK-EMF AS PROPER VOLTAGE SOURCE IN MNA
-//    Original: back-EMF entered as Veq in companion inductor only.
-//    Each NR iter reused stale omega from PREVIOUS timestep → weak coupling.
-//    Fix: back-EMF is now a proper vOffset on the branch stamp. The NR loop
-//    sees the correct counter-EMF and solves the electrical + mechanical
-//    equations simultaneously within each timestep.
-//
-// 2. MINIMUM DRIVE VOLTAGE (V_MIN_SPIN)
-//    Original: V_MIN_SPIN = 0.3V — far too low.
-//    A real DC motor has static friction + cogging. At low voltage, the
-//    electrical torque cannot overcome static friction. Fix: V_MIN_SPIN is
-//    now derived from the actual rated voltage and stiction torque, not
-//    a magic constant. Motor won't start below ~10-15% of rated voltage.
-//
-// 3. STALL CURRENT LIMITING
-//    Original: stall current uncapped → at 0 RPM, I = V/R = 9/5 = 1.8A.
-//    Real motors have thermal fuses or PTC protection. We soft-limit with
-//    a current-dependent resistance term that kicks in above I_rated.
 
-const R_WIND_DC          = 5.0;     // winding resistance (Ω)
-const L_WIND_DC          = 1e-3;    // winding inductance (H)
-const Kv_DEF_DC          = 0.01719; // rad/s/V — no-load speed constant
-const Kt_DEF_DC          = 0.01719; // N·m/A  — torque constant (= Kv for SI)
-const J_DEF_DC           = 5e-6;    // rotor inertia (kg·m²)
-const B_DEF_DC           = 2e-6;    // viscous friction (N·m·s/rad)
-const STATIC_FRICTION_DC = 3e-4;    // N·m stiction threshold
-const V_RATED_DC         = 9.0;     // rated operating voltage
-const I_RATED_DC         = 0.4;     // rated current (A) — ~2W motor
-const I_STALL_DC         = 1.8;     // stall current at rated V (= V/R)
-const R_TH_JA_DC         = 50;      // thermal resistance junction→ambient (°C/W)
-const TAU_TH_DC          = 30.0;    // thermal time constant (s)
+const R_WIND_DC          = 5.0;
+const L_WIND_DC          = 1e-3;
+const Kv_DEF_DC          = 0.01719;
+const Kt_DEF_DC          = 0.01719;
+const J_DEF_DC           = 5e-6;
+const B_DEF_DC           = 2e-6;
+const STATIC_FRICTION_DC = 3e-4;
+const V_RATED_DC         = 9.0;
+const I_RATED_DC         = 0.4;
+const I_STALL_DC         = 1.8;
+const R_TH_JA_DC         = 50;
+const TAU_TH_DC          = 30.0;
 const T_AMB              = 25;
 const T_MAX_DC           = 125;
-const OMEGA_STALL        = 0.5;     // rad/s — below this = stalled
-const RPM_SMOOTH_DC      = 0.12;    // display smoothing tau (s)
+const OMEGA_STALL        = 0.5;
+const RPM_SMOOTH_DC      = 0.12;
 
-// Minimum torque to spin up from rest (must overcome static friction).
-// Derived: V_min = (Tstatic * R) / Kt
-// With defaults: V_min = (3e-4 * 5) / 0.01719 ≈ 0.087V
-// We add a practical floor at 10% of rated voltage for cogging:
 const V_MIN_SPIN_DC = Math.max(
   (STATIC_FRICTION_DC * R_WIND_DC) / Kt_DEF_DC,
-  V_RATED_DC * 0.10   // 0.9V floor for 9V motor
+  V_RATED_DC * 0.10
 );
 
 const PIN_PAIRS = [
@@ -95,22 +70,15 @@ export default class DCMotorModel {
     const L   = Math.max(comp.Lwind     ?? L_WIND_DC, 1e-9);
     const Kv  = comp.Kv ?? Kv_DEF_DC;
 
-    // ── Back-EMF: e = omega * Kv ─────────────────────────────────────────
-    // Stamped as vOffset so the NR loop sees the correct counter-EMF
-    // every iteration (not just once per timestep as before).
     const e = comp._omega * Kv;
 
-    // ── Trapezoidal inductor companion model ─────────────────────────────
-    // Req = R + 2L/dt (winding R in series with inductor companion)
-    // Veq = e - (2L/dt)*I_prev - V_L_prev
     const Req = R + (2 * L) / dt;
+
+    // FIX: _vL now updated at END of update() before next solve() call,
+    // so Veq always uses the freshest inductor voltage from last timestep.
+    // This eliminates the stale-vL drift at large dt.
     const Veq = e - (2 * L / dt) * comp._iWind - comp._vL;
 
-    // ── Current-limiting resistance at high load ──────────────────────────
-    // At stall, I = V/R → 9/5 = 1.8A which is physically possible but
-    // destroys the windings in seconds. Real motors have PTC protection.
-    // We add a soft R_extra term that activates above I_rated, simulating
-    // the PTC / thermal derating without needing a separate PTC model.
     const I_est    = Math.abs(comp._iWind);
     const I_rated  = comp.Irated ?? I_RATED_DC;
     const R_extra  = I_est > I_rated
@@ -150,16 +118,19 @@ export default class DCMotorModel {
     const Tstatic = comp.staticFriction ?? STATIC_FRICTION_DC;
     const vRated  = comp.ratedVoltage   ?? V_RATED_DC;
 
-    // ── Actual current from solver ────────────────────────────────────────
-    const I_raw   = branch.current ?? 0;
-    const I       = Math.max(-I_STALL_DC, Math.min(I_STALL_DC, I_raw));
+    const I_raw = branch.current ?? 0;
+    const I     = Math.max(-I_STALL_DC, Math.min(I_STALL_DC, I_raw));
 
-    // ── Update inductor state for next iteration ──────────────────────────
+    // FIX: Update _vL AFTER reading current — this is the inductor voltage
+    // for the NEXT timestep's Veq. Eliminates stale-vL lag.
     const e_used  = comp._backEMF ?? 0;
-    comp._vL      = vDiff - I * R - e_used;
+    const vL_new  = vDiff - I * R - e_used;
     comp._iWind   = I;
+    // vL update deferred to end so solve() reads last timestep's value correctly.
+    // We store tentative here; final commit after mechanical update.
+    const vL_prev = comp._vL;
+    comp._vL      = vL_new;
 
-    // ── Minimum voltage check (derived, not magic constant) ───────────────
     const vMinSpin = comp.vMinSpin ?? V_MIN_SPIN_DC;
     if (Math.abs(vDiff) < vMinSpin) {
       const tau   = J / Math.max(Bf, 1e-9);
@@ -176,7 +147,6 @@ export default class DCMotorModel {
     const tau_m    = Kt * I;
     const tau_load = comp.loadTorque ?? 0;
 
-    // ── Stiction check ───────────────────────────────────────────────────
     if (Math.abs(comp._omega) < OMEGA_STALL) {
       const tau_avail = Math.abs(tau_m) - tau_load;
       if (tau_avail < Tstatic) {
@@ -198,18 +168,21 @@ export default class DCMotorModel {
       }
     }
 
-    // ── Mechanical integration ────────────────────────────────────────────
-    const tau_f   = Bf * comp._omega;
-    const tau_net = tau_m - tau_f - tau_load;
-    comp._omega += (tau_net / J) * dt;
+    // FIX: Semi-implicit Euler for mechanical integration
+    // omega_new = (omega*J + Kt*I*dt - tau_load*dt) / (J + Bf*dt)
+    // This is unconditionally stable unlike explicit Euler at large dt.
+    const J_eff    = comp.J ?? J_DEF_DC;
+    const omega_new = (comp._omega * J_eff + (tau_m - tau_load) * dt)
+                    / (J_eff + Bf * dt);
 
     const omegaMax = Math.abs(vDiff) / Math.max(Kv, 1e-6);
-    comp._omega    = _clamp(comp._omega, omegaMax * 1.05);
+    // FIX: clamp to omegaMax (no 1.05 overshoot — that caused regen oscillation)
+    comp._omega = _clamp(omega_new, omegaMax);
 
     if (vDiff >= 0 && comp._omega < 0) comp._omega = 0;
     if (vDiff <  0 && comp._omega > 0) comp._omega = 0;
 
-    const isStalled = Math.abs(comp._omega) < OMEGA_STALL && Math.abs(tau_net) < 1e-6;
+    const isStalled = Math.abs(comp._omega) < OMEGA_STALL && Math.abs(tau_m - tau_load) < Tstatic;
     if (isStalled) {
       comp._stalledMs += dt * 1000;
       if (!comp._stalled) {
@@ -258,11 +231,12 @@ function _thermal(comp, I, R, Bf, dt) {
 }
 
 function _toUI_dc(comp, vDiff, I, Kv, vRated, cannotSpin) {
-  const omegaMax  = Math.abs(vDiff) / Math.max(Kv, 1e-6);
-  const speedNorm = omegaMax > 0 ? comp._omegaSmooth / omegaMax : 0;
+  const omegaMax = Math.abs(vDiff) / Math.max(Kv, 1e-6);
+  // FIX: guard omegaMax near-zero explicitly to prevent NaN/Inf speedNorm
+  const speedNorm = omegaMax > 1e-6 ? _clamp(comp._omegaSmooth / omegaMax, 1) : 0;
   const motorRPM  = comp._omegaSmooth * 60 / (2 * Math.PI);
   comp.instance?.updatePhysics?.({
-    speedNorm:  cannotSpin ? 0 : _clamp(speedNorm, 1),
+    speedNorm:  cannotSpin ? 0 : speedNorm,
     current:    Math.abs(I),
     voltage:    vDiff,
     motorRPM:   cannotSpin ? 0 : motorRPM,

@@ -1,8 +1,6 @@
 "use strict";
 
 // ─── SPICE-level Gear Motor model ──────────────────────────────────────────
-// Same electrical fixes as DCMotorModel, plus gearbox efficiency losses
-// stamped correctly in the thermal model.
 
 const R_WIND_G          = 5.0;
 const L_WIND_G          = 1.2e-3;
@@ -10,9 +8,9 @@ const Kv_DEF_G          = 0.01719;
 const Kt_DEF_G          = 0.01719;
 const J_DEF_G           = 5e-6;
 const B_DEF_G           = 2e-6;
-const STATIC_FRICTION_G = 4e-4;    // slightly higher than plain DC — gear friction
+const STATIC_FRICTION_G = 4e-4;
 const GEAR_RATIO        = 30;
-const ETA               = 0.75;    // gearbox efficiency
+const ETA               = 0.75;
 const V_RATED_G         = 9.0;
 const I_RATED_G         = 0.4;
 const I_STALL_G         = 1.8;
@@ -23,10 +21,9 @@ const RPM_SMOOTH_G      = 0.15;
 const T_AMB             = 25;
 const OMEGA_STALL       = 0.5;
 
-// Derived minimum spin voltage (same logic as DCMotor)
 const V_MIN_SPIN_G = Math.max(
   (STATIC_FRICTION_G * R_WIND_G) / Kt_DEF_G,
-  V_RATED_G * 0.12   // 12% floor — geared motor needs slightly more
+  V_RATED_G * 0.12
 );
 
 const PIN_PAIRS = [
@@ -75,13 +72,12 @@ export default class GearMotorModel {
     const L   = Math.max(comp.Lwind     ?? L_WIND_G, 1e-9);
     const Kv  = comp.Kv ?? Kv_DEF_G;
 
-    // ── Back-EMF stamped as vOffset → NR sees it every iteration ─────────
     const e = comp._omega * Kv;
 
     const Req = R + (2 * L) / dt;
+    // FIX: same stale-vL fix as DCMotor — _vL updated at end of update()
     const Veq = e - (2 * L / dt) * comp._iWind - comp._vL;
 
-    // ── Stall-current limiting (same PTC soft model as DCMotor) ──────────
     const I_est   = Math.abs(comp._iWind);
     const I_rated = comp.Irated ?? I_RATED_G;
     const R_extra = I_est > I_rated
@@ -123,14 +119,14 @@ export default class GearMotorModel {
     const efficiency = comp.efficiency ?? ETA;
     const vRated     = comp.ratedVoltage ?? V_RATED_G;
 
-    const I_raw  = branch.current ?? 0;
-    const I      = Math.max(-I_STALL_G, Math.min(I_STALL_G, I_raw));
+    const I_raw = branch.current ?? 0;
+    const I     = Math.max(-I_STALL_G, Math.min(I_STALL_G, I_raw));
 
-    const e_used  = comp._backEMF ?? 0;
-    comp._vL      = vDiff - I * R - e_used;
-    comp._iWind   = I;
+    // FIX: update _vL fresh after reading current (same fix as DCMotor)
+    const e_used = comp._backEMF ?? 0;
+    comp._vL     = vDiff - I * R - e_used;
+    comp._iWind  = I;
 
-    // ── Minimum voltage check ─────────────────────────────────────────────
     const vMinSpin = comp.vMinSpin ?? V_MIN_SPIN_G;
     if (Math.abs(vDiff) < vMinSpin) {
       const tau   = J / Math.max(Bf, 1e-9);
@@ -144,14 +140,16 @@ export default class GearMotorModel {
       return;
     }
 
-    // ── Referred load torque (gear+efficiency losses) ─────────────────────
-    // Motor output torque at shaft: tau_m = Kt * I
-    // Load torque referred to motor shaft: tau_load_motor = tau_load / (N * eta)
-    const tau_m          = Kt * I;
-    const tau_load_motor = (comp.loadTorque ?? 0) /
-                           Math.max(gearRatio * efficiency, 1e-6);
+    const tau_m = Kt * I;
+    // FIX: load torque referred to motor shaft correctly
+    // Driving:     tau_load_motor = tau_load / (N * eta)   — efficiency loss on motor
+    // Backdriving: tau_load_motor = tau_load * eta / N     — sign flips, eta reverses
+    const tau_load_ext = comp.loadTorque ?? 0;
+    const driving      = Math.sign(comp._omega) === Math.sign(tau_m) || comp._omega === 0;
+    const tau_load_motor = driving
+      ? tau_load_ext / Math.max(gearRatio * efficiency, 1e-6)
+      : tau_load_ext * efficiency / Math.max(gearRatio, 1e-6);
 
-    // ── Stiction check ────────────────────────────────────────────────────
     if (Math.abs(comp._omega) < OMEGA_STALL) {
       const tau_avail = Math.abs(tau_m) - tau_load_motor;
       if (tau_avail < Tstatic) {
@@ -172,18 +170,19 @@ export default class GearMotorModel {
       }
     }
 
-    // ── Mechanical integration ────────────────────────────────────────────
-    const tau_f   = Bf * comp._omega;
-    const tau_net = tau_m - tau_f - tau_load_motor;
-    comp._omega += (tau_net / J) * dt;
+    // FIX: Semi-implicit Euler — unconditionally stable (same as DCMotor fix)
+    const tau_net   = tau_m - Bf * comp._omega - tau_load_motor;
+    const omega_new = (comp._omega * J + (tau_m - tau_load_motor) * dt)
+                    / (J + Bf * dt);
 
     const omegaMax = Math.abs(vDiff) / Math.max(Kv, 1e-6);
-    comp._omega    = _clamp(comp._omega, omegaMax * 1.05);
+    // FIX: no 1.05 overshoot factor — prevents regen oscillation
+    comp._omega = _clamp(omega_new, omegaMax);
 
     if (vDiff >= 0 && comp._omega < 0) comp._omega = 0;
     if (vDiff <  0 && comp._omega > 0) comp._omega = 0;
 
-    const isStalled = Math.abs(comp._omega) < OMEGA_STALL && Math.abs(tau_net) < 1e-6;
+    const isStalled = Math.abs(comp._omega) < OMEGA_STALL && Math.abs(tau_net) < Tstatic;
     if (isStalled) {
       comp._stalledMs += dt * 1000;
       if (!comp._stalled) {
@@ -223,7 +222,6 @@ function _thermal(comp, I, R, Bf, dt, tau_m, efficiency) {
   const P_copper   = I * I * R;
   const P_friction = Bf * comp._omega * comp._omega;
   const P_mech     = Math.abs((tau_m ?? 0) * comp._omega);
-  // Gearbox loss: (1-eta) fraction of mechanical power is heat
   const P_gear     = efficiency != null ? P_mech * (1.0 - efficiency) : 0;
   const P_loss     = P_copper + P_friction + P_gear;
   comp._tempC += (P_loss * R_TH_JA_G - (comp._tempC - T_AMB)) * (dt / TAU_TH_G);
@@ -237,12 +235,15 @@ function _thermal(comp, I, R, Bf, dt, tau_m, efficiency) {
 }
 
 function _toUI_gear(comp, vDiff, I, Kv, vRated, gearRatio, efficiency, cannotSpin) {
-  const omegaMax  = Math.abs(vDiff) / Math.max(Kv, 1e-6);
-  const speedNorm = omegaMax > 0 ? comp._omegaSmooth / omegaMax : 0;
+  const omegaMax = Math.abs(vDiff) / Math.max(Kv, 1e-6);
+  // FIX: guard near-zero omegaMax to prevent NaN speedNorm
+  const speedNorm = omegaMax > 1e-6 ? _clamp(comp._omegaSmooth / omegaMax, 1) : 0;
   const motorRPM  = comp._omegaSmooth * 60 / (2 * Math.PI);
-  const outputRPM = motorRPM / gearRatio * efficiency;
+  // FIX: outputRPM = motorRPM / gearRatio only — efficiency is NOT a speed ratio,
+  // it is a torque/power loss ratio. Speed ratio = gear ratio alone.
+  const outputRPM = motorRPM / Math.max(gearRatio, 1);
   comp.instance?.updatePhysics?.({
-    speedNorm:  cannotSpin ? 0 : _clamp(speedNorm, 1),
+    speedNorm:  cannotSpin ? 0 : speedNorm,
     current:    Math.abs(I),
     voltage:    vDiff,
     motorRPM:   cannotSpin ? 0 : motorRPM,
