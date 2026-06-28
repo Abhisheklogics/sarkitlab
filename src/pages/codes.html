@@ -291,6 +291,45 @@ void loop() {
 }
 
 #include <TM1637Display.h>
+#define CLK 
+#define DIO 
+
+TM1637Display display(CLK, DIO);
+
+void setup() {
+  display.setBrightness(7);   
+  display.clear();
+}
+
+void loop() {
+  display.showNumberDec(1234);
+  delay(1000);
+
+  display.showNumberDec(5678); 
+  delay(1000);
+}
+#include <TM1637Display.h>
+
+#define CLK 
+#define DIO 
+
+TM1637Display display(CLK, DIO);
+
+void setup() {
+  display.setBrightness(7);   
+  display.clear();
+}
+
+void loop() {
+  display.showNumberDecEx(1234, 0b01000000);  // colon ON
+  delay(1000);
+
+  display.showNumberDecEx(5678, 0b01000000);  // colon ON
+  delay(1000);
+}ye wale code bhi sahi se parse ho  jate or fourdigit segment chalti hia to kya ardino compiler promt me ye cover hai ya nahi
+
+
+#include <TM1637Display.h>
 
 #define CLK 3
 #define DIO 2

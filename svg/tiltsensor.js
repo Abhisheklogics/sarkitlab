@@ -2,10 +2,10 @@
 
 export default class VirtualTiltSensor {
   constructor() {
-    this.tilted     = false;
-    this.active     = false;
-    this.instance   = this;
-    this._simEngine = null;
+    this._tilted     = false;
+    this.instance    = this;
+    this._simEngine  = null;
+    this._engine     = null;
     this._voltageOUT = 0;
     this._voltageGND = 0;
 
@@ -18,6 +18,20 @@ export default class VirtualTiltSensor {
     this.svg = this._createSVG();
     this._attachEvents();
   }
+
+  get tilted()  { return this._tilted; }
+  get active()  { return this._tilted; }
+
+  set tilted(val) {
+    const b = !!val;
+    if (b === this._tilted) return;
+    this._tilted = b;
+    this._updateVisual();
+    const eng = this._simEngine ?? this._engine;
+    if (eng) eng.resolveElectrical?.();
+  }
+
+  set active(val) { this.tilted = val; }
 
   _createSVG() {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -44,39 +58,32 @@ export default class VirtualTiltSensor {
   _attachEvents() {
     this.svg.addEventListener("pointerdown", e => {
       e.stopPropagation();
-      this.tilted = !this.tilted;
-      this.active = this.tilted;
-      this._updateVisual();
+      this.tilted = !this._tilted;
     });
   }
 
   _updateVisual() {
     const sensor = this.svg.querySelector("#sensor");
     if (sensor) {
-      sensor.setAttribute("transform", this.tilted ? "rotate(20 80 35)" : "rotate(0 80 35)");
+      sensor.setAttribute("transform",
+        this._tilted ? "rotate(20 80 35)" : "rotate(0 80 35)");
     }
     const ball = this.svg.querySelector("#ball");
     if (ball) {
-      ball.setAttribute("fill", this.tilted ? "#f97316" : "#cfcfcf");
-      ball.setAttribute("cx",   this.tilted ? "110"     : "35");
+      ball.setAttribute("fill", this._tilted ? "#f97316" : "#cfcfcf");
+      ball.setAttribute("cx",   this._tilted ? "110"     : "35");
     }
     const label = this.svg.querySelector("#state-label");
     if (label) {
-      label.textContent = this.tilted ? "OPEN (tilted)" : "CLOSED (upright)";
-      label.setAttribute("fill", this.tilted ? "#f97316" : "#69f0ae");
+      label.textContent = this._tilted
+        ? "OPEN (tilted)" : "CLOSED (upright)";
+      label.setAttribute("fill", this._tilted ? "#f97316" : "#69f0ae");
     }
   }
 
-  getActiveShorts() {
-    return [];
-  }
+  getActiveShorts() { return []; }
+  isActive()        { return this._tilted ? 1 : 0; }
+  getElement()      { return this.svg; }
 
-  isActive()   { return this.tilted ? 1 : 0; }
-  getElement() { return this.svg; }
-
-  updateVisual(state) {
-    this.tilted = !!state;
-    this.active = !!state;
-    this._updateVisual();
-  }
+  updateVisual(state) { this.tilted = !!state; }
 }

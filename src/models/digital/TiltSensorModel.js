@@ -28,7 +28,7 @@ export const TiltSensorModel = {
     const rattleHigh = comp._rattleHigh ?? false;
 
     let rContact;
-    if (!isTilted) {
+    if (isTilted) {
       rContact = inRattle
         ? (rattleHigh ? R_BALL_HIGH : R_BALL_LOW)
         : R_CLOSED;
@@ -61,8 +61,6 @@ export const TiltSensorModel = {
       comp._inRattle     = true;
       comp._rattleHigh   = false;
       comp._nextFlipTime = now + RATTLE_FLIP_MS;
-      const engine = solver.simEngine ?? comp.instance?._engine;
-      engine?.resolveElectrical?.();
     }
 
     if (comp._inRattle) {

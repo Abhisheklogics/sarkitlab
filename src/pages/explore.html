@@ -48,47 +48,39 @@
     .page-header-inner { max-width: 1200px; margin: 0 auto; }
     .page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--ink-900); margin-bottom: 6px; letter-spacing: -0.4px; }
     .page-header p { font-size: 14px; color: var(--ink-400); margin-bottom: 20px; }
-
     .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--ink-500); transition: all var(--ease); }
     .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     .page-body { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
-
     .stats-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .stats-bar-text { font-size: 13px; color: var(--ink-400); }
     .stats-bar-text strong { color: var(--ink-700); }
 
     .index-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--r-md); padding: 12px 16px; font-size: 12.5px; color: #92400e; margin-bottom: 16px; display: none; align-items: center; gap: 10px; }
     .index-notice.show { display: flex; }
-    .index-notice a { color: #c4611a; font-weight: 600; text-decoration: underline; }
+    .index-notice a { color: var(--accent); font-weight: 600; text-decoration: underline; }
 
     .circuit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
-
     .circuit-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; transition: all var(--ease); display: flex; flex-direction: column; }
     .circuit-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.07); transform: translateY(-2px); }
-
     .circuit-thumb { height: 120px; background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-soft); color: var(--border); cursor: pointer; text-decoration: none; }
-
     .circuit-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
-
-    .circuit-name { font-size: 14px; font-weight: 700; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; cursor: pointer; }
+    .circuit-name { font-size: 14px; font-weight: 700; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
     .circuit-name:hover { color: var(--accent); }
-
     .circuit-author { font-size: 12px; color: var(--ink-400); display: flex; align-items: center; gap: 4px; }
     .circuit-author a { color: var(--accent); font-weight: 600; text-decoration: none; }
     .circuit-author a:hover { text-decoration: underline; }
-
     .circuit-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border-soft); }
     .circuit-stats { display: flex; align-items: center; gap: 10px; }
 
-    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); border-radius: 99px; padding: 4px 10px; cursor: pointer; font-size: 12px; color: var(--ink-400); font-family: var(--font-body); transition: all .15s; }
+    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); border-radius: 99px; padding: 4px 10px; cursor: pointer; font-size: 12px; color: var(--ink-400); font-family: var(--font-body); transition: all .15s; user-select: none; }
     .like-btn:hover { border-color: #e05b5b; color: #e05b5b; }
     .like-btn.liked { border-color: #e05b5b; color: #e05b5b; background: #fff0f0; }
+    .like-btn:disabled { opacity: .6; cursor: not-allowed; }
 
     .view-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-400); }
-
     .meta-time { font-size: 11px; color: var(--ink-300); }
 
     .shimmer { background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm); }
@@ -98,7 +90,6 @@
     .load-more-wrap { text-align: center; margin-top: 36px; }
     .load-more-btn { padding: 10px 28px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg-el); font-size: 13px; font-weight: 600; font-family: var(--font-body); color: var(--ink-700); cursor: pointer; transition: all var(--ease); }
     .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .empty-state { text-align: center; padding: 80px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .empty-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--ink-300); }
@@ -158,20 +149,17 @@
 <div class="page-body">
   <div class="index-notice" id="indexNotice">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span>Firestore index ban raha hai — abhi newest sort se dekho. <a href="https://console.firebase.google.com/project/sarkitlab/firestore/indexes" target="_blank">Index status check karo →</a></span>
+    <span>Firebase index abhi ban raha hai (2-3 min). Tab tak "Newest" use karo. <a href="https://console.firebase.google.com/project/sarkitlab/firestore/indexes" target="_blank">Status →</a></span>
   </div>
-
   <div class="stats-bar">
     <div class="stats-bar-text">Showing <strong id="showingCount">—</strong> circuits</div>
   </div>
-
   <div class="circuit-grid" id="circuitGrid">
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:80%"></div><div class="shimmer" style="height:11px;width:30%"></div></div></div>
   </div>
-
   <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
     <button class="load-more-btn" id="loadMoreBtn">Load more circuits</button>
   </div>
@@ -181,10 +169,10 @@
 
 <script type="module">
   import { getSession } from "/src/utils/auth.js";
-  import { app } from "/src/utils/auth.js";
+  import { app }        from "/src/utils/auth.js";
   import {
     getFirestore, collection, query, where, orderBy, limit,
-    startAfter, getDocs, doc, getDoc, setDoc, increment,
+    startAfter, getDocs, doc, getDoc, setDoc, increment, getDocFromCache,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const db      = getFirestore(app);
@@ -193,8 +181,7 @@
   if (session) {
     document.getElementById("navRight").innerHTML = `
       <a class="nav-btn btn-ghost" href="/user-dashboard">Dashboard</a>
-      <a class="nav-btn btn-primary" href="/create-circuit">+ New Circuit</a>
-    `;
+      <a class="nav-btn btn-primary" href="/create-circuit">+ New Circuit</a>`;
   }
 
   function toast(msg, type = "ok") {
@@ -216,8 +203,7 @@
   function timeAgo(ts) {
     if (!ts) return "";
     const ms   = typeof ts === "object" && "toMillis" in ts ? ts.toMillis() : (typeof ts === "number" ? ts : new Date(ts).getTime());
-    const diff = Date.now() - ms;
-    const mins = Math.floor(diff / 60000);
+    const diff = Date.now() - ms, mins = Math.floor(diff / 60000);
     if (mins < 1)  return "just now";
     if (mins < 60) return mins + "m ago";
     const hrs = Math.floor(mins / 60);
@@ -231,36 +217,37 @@
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
-  let currentSort = "newest";
-  let lastDoc     = null;
-  let allProjects = [];
-  let likedSet    = new Set();
-  const PAGE_SIZE = 12;
-  let loading     = false;
-  let searchQuery = "";
+  let currentSort  = "newest";
+  let lastDoc      = null;
+  let allProjects  = [];
+  let likedSet     = new Set();
+  const PAGE_SIZE  = 12;
+  let loading      = false;
+  let searchQuery  = "";
   const authorFilter = new URLSearchParams(window.location.search).get("author");
 
-  const SKELETONS = `
+  const SKELS = `
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:70%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
     <div class="skel-card"><div class="shimmer" style="height:120px"></div><div style="padding:14px;display:flex;flex-direction:column;gap:8px"><div class="shimmer" style="height:14px;width:55%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>`;
 
-  async function fetchLikedSet(projectIds) {
-    if (!session?.uid || !projectIds.length) return;
-    for (let i = 0; i < projectIds.length; i += 30) {
-      const chunk = projectIds.slice(i, i + 30);
+  async function fetchLikedSet(ids) {
+    if (!session?.uid || !ids.length) return;
+    for (let i = 0; i < ids.length; i += 30) {
       try {
-        const snap = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", chunk)));
-        snap.forEach(d => { if (d.data()?.likedBy?.[session.uid]) likedSet.add(d.id); });
+        const snap = await getDocs(
+          query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i + 30)))
+        );
+        snap.forEach(d => {
+          if (d.data()?.likedBy?.[session.uid] === true) likedSet.add(d.id);
+        });
       } catch {}
     }
   }
 
   function buildCard(proj) {
-    const url    = buildCircuitUrl(proj);
-    const liked  = likedSet.has(proj.id);
-    const likes  = proj._likes || 0;
-    const views  = proj._views || 0;
+    const url   = buildCircuitUrl(proj);
+    const liked = likedSet.has(proj.id);
 
     const card = document.createElement("div");
     card.className  = "circuit-card";
@@ -279,13 +266,13 @@
         </div>
         <div class="circuit-footer">
           <div class="circuit-stats">
-            <button class="like-btn ${liked ? "liked" : ""}" data-id="${proj.id}" data-liked="${liked}">
+            <button class="like-btn ${liked ? "liked" : ""}" data-id="${proj.id}" data-liked="${liked}" ${!session ? "title='Login to like'" : ""}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="${liked ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              <span class="like-count">${likes}</span>
+              <span class="like-count">${proj._likes || 0}</span>
             </button>
             <span class="view-stat">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              ${views}
+              ${proj._views || 0}
             </span>
           </div>
           <span class="meta-time">${timeAgo(proj.updatedAt || proj.timestamp)}</span>
@@ -298,10 +285,14 @@
     container.querySelectorAll(".like-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (!session?.uid) { toast("Like karne ke liye login karein", "err"); return; }
+        if (btn.disabled)  return;
+
         const id       = btn.dataset.id;
         const wasLiked = btn.dataset.liked === "true";
         const countEl  = btn.querySelector(".like-count");
         const cur      = parseInt(countEl.textContent) || 0;
+
+        btn.disabled = true;
 
         btn.dataset.liked = String(!wasLiked);
         btn.classList.toggle("liked", !wasLiked);
@@ -321,47 +312,36 @@
           countEl.textContent = cur;
           if (wasLiked) likedSet.add(id); else likedSet.delete(id);
           toast("Like save nahi hua", "err");
+        } finally {
+          btn.disabled = false;
         }
       });
     });
   }
 
-  async function loadNewest(reset) {
-    let constraints = [
-      where("isPublic", "==", true),
-      orderBy("timestamp", "desc"),
-      limit(PAGE_SIZE),
-    ];
+  async function fetchNewest() {
+    let constraints = [where("isPublic", "==", true), orderBy("timestamp", "desc"), limit(PAGE_SIZE)];
     if (authorFilter) constraints = [where("authorUid", "==", authorFilter), ...constraints];
     if (lastDoc) constraints.push(startAfter(lastDoc));
 
-    try {
-      const snap = await getDocs(query(collection(db, "projects"), ...constraints));
-      lastDoc = snap.docs[snap.docs.length - 1] || null;
+    const snap = await getDocs(query(collection(db, "projects"), ...constraints));
+    lastDoc = snap.docs[snap.docs.length - 1] || null;
 
-      const ids = snap.docs.map(d => d.id);
-      const statsMap = {};
-      for (let i = 0; i < ids.length; i += 30) {
-        try {
-          const ss = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i+30))));
-          ss.forEach(d => { statsMap[d.id] = d.data(); });
-        } catch {}
-      }
-
-      return snap.docs.map(d => {
-        const s = statsMap[d.id] || {};
-        return { id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 };
-      });
-    } catch (err) {
-      if (err.code === "failed-precondition" || err.message?.includes("index")) {
-        document.getElementById("indexNotice").classList.add("show");
-        throw err;
-      }
-      throw err;
+    const ids = snap.docs.map(d => d.id);
+    const statsMap = {};
+    for (let i = 0; i < ids.length; i += 30) {
+      try {
+        const ss = await getDocs(query(collection(db, "projectStats"), where("__name__", "in", ids.slice(i, i + 30))));
+        ss.forEach(d => { statsMap[d.id] = d.data(); });
+      } catch {}
     }
+    return snap.docs.map(d => {
+      const s = statsMap[d.id] || {};
+      return { id: d.id, ...d.data(), _likes: s.likes || 0, _views: s.views || 0 };
+    });
   }
 
-  async function loadByStats(field, reset) {
+  async function fetchByStats(field) {
     const statsQ = lastDoc
       ? query(collection(db, "projectStats"), orderBy(field, "desc"), startAfter(lastDoc), limit(PAGE_SIZE))
       : query(collection(db, "projectStats"), orderBy(field, "desc"), limit(PAGE_SIZE));
@@ -373,19 +353,17 @@
     const statsMap = {};
     statsSnap.docs.forEach(d => { statsMap[d.id] = d.data(); });
 
-    const ids      = statsSnap.docs.map(d => d.id);
-    const projDocs = await Promise.all(ids.map(id => getDoc(doc(db, "projects", id))));
-
-    const projects = [];
+    const projDocs = await Promise.all(statsSnap.docs.map(d => getDoc(doc(db, "projects", d.id))));
+    const out = [];
     projDocs.forEach(d => {
       if (!d.exists()) return;
       const data = d.data();
       if (!data.isPublic) return;
       if (authorFilter && data.authorUid !== authorFilter) return;
       const s = statsMap[d.id] || {};
-      projects.push({ id: d.id, ...data, _likes: s.likes || 0, _views: s.views || 0 });
+      out.push({ id: d.id, ...data, _likes: s.likes || 0, _views: s.views || 0 });
     });
-    return projects;
+    return out;
   }
 
   async function loadCircuits(reset = false) {
@@ -394,21 +372,17 @@
     const grid = document.getElementById("circuitGrid");
 
     if (reset) {
-      grid.innerHTML = SKELETONS;
-      allProjects = [];
-      lastDoc     = null;
-      likedSet    = new Set();
+      grid.innerHTML = SKELS;
+      allProjects = []; lastDoc = null; likedSet = new Set();
       document.getElementById("loadMoreWrap").style.display = "none";
     }
 
     try {
       let projects = [];
-
       if (currentSort === "newest") {
-        projects = await loadNewest(reset);
+        projects = await fetchNewest();
       } else {
-        const field = currentSort === "views" ? "views" : "likes";
-        projects = await loadByStats(field, reset);
+        projects = await fetchByStats(currentSort === "views" ? "views" : "likes");
       }
 
       if (searchQuery) {
@@ -430,10 +404,9 @@
           <div class="empty-state" style="grid-column:1/-1">
             <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg></div>
             <h3>Koi circuit nahi mila</h3>
-            <p>Abhi tak koi public circuit nahi hai. Pehle banao!</p>
+            <p>Abhi tak koi public circuit nahi hai.</p>
           </div>`;
-        loading = false;
-        return;
+        loading = false; return;
       }
 
       projects.forEach(proj => grid.appendChild(buildCard(proj)));
@@ -458,25 +431,21 @@
 
     } catch (err) {
       console.error("[Explore]", err.code, err.message);
-      if (reset && !allProjects.length) {
-        if (err.code === "failed-precondition" || err.message?.includes("index")) {
-          grid.innerHTML = `
-            <div class="empty-state" style="grid-column:1/-1">
-              <div class="empty-icon" style="background:#fffbeb;color:#b45309">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              </div>
-              <h3>Index build ho raha hai</h3>
-              <p>Firebase index 2-3 minute mein ready hoga. Tab tak "Newest" tab use karo.</p>
-              <button onclick="document.querySelector('[data-sort=newest]').click()" style="margin-top:8px;padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600;">Newest dekho →</button>
-            </div>`;
-        } else {
-          grid.innerHTML = `
-            <div class="empty-state" style="grid-column:1/-1">
-              <h3>Load nahi hua</h3>
-              <p style="color:#c0392b;font-family:monospace;font-size:11px">${esc(err.message)}</p>
-              <button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button>
-            </div>`;
+      if (err.code === "failed-precondition" || (err.message || "").includes("index")) {
+        document.getElementById("indexNotice").classList.add("show");
+        if (currentSort !== "newest") {
+          if (reset) grid.innerHTML = "";
+          document.querySelector('[data-sort="newest"]').click();
+          loading = false; return;
         }
+      }
+      if (reset && !allProjects.length) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <h3>Load nahi hua</h3>
+            <p style="color:#c0392b;font-family:monospace;font-size:11px">${esc(err.message)}</p>
+            <button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600">Retry</button>
+          </div>`;
       }
     }
 
@@ -499,7 +468,7 @@
     const grid  = document.getElementById("circuitGrid");
     let visible = 0;
     grid.querySelectorAll(".circuit-card").forEach(card => {
-      const name   = card.querySelector(".circuit-name")?.textContent?.toLowerCase() || "";
+      const name   = card.querySelector(".circuit-name")?.textContent?.toLowerCase()  || "";
       const author = card.querySelector(".circuit-author a")?.textContent?.toLowerCase() || "";
       const show   = name.includes(searchQuery) || author.includes(searchQuery);
       card.style.display = show ? "" : "none";

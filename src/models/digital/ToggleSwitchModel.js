@@ -57,8 +57,6 @@ export const ToggleSwitchModel = {
     const curr = comp.instance?.active === true;
     if (comp._prevActive !== curr) {
       comp._prevActive = curr;
-      const engine = solver.simEngine ?? comp.instance?._engine;
-      engine?.resolveElectrical?.();
     }
     if (comp.instance) {
       if (comp._comNet) comp.instance._voltageCOM = electrical.netVoltage.get(comp._comNet) ?? 0;

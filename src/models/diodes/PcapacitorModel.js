@@ -9,18 +9,18 @@ export default class PcapacitorModel {
     const netN = solver.findNet(comp.id, "N") ?? solver.findNet(comp.id, "negative") ?? solver.findNet(comp.id, "B");
     if (!netP || !netN) return;
 
-    const inst         = comp.instance;
-    const C            = Math.max(1e-15, inst?.capacitance ?? 100e-6);
-    const ESR          = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
-    const polarized    = inst?.polarized ?? true;
-    const Vbreakdown   = inst?.maxVoltage ?? 25;
+    const inst       = comp.instance;
+    const C          = Math.max(1e-15, inst?.capacitance ?? 100e-6);
+    const ESR        = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
+    const polarized  = inst?.polarized ?? true;
+    const Vbreakdown = inst?.maxVoltage ?? 25;
 
     const Va0   = electrical.netVoltage.get(netP) ?? 0;
     const Vb0   = electrical.netVoltage.get(netN) ?? 0;
     const Vest  = Va0 - Vb0;
     const hist  = solver._capState?.get(comp.id);
-    const Vprev = hist?.V ?? Vest;
-    const Iprev = hist?.I ?? 0;
+    const Vprev = hist != null ? hist.V : Vest;
+    const Iprev = hist != null ? hist.I : 0;
 
     if (polarized && Vest < -FORWARD_THRESHOLD) {
       const Vrev = Math.abs(Vest);
@@ -51,8 +51,8 @@ export default class PcapacitorModel {
       }
 
       if (inst) {
-        inst._nets = { A: netP, B: netN };
-        inst._branch = null;
+        inst._nets       = { A: netP, B: netN };
+        inst._branch     = null;
         inst._reverseMode = true;
       }
       return;
@@ -76,13 +76,15 @@ export default class PcapacitorModel {
     };
     electrical.circuits.push(branch);
 
-    const Rleak = _leakageR(C, inst?.leakageCurrent);
     electrical.circuits.push({
       id: `${comp.id}_leak`, type: "RESISTOR",
-      a: netP, b: netN, ohms: Rleak,
+      a: netP, b: netN, ohms: _leakageR(C, inst?.leakageCurrent),
     });
 
-    if (inst) { inst._nets = { A: netP, B: netN }; inst._branch = branch; }
+    if (inst) {
+      inst._nets   = { A: netP, B: netN };
+      inst._branch = branch;
+    }
   }
 
   static update(comp, electrical, solver) {
@@ -109,13 +111,16 @@ export default class PcapacitorModel {
     }
 
     const Vc = Vt - Ic * ESR;
+
     if (!solver._capState) solver._capState = new Map();
     solver._capState.set(comp.id, { V: Vc, I: Ic });
 
     Object.assign(inst, {
       Vcurrent: Vc, voltage: Vc, Icurrent: Ic, current: Ic,
-      power: Math.abs(Vt * Ic), energyStored: 0.5 * C * Vc * Vc,
-      chargeStored: C * Math.abs(Vc), chargePercent: Math.min(100, Math.abs(Vc) / Vrated * 100),
+      power: Math.abs(Vt * Ic),
+      energyStored:  0.5 * C * Vc * Vc,
+      chargeStored:  C * Math.abs(Vc),
+      chargePercent: Math.min(100, Math.abs(Vc) / Vrated * 100),
     });
     inst.updateVoltage?.(Vc);
 
@@ -136,6 +141,7 @@ export default class PcapacitorModel {
         energyStored: 0, chargeStored: 0, chargePercent: 0,
         _reverseMode: false, _reverseWarned: false,
         _damaged: false, _overvoltageWarned: false,
+        _nets: null, _branch: null,
       });
     }
   }

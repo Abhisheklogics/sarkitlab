@@ -76,8 +76,6 @@ export const PushButtonModel = {
       comp._inBounce     = true;
       comp._bounceHigh   = false;
       comp._nextFlipTime = now + BOUNCE_FLIP_MS;
-      const engine = solver.simEngine ?? comp.instance?._engine;
-      engine?.resolveElectrical?.();
     }
 
     if (comp._inBounce) {

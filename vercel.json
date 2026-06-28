@@ -7,6 +7,7 @@
     { "source": "/onboarding",     "destination": "/src/pages/onboarding.html" },
     { "source": "/edit",           "destination": "/src/pages/edit.html" },
     { "source": "/codes",          "destination": "/src/pages/codes.html" },
-    { "source": "/explore",        "destination": "/src/pages/explore.html" }
+    { "source": "/explore",        "destination": "/src/pages/explore.html" },
+    { "source": "/join",        "destination": "/src/pages/join.html" }
   ]
 }

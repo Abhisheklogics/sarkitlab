@@ -16,7 +16,7 @@ import "./svg/VirtualSerialMonitor.js";
 import Battery9VModel from "./src/models/digital/Battery9VModel.js";
 import Battery3VModel from "./src/models/digital/Battery3VModel.js";
 import LogicICModel   from "./src/models/digital/logicic.js";
-
+import BreadboardModel from "./src/models/base/BreadboardModel.js";
 import {
   buildSidebar,
   makeLoaderSpawner,
@@ -55,6 +55,7 @@ wireSys._onWireFinished = wire => {
   deleteSystem.registerWire(wire);
   projectSaved = false;
   setSaveStatus(false);
+  window._notifyCircuitChanged?.();  // ADD THIS
   updateCompCount();
   const conn = wireSys.connections.find(c => c.wire === wire);
   if (conn && window.undoRedo) window.undoRedo.recordWireDraw(conn);
@@ -104,11 +105,13 @@ window.spawnComponent = async (type, x, y, forcedId, skipUndo) => {
   if (handled) {
     updateCompCount();
     setSaveStatus(false);
+    window._notifyCircuitChanged?.();  // ADD THIS
     return;
   }
 
   projectSaved = false;
   setSaveStatus(false);
+  window._notifyCircuitChanged?.();   // ADD THIS
   updateCompCount();
   return spawner.spawnComponent(type, x, y, forcedId, skipUndo);
 };
@@ -131,7 +134,11 @@ const storage = new ProjectStorage(
     _loadingProject = false;
   }
 );
-
+window._getCircuitPayload = () => {
+  return storage._buildSavePayload(
+    document.getElementById("projectNameDisplay")?.textContent || "Untitled Circuit"
+  );
+};
 const wsCtrl = new WorkspaceController(workspace, registry, wireSys);
 const parser  = new ArduinoParserEngine();
 
@@ -470,23 +477,36 @@ function setRunState(running) {
 }
 
 function resetAllComponents() {
+  const LOGIC_MODELS = new Set([
+    "74HC08","74HC32","74HC00","74HC86","74HC02",
+    "74HC83","74HC148","74HC153","74HC04","74HC14",
+    "74HC74","74HC73","74HC76","74HC266","74HC7266",
+  ]);
+
   registry.getAll().forEach(comp => {
     const inst = comp.instance ?? comp.__instance;
-    if (!inst) return;
 
-    if (comp.type === "led")               inst.setOff?.();
-    if (comp.type === "rgb-led")               inst.turnOff?.();
-    if (comp.type === "buzzer")            inst.stopTone?.();
-    if (comp.type === "dcmotor")           inst.setOff?.();
-    if (comp.type === "gearmotor")         inst.setOff?.();
-    if (comp.type === "servo")             inst.stop?.(0);
-    if (comp.type === "lcd")               inst.reset?.();
-    if (comp.type === "7-segment")         inst.clear?.();
-    if (comp.type === "4-digit-7-segment") { inst.clear?.(); inst.setColon?.(false); }
-    if (comp.type === "potentiometer")     inst.onChange = null;
-    if (comp.type === "bulb")              inst.setOff?.();
+    if (comp.type === "led")                inst?.setOff?.();
+    if (comp.type === "rgb-led")            inst?.turnOff?.();
+    if (comp.type === "buzzer")             inst?.stopTone?.();
+    if (comp.type === "dcmotor")            inst?.setOff?.();
+    if (comp.type === "gearmotor")          inst?.setOff?.();
+    if (comp.type === "servo")              inst?.stop?.(0);
+    if (comp.type === "lcd")                inst?.reset?.();
+    if (comp.type === "7-segment")          inst?.clear?.();
+    if (comp.type === "4-digit-7-segment")  { inst?.clear?.(); inst?.setColon?.(false); }
+    if (comp.type === "potentiometer")      { if (inst) inst.onChange = null; }
+    if (comp.type === "bulb")               inst?.setOff?.();
 
-    if (comp.type === "polorizedcapacitor") {
+    if (comp.type === "breadboard") {
+      BreadboardModel.reset(comp);
+    }
+
+    if (LOGIC_MODELS.has(comp.model ?? comp.instance?.model ?? "")) {
+      LogicICModel.reset(comp);
+    }
+
+    if (comp.type === "polorizedcapacitor" && inst) {
       inst._Vprev = inst.Vprev = inst.Icurrent = inst.Vcurrent = 0;
       inst.energyStored = inst.chargeStored = inst.power = 0;
       inst._isReversed = false;
@@ -494,28 +514,30 @@ function resetAllComponents() {
       inst.updateVoltage?.(0);
     }
 
-    if (comp.type === "capacitor") {
+    if (comp.type === "capacitor" && inst) {
       inst._Vprev = inst.Vprev = inst.Icurrent = inst.Vcurrent = 0;
       inst.voltage = inst.current = inst.energyStored = inst.chargeStored = inst.power = 0;
       inst._nets = null;
       inst.updateVoltage?.(0);
     }
 
-    if (comp.type === "inductor") {
+    if (comp.type === "inductor" && inst) {
       inst.Iprev = inst.Icurrent = inst.Vcurrent = inst.energyStored = inst.power = 0;
       inst.isSaturated = false;
       inst.updateCurrent?.(0);
     }
 
-    if (comp.type === "oled") {
+    if (comp.type === "oled" && inst) {
       comp._powered = comp._wasOn = false;
-      comp._vcc = 0; comp._sleeping = false;
-      inst.initialized = false; inst.displayOn = true;
+      comp._vcc = 0;
+      comp._sleeping = false;
+      inst.initialized = false;
+      inst.displayOn = true;
       inst.commandMode = inst.dataMode = inst._renderPending = false;
       inst.clear?.();
     }
 
-    if (comp.type === "keypad") {
+    if (comp.type === "keypad" && inst) {
       inst.pressedKey = null;
       inst.codeParsed = false;
       if (inst.colPins && inst.digitalInputs) {
@@ -525,13 +547,13 @@ function resetAllComponents() {
       }
     }
 
-    if (comp.type === "dht11") {
+    if (comp.type === "dht11" && inst) {
       inst.powered = inst._heatActive = inst._wasOn = false;
       inst.stopHeatWaves?.();
       inst.controlsGroup?.setAttribute("visibility", "hidden");
     }
 
-    if (comp.type === "ultrasonic") {
+    if (comp.type === "ultrasonic" && inst) {
       inst.simEngine = engine;
       inst.powered   = false;
       inst.triggered = false;
@@ -540,23 +562,16 @@ function resetAllComponents() {
     if (comp.type === "soilMoisture") {
       comp._powered = false; comp._vcc = 0;
       comp._sigNet = null; comp._sigVoltage = 0;
-      inst.powered = false;
-      inst.controlsGroup?.setAttribute("visibility", "hidden");
+      if (inst) {
+        inst.powered = false;
+        inst.controlsGroup?.setAttribute("visibility", "hidden");
+      }
     }
 
-    if (comp.type === "sound-sensor") {
-      inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {};
-    }
-    if (comp.type === "flame-sensor") {
-      inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {};
-    }
-    if (comp.type === "vibrationSensor") {
-      inst.reset?.(); inst._simEngine = null;
-    }
-    if (comp.type === "pir-sensor") {
-      inst.reset?.(); inst._simEngine = null;
-      inst.pinOUT = null; inst._powered = false; inst._nets = null;
-    }
+    if (comp.type === "sound-sensor" && inst)     { inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {}; }
+    if (comp.type === "flame-sensor" && inst)     { inst.reset?.(); inst._simEngine = null; inst.digitalInputs = {}; }
+    if (comp.type === "vibrationSensor" && inst)  { inst.reset?.(); inst._simEngine = null; }
+    if (comp.type === "pir-sensor" && inst)       { inst.reset?.(); inst._simEngine = null; inst.pinOUT = null; inst._powered = false; inst._nets = null; }
 
     if (comp.type === "battery9v" || comp.type === "battery-9v") {
       Battery9VModel.reset(comp);
@@ -568,17 +583,10 @@ function resetAllComponents() {
       comp.instance?.updatePhysics?.({ soc: 1.0, voc: 3.0, rint: 15, current: 0, vterminal: 3.0, dead: false, overload: false });
     }
 
-    const LOGIC_MODELS = new Set([
-      "74HC08","74HC32","74HC00","74HC86","74HC02",
-      "74HC83","74HC148","74HC153","74HC04","74HC14",
-      "74HC74","74HC73","74HC76","74HC266","74HC7266",
-    ]);
-  
-
     if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
-      if (typeof inst.reset === "function") {
+      if (typeof inst?.reset === "function") {
         inst.reset();
-      } else {
+      } else if (inst) {
         inst.gasIntensity  = 0;
         inst.currentAnalog = inst.config?.baseline ?? 0;
         inst.outputVoltage = 0;
@@ -590,29 +598,12 @@ function resetAllComponents() {
       }
     }
 
-   const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
-if (SWITCH_TYPES.has(comp.type)) {
-  if (comp.instance._engineLinked) {
-    const curActive = comp.instance.active;
-    const curTilted = comp.instance.tilted;
-    Object.defineProperty(comp.instance, "active", {
-      value: curActive,
-      writable: true,
-      configurable: true,
-    });
-    if ("tilted" in comp.instance) {
-      Object.defineProperty(comp.instance, "tilted", {
-        value: curTilted,
-        writable: true,
-        configurable: true,
-      });
+    const SWITCH_TYPES = new Set(["pushbutton","toggleSwitch","tiltSensor","touchSensor","vibrationSensor"]);
+    if (SWITCH_TYPES.has(comp.type) && inst) {
+      inst._engine    = null;
+      inst._simEngine = null;
+      comp._simEngine = null;
     }
-    comp.instance._engineLinked = false;
-  }
-  comp.instance._engine    = null;
-  comp.instance._simEngine = null;
-  comp._simEngine          = null;
-}
   });
 
   digitalOutputs = {};
@@ -653,6 +644,9 @@ simulationBtn?.addEventListener("click", async () => {
       lockEditor(true);
       tCheck.checkAllConnections();
 
+      // --- Solver ki stale state flush karo har run se pehle ---
+      wireSys?.solver?.reset?.();
+
       engine = new SimulationEngine(parsed, {
         pinStates,
         digitalInputs,
@@ -685,7 +679,6 @@ simulationBtn?.addEventListener("click", async () => {
       registry.getAll().forEach(comp => {
         if (!comp.instance) return;
         const inst = comp.instance;
-        
 
         if (comp.type?.startsWith("MQ-") || comp.type === "gas-sensor") {
           inst.simEngine     = engine;
@@ -754,46 +747,12 @@ simulationBtn?.addEventListener("click", async () => {
           }
         }
 
-if (SWITCH_TYPES.has(comp.type)) {
-  inst._engine    = engine;
-  inst._simEngine = engine;
-  comp._simEngine = engine;
-  if (comp.svg) comp.svg._simEngine = engine;
-
-  if (!inst._engineLinked) {
-    inst._engineLinked = true;
-
-    let active = inst.active ?? false;
-    const ad = Object.getOwnPropertyDescriptor(inst, "active");
-    if (!ad?.set) {
-      Object.defineProperty(inst, "active", {
-        get: () => active,
-        set: val => {
-          const changed = val !== active;
-          active = val;
-          if (changed) queueMicrotask(() => engine.resolveElectrical?.());
-        },
-        configurable: true,
-      });
-    }
-
-    if ("tilted" in inst) {
-      let tilted = inst.tilted ?? false;
-      const td = Object.getOwnPropertyDescriptor(inst, "tilted");
-      if (!td?.set) {
-        Object.defineProperty(inst, "tilted", {
-          get: () => tilted,
-          set: val => {
-            const changed = val !== tilted;
-            tilted = val;
-            if (changed) queueMicrotask(() => engine.resolveElectrical?.());
-          },
-          configurable: true,
-        });
-      }
-    }
-  }
-}
+        if (SWITCH_TYPES.has(comp.type)) {
+          inst._engine    = engine;
+          inst._simEngine = engine;
+          comp._simEngine = engine;
+          if (comp.svg) comp.svg._simEngine = engine;
+        }
       });
 
       if (emptyCode) {

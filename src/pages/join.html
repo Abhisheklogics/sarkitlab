@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Circuit — SarkitLab</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --accent:#c4611a;--accent-dk:#a34f13;
+      --ink-900:#111318;--ink-500:#6b7280;--ink-400:#9ca3af;
+      --bg:#f7f8fa;--bg-card:#fff;--border:#e4e6ea;
+      --green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;--red-bg:#fef2f2;
+      --font:'Inter',system-ui,sans-serif;
+      --r:8px;--r-lg:14px;--r-xl:20px;
+      --shadow-md:0 4px 20px rgba(0,0,0,.1);
+    }
+    body{font-family:var(--font);background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:36px 32px;width:100%;max-width:420px;box-shadow:var(--shadow-md);text-align:center;}
+    .logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px;font-size:18px;font-weight:700;color:var(--ink-900);}
+    .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;}
+    .logo span{color:var(--accent);}
+    .icon-wrap{width:56px;height:56px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--green);}
+    .icon-wrap.err{background:var(--red-bg);color:var(--red);}
+    h2{font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:8px;}
+    .sub{font-size:13px;color:var(--ink-500);line-height:1.6;margin-bottom:24px;}
+    .meta-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:24px;text-align:left;}
+    .meta-row{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;}
+    .meta-row:last-child{margin-bottom:0;}
+    .meta-label{color:var(--ink-400);font-weight:500;}
+    .meta-val{color:var(--ink-900);font-weight:600;}
+    .badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+    .badge-editor{background:#eff6ff;color:#1d4ed8;}
+    .badge-viewer{background:var(--bg);color:var(--ink-400);border:1px solid var(--border);}
+    .btn{width:100%;padding:11px;border:none;border-radius:var(--r-lg);font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background .15s;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-dk);}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed;}
+    .btn-ghost{background:var(--bg);border:1px solid var(--border);color:var(--ink-900);margin-top:10px;}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #state-loading,#state-info,#state-success,#state-error{display:none;}
+    #state-loading.show,#state-info.show,#state-success.show,#state-error.show{display:block;}
+    .loading-inner{padding:40px 0;color:var(--ink-400);font-size:14px;}
+    .loading-spin{width:28px;height:28px;border:2px solid #e4e6ea;border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 12px;display:block;}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
+        <path d="M8 12h8M2 12h2M20 12h2"/>
+      </svg>
+    </div>
+    Sarkit<span>Lab</span>
+  </div>
+
+  <div id="state-loading">
+    <div class="loading-inner">
+      <div class="loading-spin"></div>
+      Checking invite…
+    </div>
+  </div>
+
+  <div id="state-info">
+    <div class="icon-wrap">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <h2>You've been invited!</h2>
+    <p class="sub" id="invite-sub"></p>
+    <div class="meta-box">
+      <div class="meta-row"><span class="meta-label">Circuit</span><span class="meta-val" id="info-project"></span></div>
+      <div class="meta-row"><span class="meta-label">Invited by</span><span class="meta-val" id="info-by"></span></div>
+      <div class="meta-row"><span class="meta-label">Your role</span><span id="info-role"></span></div>
+    </div>
+    <button class="btn btn-primary" id="acceptBtn">Accept &amp; Join</button>
+    <button class="btn btn-ghost" onclick="window.location.href='/'">Go to Home</button>
+  </div>
+
+  <div id="state-success">
+    <div class="icon-wrap">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Joined!</h2>
+    <p class="sub">You are now a collaborator. Redirecting to circuit…</p>
+  </div>
+
+  <div id="state-error">
+    <div class="icon-wrap err">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h2>Link Problem</h2>
+    <p class="sub" id="error-msg"></p>
+    <button class="btn btn-ghost" onclick="window.location.href='/'">Go to Home</button>
+  </div>
+</div>
+
+<script type="module">
+  import { getSession }  from "/src/utils/auth.js";
+  import { app }         from "/src/utils/auth.js";
+  import InviteManager   from "/src/collab/InviteManager.js";
+  import {
+    getFirestore, doc, getDoc,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const db      = getFirestore(app);
+  const session = getSession();
+  const token   = new URLSearchParams(window.location.search).get("token");
+  const inv     = new InviteManager();
+
+  const MSGS = {
+    invalid_token:     "This invite link is invalid or does not exist.",
+    expired:           "This invite link has expired. Ask the owner to send a new one.",
+    already_joined:    "You have already joined this circuit.",
+    project_not_found: "The circuit no longer exists.",
+    not_logged_in:     "Please log in first to accept this invite.",
+  };
+
+  function show(id) {
+    ["state-loading","state-info","state-success","state-error"]
+      .forEach(s => document.getElementById(s).classList.remove("show"));
+    document.getElementById(id).classList.add("show");
+  }
+
+  async function init() {
+    show("state-loading");
+
+    if (!token) {
+      show("state-error");
+      document.getElementById("error-msg").textContent = MSGS.invalid_token;
+      return;
+    }
+
+    if (!session) {
+      localStorage.setItem("sks_pending_invite", token);
+      window.location.replace(`/login?next=${encodeURIComponent("/join?token=" + token)}`);
+      return;
+    }
+
+    try {
+      const invSnap = await getDoc(doc(db, "invites", token));
+      if (!invSnap.exists()) {
+        show("state-error");
+        document.getElementById("error-msg").textContent = MSGS.invalid_token;
+        return;
+      }
+
+      const data = invSnap.data();
+
+      if (data.expiresAt < Date.now()) {
+        show("state-error");
+        document.getElementById("error-msg").textContent = MSGS.expired;
+        return;
+      }
+
+      if (data.usedBy?.includes(session.uid)) {
+        window.location.replace(`/create-circuit?project=${data.projectId}&autorun=0`);
+        return;
+      }
+
+      document.getElementById("info-project").textContent = data.projectName || "Untitled";
+      document.getElementById("info-by").textContent      = data.createdByName || "Someone";
+      document.getElementById("info-role").innerHTML      =
+        `<span class="badge badge-${data.role}">${data.role === "editor" ? "Editor — can edit" : "Viewer — read only"}</span>`;
+      document.getElementById("invite-sub").textContent   =
+        `${data.createdByName || "Someone"} ne aapko is circuit par collaborate karne ke liye invite kiya hai.`;
+
+      show("state-info");
+
+      document.getElementById("acceptBtn").addEventListener("click", async () => {
+        const btn    = document.getElementById("acceptBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Joining…';
+
+        const result = await inv.acceptInvite(token);
+        if (result.success) {
+          show("state-success");
+          setTimeout(() => {
+            window.location.replace(`/create-circuit?project=${result.projectId}&autorun=0`);
+          }, 1800);
+        } else {
+          show("state-error");
+          document.getElementById("error-msg").textContent = MSGS[result.error] || "Something went wrong.";
+        }
+      });
+
+    } catch (e) {
+      console.error(e);
+      show("state-error");
+      document.getElementById("error-msg").textContent = "Could not load invite. Check your connection.";
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

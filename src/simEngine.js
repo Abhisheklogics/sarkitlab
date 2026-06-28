@@ -892,17 +892,19 @@ case "methodCallAssign": {
               if (op.variable) vars[op.variable] = _val;
               break;
             }
-            case "digitalRead": {
-              const _pin = this._resolvePin(String(vars[op.args?.[0]] ?? this.globalVars[op.args?.[0]] ?? op.args?.[0] ?? ""), vars);
-              const _key = `D${_pin}`;
-              const _mode = this.pinStates[_key];
-              if (!_mode || _mode === PIN_MODES.OUTPUT) { if (op.variable) vars[op.variable] = 0; break; }
-              const _ard = this._findArduinoComponent();
-              const _netId = _ard ? this.circuitSolver.findNet(_ard.id, this._pinStr(_pin)) : null;
-              const _val = _netId ? ((this.electricalState.netVoltage.get(_netId) ?? 0) >= 2.5 ? 1 : 0) : (_mode === PIN_MODES.INPUT_PULLUP ? 1 : 0);
-              if (op.variable) vars[op.variable] = _val;
-              break;
-            }
+        case "digitalRead": {
+  const _pin   = this._resolvePin(String(vars[op.args?.[0]] ?? this.globalVars[op.args?.[0]] ?? op.args?.[0] ?? ""), vars);
+  const _key   = `D${_pin}`;
+  const _mode  = this.pinStates[_key];
+  if (!_mode || _mode === PIN_MODES.OUTPUT) { if (op.variable) vars[op.variable] = 0; break; }
+  const _ard   = this._findArduinoComponent();
+  const _netId = _ard ? this.circuitSolver.findNet(_ard.id, this._pinStr(_pin)) : null;
+  const _volt  = _netId ? (this.electricalState.netVoltage.get(_netId) ?? 0) : -1;
+  const _val   = _netId ? (_volt >= 2.5 ? 1 : 0) : (_mode === PIN_MODES.INPUT_PULLUP ? 1 : 0);
+  console.log(`[digitalRead] pin=${_pin}, key=${_key}, mode=${_mode}, netId=${_netId}, voltage=${_volt.toFixed(3)}, result=${_val}`);
+  if (op.variable) vars[op.variable] = _val;
+  break;
+}
             case "map": {
               const [v, il, ih, ol, oh] = (op.args ?? []).map(a => this.evaluateExpression(a, vars));
               if (op.variable) vars[op.variable] = ih === il ? ol : (v - il) * (oh - ol) / (ih - il) + ol;

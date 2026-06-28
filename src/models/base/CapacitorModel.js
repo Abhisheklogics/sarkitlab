@@ -1,7 +1,5 @@
 "use strict";
 
-const LEAKAGE_R_BASE = 1e6;
-
 export default class CapacitorModel {
 
   static solve(comp, electrical, solver) {
@@ -11,18 +9,17 @@ export default class CapacitorModel {
            ?? solver.findNet(comp.id, "N") ?? solver.findNet(comp.id, "negative");
     if (!A || !B) return;
 
-    const inst     = comp.instance;
-    const C        = Math.max(1e-15, inst?.capacitance ?? 100e-6);
-    const ESR      = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
-    const Vrated   = inst?.maxVoltage ?? 50;
-    const dt       = Math.max(1e-6, solver._dt ?? 1e-4);
+    const inst   = comp.instance;
+    const C      = Math.max(1e-15, inst?.capacitance ?? 100e-6);
+    const ESR    = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
+    const Vrated = inst?.maxVoltage ?? 50;
+    const dt     = Math.max(1e-6, solver._dt ?? 1e-4);
 
     const Va0   = electrical.netVoltage.get(A) ?? 0;
     const Vb0   = electrical.netVoltage.get(B) ?? 0;
-    const Vest  = Va0 - Vb0;
     const hist  = solver._capState?.get(comp.id);
-    const Vprev = hist?.V ?? Vest;
-    const Iprev = hist?.I ?? 0;
+    const Vprev = hist != null ? hist.V : (Va0 - Vb0);
+    const Iprev = hist != null ? hist.I : 0;
 
     const Geq     = 2.0 * C / dt;
     const Ieq     = Geq * Vprev + Iprev;
@@ -36,13 +33,16 @@ export default class CapacitorModel {
     };
     electrical.circuits.push(branch);
 
-    const Rleak = _leakageR(C, inst?.leakageCurrent);
     electrical.circuits.push({
       id: `${comp.id}_leak`, type: "RESISTOR",
-      a: A, b: B, ohms: Rleak,
+      a: A, b: B, ohms: _leakageR(C, inst?.leakageCurrent),
     });
 
-    if (inst) { inst._nets = { A, B }; inst._branch = branch; inst._Vrated = Vrated; }
+    if (inst) {
+      inst._nets   = { A, B };
+      inst._branch = branch;
+      inst._Vrated = Vrated;
+    }
   }
 
   static update(comp, electrical, solver) {
@@ -95,15 +95,14 @@ export default class CapacitorModel {
         voltage: 0, Vcurrent: 0, Icurrent: 0, current: 0,
         energyStored: 0, chargeStored: 0, chargePercent: 0,
         _overvoltageWarned: false, _reverseWarned: false,
+        _nets: null, _branch: null,
       });
     }
   }
 }
 
 function _leakageR(C, leakageCurrent) {
-  if (leakageCurrent && leakageCurrent > 0) {
-    return Math.min(1e9, 5.0 / leakageCurrent);
-  }
+  if (leakageCurrent && leakageCurrent > 0) return Math.min(1e9, 5.0 / leakageCurrent);
   if (C >= 100e-6) return 500e3;
   if (C >= 10e-6)  return 1e6;
   if (C >= 1e-6)   return 5e6;

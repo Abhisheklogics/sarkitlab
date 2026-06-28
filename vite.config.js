@@ -10,6 +10,7 @@ const routes = {
   '/edit':           '/src/pages/edit.html',
   '/codes':          '/src/pages/codes.html',
   '/explore':        '/src/pages/explore.html',
+    '/join':        '/src/pages/join.html'
 };
 
 function pageRewritePlugin() {
@@ -39,6 +40,7 @@ export default defineConfig({
         edit:        resolve(__dirname, 'src/pages/edit.html'),
         codes:       resolve(__dirname, 'src/pages/codes.html'),
         explore:     resolve(__dirname, 'src/pages/explore.html'),
+         join:     resolve(__dirname, 'src/pages/join.html')
       },
     },
   },

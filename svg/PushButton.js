@@ -3,9 +3,10 @@
 export default class PushButtons {
 
   constructor() {
-    this.active   = false;
-    this.instance = this;
+    this.instance   = this;
     this._simEngine = null;
+    this._engine    = null;
+    this._active    = false;
 
     this.meta = {
       category  : "digital-input",
@@ -13,19 +14,27 @@ export default class PushButtons {
     };
 
     this.pins = [
-      { id: "A1", x: 28,  y: 110 },
-      { id: "A2", x: 28,  y: 20  },
-      { id: "B1", x: 92,  y: 110 },
-      { id: "B2", x: 92,  y: 20  },
+      { id: "A1", x: 28, y: 110 },
+      { id: "A2", x: 28, y: 20  },
+      { id: "B1", x: 92, y: 110 },
+      { id: "B2", x: 92, y: 20  },
     ];
 
-    this._pointerUpHandler = () => {
-      this.active = false;
-      this._updateVisual();
-    };
+    this._pointerUpHandler = () => { this.active = false; };
 
     this.svg = this._createSVG();
     this._attachEvents();
+  }
+
+  get active() { return this._active; }
+
+  set active(val) {
+    const b = !!val;
+    if (b === this._active) return;
+    this._active = b;
+    this._updateVisual();
+    const eng = this._simEngine ?? this._engine;
+    if (eng) eng.resolveElectrical?.();
   }
 
   _createSVG() {
@@ -45,10 +54,14 @@ export default class PushButtons {
       <circle cx="56" cy="46" r="6" fill="rgba(255,255,255,0.4)"/>
       <rect x="28" y="20" width="8"  height="54" fill="#cfcfcf"/>
       <rect x="84" y="20" width="8"  height="54" fill="#cfcfcf"/>
-      <text x="18"  y="118" font-size="7" font-family="monospace" fill="#888" text-anchor="middle">A1</text>
-      <text x="18"  y="17"  font-size="7" font-family="monospace" fill="#888" text-anchor="middle">A2</text>
-      <text x="102" y="118" font-size="7" font-family="monospace" fill="#888" text-anchor="middle">B1</text>
-      <text x="102" y="17"  font-size="7" font-family="monospace" fill="#888" text-anchor="middle">B2</text>
+      <text x="18"  y="118" font-size="7" font-family="monospace"
+            fill="#888" text-anchor="middle">A1</text>
+      <text x="18"  y="17"  font-size="7" font-family="monospace"
+            fill="#888" text-anchor="middle">A2</text>
+      <text x="102" y="118" font-size="7" font-family="monospace"
+            fill="#888" text-anchor="middle">B1</text>
+      <text x="102" y="17"  font-size="7" font-family="monospace"
+            fill="#888" text-anchor="middle">B2</text>
     `;
     return svg;
   }
@@ -57,7 +70,6 @@ export default class PushButtons {
     this.svg.addEventListener("pointerdown", e => {
       e.stopPropagation();
       this.active = true;
-      this._updateVisual();
     });
     window.addEventListener("pointerup",     this._pointerUpHandler);
     window.addEventListener("pointercancel", this._pointerUpHandler);
@@ -66,21 +78,15 @@ export default class PushButtons {
   _updateVisual() {
     const cap = this.svg.querySelector("#btncap");
     if (!cap) return;
-    cap.setAttribute("r",    this.active ? "12" : "14");
-    cap.setAttribute("fill", this.active ? "#9c9c9c" : "#d6d6d6");
+    cap.setAttribute("r",    this._active ? "12" : "14");
+    cap.setAttribute("fill", this._active ? "#9c9c9c" : "#d6d6d6");
   }
 
-  getActiveShorts() {
-    return [];
-  }
+  getActiveShorts() { return []; }
+  isActive()        { return this._active ? 1 : 0; }
+  getElement()      { return this.svg; }
 
-  isActive()   { return this.active ? 1 : 0; }
-  getElement() { return this.svg; }
-
-  updateVisual(state) {
-    this.active = !!state;
-    this._updateVisual();
-  }
+  updateVisual(state) { this.active = !!state; }
 
   destroy() {
     window.removeEventListener("pointerup",     this._pointerUpHandler);

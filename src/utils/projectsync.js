@@ -26,8 +26,7 @@ function getQueue() {
 function addToQueue(item) {
   const q   = getQueue();
   const idx = q.findIndex(i => i.projectId === item.projectId);
-  if (idx !== -1) q[idx] = item;
-  else q.push(item);
+  if (idx !== -1) q[idx] = item; else q.push(item);
   try { localStorage.setItem(LOCAL_QUEUE_KEY, JSON.stringify(q)); } catch {}
 }
 
@@ -36,9 +35,7 @@ function removeFromQueue(projectId) {
   try { localStorage.setItem(LOCAL_QUEUE_KEY, JSON.stringify(q)); } catch {}
 }
 
-function localKey(projectId) {
-  return `sks_proj_${projectId}`;
-}
+function localKey(projectId) { return `sks_proj_${projectId}`; }
 
 function saveLocal(projectId, data) {
   try { localStorage.setItem(localKey(projectId), JSON.stringify(data)); }
@@ -65,13 +62,20 @@ function tsFromFirestore(ts) {
 
 function sanitizeForStorage(data) {
   const out = { ...data };
-  if (out.updatedAt && typeof out.updatedAt === "object") {
-    out.updatedAt = tsFromFirestore(out.updatedAt) ?? Date.now();
-  }
-  if (out.createdAt && typeof out.createdAt === "object") {
-    out.createdAt = tsFromFirestore(out.createdAt) ?? Date.now();
-  }
+  if (out.updatedAt && typeof out.updatedAt === "object") out.updatedAt = tsFromFirestore(out.updatedAt) ?? Date.now();
+  if (out.createdAt && typeof out.createdAt === "object") out.createdAt = tsFromFirestore(out.createdAt) ?? Date.now();
   return out;
+}
+
+function _updateLocalList(uid, projectId, name, slug, timestamp) {
+  const listKey = `all_projects_${uid}`;
+  try {
+    let list = JSON.parse(localStorage.getItem(listKey) || "[]");
+    const idx = list.findIndex(p => p.id === projectId);
+    const entry = { id: projectId, name: name || "Untitled", slug: slug || "", date: timestamp || Date.now() };
+    if (idx !== -1) list[idx] = entry; else list.push(entry);
+    localStorage.setItem(listKey, JSON.stringify(list));
+  } catch {}
 }
 
 export async function saveProjectData(projectId, data) {
@@ -83,6 +87,7 @@ export async function saveProjectData(projectId, data) {
     authorUid:      session.uid,
     author:         session.displayName || session.email || "Anonymous",
     localUpdatedAt: Date.now(),
+    _needsSync:     true,
   };
 
   saveLocal(projectId, enriched);
@@ -94,7 +99,7 @@ export async function saveProjectData(projectId, data) {
   }
 
   try {
-    const docData = {
+    await setDoc(doc(db, PROJECTS_COLLECTION, projectId), {
       name:        enriched.name        || "Untitled Circuit",
       slug:        enriched.slug        || "",
       version:     enriched.version     || 3,
@@ -106,14 +111,11 @@ export async function saveProjectData(projectId, data) {
       wires:       enriched.wires       || [],
       arduinoCode: enriched.arduinoCode || "",
       updatedAt:   serverTimestamp(),
-    };
+    }, { merge: true });
 
-    await setDoc(doc(db, PROJECTS_COLLECTION, projectId), docData, { merge: true });
-
-    const withSync = { ...enriched, syncedAt: Date.now() };
+    const withSync = { ...enriched, _needsSync: false, syncedAt: Date.now() };
     saveLocal(projectId, withSync);
     removeFromQueue(projectId);
-
     _updateLocalList(session.uid, projectId, enriched.name, enriched.slug, enriched.timestamp);
     return { synced: true };
 
@@ -124,23 +126,10 @@ export async function saveProjectData(projectId, data) {
   }
 }
 
-function _updateLocalList(uid, projectId, name, slug, timestamp) {
-  const listKey = `all_projects_${uid}`;
-  try {
-    let list = JSON.parse(localStorage.getItem(listKey) || "[]");
-    const idx = list.findIndex(p => p.id === projectId);
-    const entry = { id: projectId, name: name || "Untitled", slug: slug || "", date: timestamp || Date.now() };
-    if (idx !== -1) list[idx] = entry;
-    else list.push(entry);
-    localStorage.setItem(listKey, JSON.stringify(list));
-  } catch {}
-}
-
 export async function syncPendingProjects() {
   if (!navigator.onLine) return;
   const session = getSession();
   if (!session?.uid) return;
-
   const queue = getQueue();
   if (!queue.length) return;
 
@@ -162,9 +151,8 @@ export async function syncPendingProjects() {
       }, { merge: true });
 
       const local = loadLocal(item.projectId);
-      if (local) saveLocal(item.projectId, { ...local, syncedAt: Date.now() });
+      if (local) saveLocal(item.projectId, { ...local, _needsSync: false, syncedAt: Date.now() });
       removeFromQueue(item.projectId);
-      console.info("[Sync] Synced queued project:", item.projectId);
     } catch (err) {
       console.warn("[Sync] Failed to sync queued project:", item.projectId, err.code, err.message);
     }
@@ -173,44 +161,34 @@ export async function syncPendingProjects() {
 
 export async function getUserProjects(uid) {
   if (!uid) return [];
-
   if (navigator.onLine) {
     try {
-      const q    = query(
+      const snap = await getDocs(query(
         collection(db, PROJECTS_COLLECTION),
         where("authorUid", "==", uid),
         orderBy("updatedAt", "desc")
-      );
-      const snap = await getDocs(q);
-      const projects = snap.docs.map(d => ({
-        id: d.id,
-        ...sanitizeForStorage(d.data()),
-        source: "cloud",
-      }));
-      return projects;
+      ));
+      return snap.docs.map(d => ({ id: d.id, ...sanitizeForStorage(d.data()), source: "cloud" }));
     } catch (err) {
-      console.warn("[Sync] Firestore getUserProjects failed:", err.code, err.message);
+      console.warn("[Sync] getUserProjects failed:", err.code, err.message);
     }
   }
-
   return _getLocalProjects(uid);
 }
 
 function _getLocalProjects(uid) {
-  const listKey   = `all_projects_${uid}`;
-  const localList = JSON.parse(localStorage.getItem(listKey) || "[]");
-  const projects  = [];
-  for (const p of localList) {
+  const list = JSON.parse(localStorage.getItem(`all_projects_${uid}`) || "[]");
+  const out  = [];
+  for (const p of list) {
     const d = loadLocal(p.id);
-    if (d) projects.push({ id: p.id, ...d, source: "local" });
+    if (d) out.push({ id: p.id, ...d, source: "local" });
   }
-  projects.sort((a, b) => (b.localUpdatedAt || b.timestamp || 0) - (a.localUpdatedAt || a.timestamp || 0));
-  return projects;
+  out.sort((a, b) => (b.localUpdatedAt || b.timestamp || 0) - (a.localUpdatedAt || a.timestamp || 0));
+  return out;
 }
 
 export async function loadProjectData(projectId) {
   if (!projectId) return null;
-
   if (navigator.onLine) {
     try {
       const snap = await getDoc(doc(db, PROJECTS_COLLECTION, projectId));
@@ -223,7 +201,6 @@ export async function loadProjectData(projectId) {
       console.warn("[Sync] Firestore load failed:", err.code, err.message);
     }
   }
-
   const local = loadLocal(projectId);
   if (local) return { ...local, source: "local" };
   return null;
@@ -231,9 +208,9 @@ export async function loadProjectData(projectId) {
 
 export async function deleteProjectData(projectId) {
   const session = getSession();
-  try { localStorage.removeItem(localKey(projectId)); } catch {}
+  try { localStorage.removeItem(localKey(projectId)); }     catch {}
+  try { localStorage.removeItem(`project_${projectId}`); }  catch {}
   try { localStorage.removeItem(`sks_stats_${projectId}`); } catch {}
-  try { localStorage.removeItem(`project_${projectId}`); } catch {}
   removeFromQueue(projectId);
 
   if (session?.uid) {
@@ -253,20 +230,17 @@ export async function deleteProjectData(projectId) {
 export async function toggleLikeProject(projectId) {
   const session = getSession();
   if (!session?.uid) return null;
-
   const statsKey = `sks_stats_${projectId}`;
   let stats = {};
   try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
-
   stats.likedByMe = !stats.likedByMe;
   stats.likes     = Math.max(0, (stats.likes || 0) + (stats.likedByMe ? 1 : -1));
   try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
-
   if (navigator.onLine) {
     try {
       await setDoc(doc(db, STATS_COLLECTION, projectId), {
-        likes:                          increment(stats.likedByMe ? 1 : -1),
-        [`likedBy.${session.uid}`]:     stats.likedByMe,
+        likes:                      increment(stats.likedByMe ? 1 : -1),
+        [`likedBy.${session.uid}`]: stats.likedByMe,
       }, { merge: true });
     } catch (err) { console.warn("[Sync] Like sync failed:", err.message); }
   }
@@ -275,12 +249,11 @@ export async function toggleLikeProject(projectId) {
 
 export async function recordProjectView(projectId, viewerUid) {
   const session = getSession();
-
   const seenKey = `sks_viewed_${viewerUid || "anon"}_${projectId}`;
   if (sessionStorage.getItem(seenKey)) return;
 
   const localData = loadLocal(projectId);
-  if (session?.uid && localData?.authorUid && session.uid === localData.authorUid) return;
+  if (session?.uid && localData?.authorUid === session.uid) return;
 
   if (navigator.onLine && session?.uid) {
     try {
@@ -290,7 +263,6 @@ export async function recordProjectView(projectId, viewerUid) {
   }
 
   sessionStorage.setItem(seenKey, "1");
-
   const statsKey = `sks_stats_${projectId}`;
   let stats = {};
   try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
@@ -300,9 +272,7 @@ export async function recordProjectView(projectId, viewerUid) {
   if (navigator.onLine) {
     try {
       await setDoc(doc(db, STATS_COLLECTION, projectId), { views: increment(1) }, { merge: true });
-    } catch (err) {
-      console.warn("[Sync] View sync failed:", err.message);
-    }
+    } catch (err) { console.warn("[Sync] View sync failed:", err.message); }
   }
 }
 
@@ -311,7 +281,6 @@ export async function getProjectStats(projectId) {
   const statsKey = `sks_stats_${projectId}`;
   let stats = {};
   try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
-
   if (navigator.onLine) {
     try {
       const snap = await getDoc(doc(db, STATS_COLLECTION, projectId));
@@ -319,8 +288,8 @@ export async function getProjectStats(projectId) {
         const d = snap.data();
         stats = {
           ...stats,
-          likes:     d.likes    || 0,
-          views:     d.views    || 0,
+          likes:     d.likes || 0,
+          views:     d.views || 0,
           likedByMe: session?.uid ? !!(d.likedBy?.[session.uid]) : false,
         };
         try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
@@ -331,6 +300,5 @@ export async function getProjectStats(projectId) {
 }
 
 window.addEventListener("online", () => {
-  console.info("[Sync] Back online — syncing pending projects...");
   syncPendingProjects();
 });

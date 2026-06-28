@@ -1,12 +1,12 @@
 "use strict";
 
-const IC_OUTPUT_R  = 25;
-const IC_OC_LOW_R  = 20;
-const IC_FLOAT_R   = 1e7;
+const IC_OUTPUT_R  = 10;
+const IC_OC_LOW_R  = 8;
+const IC_FLOAT_R   = 1e8;
 const VCC_MAX      = 7.0;
 const VCC_MIN      = 2.0;
-const LOGIC_HI     = 0.7;
-const LOGIC_LO     = 0.3;
+const LOGIC_HI     = 0.65;
+const LOGIC_LO     = 0.35;
 
 const PIN_MAP_14 = { vcc: 14, gnd: 7  };
 const PIN_MAP_16 = { vcc: 16, gnd: 8  };
@@ -31,13 +31,13 @@ export default class LogicICModel {
     if (!model) return;
 
     const is83    = model === "74HC83";
-    const is16Pin = ["74HC153","74HC148","74HC83"].includes(model);
+    const is16Pin = ["74HC153","74HC148","74HC83","74HC74","74HC73","74HC76"].includes(model);
     const pinMap  = is83 ? PIN_MAP_83 : is16Pin ? PIN_MAP_16 : PIN_MAP_14;
     const pinCount = is16Pin ? 16 : 14;
 
-    const nets   = LogicICModel._resolveNets(comp, solver, pinCount);
-    const vccNet = nets[pinMap.vcc];
-    const gndNet = nets[pinMap.gnd];
+    const nets    = LogicICModel._resolveNets(comp, solver, pinCount);
+    const vccNet  = nets[pinMap.vcc];
+    const gndNet  = nets[pinMap.gnd];
     if (!vccNet || !gndNet) return;
 
     const vcc = electrical.netVoltage.get(vccNet) ?? 0;
@@ -47,15 +47,19 @@ export default class LogicICModel {
     if (LogicICModel._checkBurn(comp, vdd)) return;
     if (vdd < VCC_MIN) return;
 
-    const read = (pin) =>
-      LogicICModel._readLogic(pin, nets, electrical, gnd, vdd);
+    const vccPinNums = new Set([pinMap.vcc, pinMap.gnd]);
+
+    const read = (pin) => LogicICModel._readLogic(pin, nets, electrical, gnd, vdd, vccPinNums);
     const push = (pin, val, oc = false) =>
-      LogicICModel._pushOutput(comp, nets, electrical, pin, gndNet, val, vdd, oc);
+      LogicICModel._pushOutput(comp, nets, electrical, pin, gndNet, val, vdd, oc, vccPinNums);
 
     if (GATE_TABLE[model])   { LogicICModel._solveGates(model, read, push); return; }
     if (model === "74HC83")  { LogicICModel._solve83(read, push);            return; }
     if (model === "74HC153") { LogicICModel._solve153(read, push);           return; }
     if (model === "74HC148") { LogicICModel._solve148(read, push);           return; }
+    if (model === "74HC74")  { LogicICModel._solve74(read, push, comp);      return; }
+    if (model === "74HC73")  { LogicICModel._solve73(read, push, comp);      return; }
+    if (model === "74HC76")  { LogicICModel._solve76(read, push, comp);      return; }
   }
 
   static _resolveNets(comp, solver, pinCount) {
@@ -69,8 +73,9 @@ export default class LogicICModel {
     return nets;
   }
 
-  static _readLogic(pin, nets, electrical, gnd, vdd) {
+  static _readLogic(pin, nets, electrical, gnd, vdd, vccPinNums) {
     if (!pin || pin === 0) return null;
+    if (vccPinNums?.has(pin)) return null;
     const net = nets[pin];
     if (!net) return undefined;
     const v = electrical.netVoltage.get(net);
@@ -81,7 +86,8 @@ export default class LogicICModel {
     return undefined;
   }
 
-  static _pushOutput(comp, nets, electrical, pin, gndNet, logic, vdd, oc = false) {
+  static _pushOutput(comp, nets, electrical, pin, gndNet, logic, vdd, oc = false, vccPinNums) {
+    if (vccPinNums?.has(pin)) return;
     const net = nets[pin];
     if (!net) return;
 
@@ -94,17 +100,10 @@ export default class LogicICModel {
     }
 
     if (oc) {
-      if (logic) {
-        electrical.circuits.push({
-          id: `${comp.id}_p${pin}_oc_hi`, type: "IC_OUTPUT",
-          a: net, b: gndNet, ohms: IC_FLOAT_R, vOffset: 0,
-        });
-      } else {
-        electrical.circuits.push({
-          id: `${comp.id}_p${pin}_oc_lo`, type: "IC_OUTPUT",
-          a: net, b: gndNet, ohms: IC_OC_LOW_R, vOffset: 0,
-        });
-      }
+      electrical.circuits.push(logic
+        ? { id: `${comp.id}_p${pin}_oc_hi`, type: "IC_OUTPUT", a: net, b: gndNet, ohms: IC_FLOAT_R,  vOffset: 0   }
+        : { id: `${comp.id}_p${pin}_oc_lo`, type: "IC_OUTPUT", a: net, b: gndNet, ohms: IC_OC_LOW_R, vOffset: 0   }
+      );
       return;
     }
 
@@ -136,13 +135,16 @@ export default class LogicICModel {
       const a = read(i1);
 
       if (type === "NOT") {
-        if (a === undefined) { push(out, undefined); continue; }
-        push(out, !a);
+        push(out, a === undefined ? undefined : !a);
         continue;
       }
 
       const b = read(i2);
-      if (a === undefined || b === undefined) { push(out, undefined, oc); continue; }
+
+      if (a === undefined || b === undefined) {
+        push(out, undefined, oc);
+        continue;
+      }
 
       let result;
       switch (type) {
@@ -158,12 +160,6 @@ export default class LogicICModel {
     }
   }
 
-  // 74HC83: 4-bit Full Adder
-  // VCC=16, GND=8 (standard 16-pin DIP)
-  // A1=10, A2=3, A3=14, A4=1
-  // B1=11, B2=4,  B3=15, B4=16 — wait, corrected per actual 74HC83 datasheet below:
-  // Pin 1=A4, 2=S3, 3=A3, 4=B3, 5=S2, 6=B2, 7=A2, 8=GND
-  // Pin 9=S1, 10=A1, 11=B1, 12=C0, 13=C4, 14=S4, 15=B4, 16=VCC
   static _solve83(read, push) {
     const a1  = read(10);
     const b1  = read(11);
@@ -177,18 +173,17 @@ export default class LogicICModel {
 
     const anyUndef = [a1,b1,a2,b2,a3,b3,a4,b4].some(v => v === undefined);
 
-    const toB = (v) => v === true ? 1 : 0;
-
-    const A = (toB(a4)<<3)|(toB(a3)<<2)|(toB(a2)<<1)|toB(a1);
-    const B = (toB(b4)<<3)|(toB(b3)<<2)|(toB(b2)<<1)|toB(b1);
-    const C = toB(cin === undefined ? false : cin);
-
     if (anyUndef) {
       [9, 2, 5, 14, 13].forEach(p => push(p, undefined));
       return;
     }
 
+    const toB = (v) => v === true ? 1 : 0;
+    const A   = (toB(a4)<<3)|(toB(a3)<<2)|(toB(a2)<<1)|toB(a1);
+    const B   = (toB(b4)<<3)|(toB(b3)<<2)|(toB(b2)<<1)|toB(b1);
+    const C   = toB(cin === undefined ? false : cin);
     const sum = A + B + C;
+
     push(9,  !!(sum & 1));
     push(2,  !!(sum & 2));
     push(5,  !!(sum & 4));
@@ -196,11 +191,6 @@ export default class LogicICModel {
     push(13, !!(sum & 16));
   }
 
-  // 74HC153: Dual 4-to-1 Multiplexer
-  // VCC=16, GND=8
-  // S0=14(shared), S1=2(shared)
-  // MuxA: ~1G=1(active LOW), I0=6, I1=5, I2=4, I3=3, Y=7
-  // MuxB: ~2G=15(active LOW), I0=10, I1=11, I2=12, I3=13, Y=9
   static _solve153(read, push) {
     const s0 = read(14);
     const s1 = read(2);
@@ -234,12 +224,6 @@ export default class LogicICModel {
     }
   }
 
-  // 74HC148: 8-to-3 Priority Encoder
-  // VCC=16, GND=8
-  // EI=5 (active LOW)
-  // I0..I7 at pins [10,11,12,13,1,2,3,4] (active LOW)
-  // A0=9, A1=7, A2=6 (active LOW)
-  // GS=14, EO=15
   static _solve148(read, push) {
     const ei = read(5);
 
@@ -251,8 +235,7 @@ export default class LogicICModel {
     const iPins = [10, 11, 12, 13, 1, 2, 3, 4];
     let priority = -1;
     for (let i = 7; i >= 0; i--) {
-      const val = read(iPins[i]);
-      if (val === false) { priority = i; break; }
+      if (read(iPins[i]) === false) { priority = i; break; }
     }
 
     if (priority !== -1) {
@@ -268,5 +251,146 @@ export default class LogicICModel {
       push(14, true);
       push(15, false);
     }
+  }
+
+  static _solve74(read, push, comp) {
+    if (!comp._ff74) comp._ff74 = [
+      { q: false, qn: true },
+      { q: false, qn: true },
+    ];
+
+    const FF = [
+      { clk: 3, d: 2, pre: 4, clr: 1, q: 5, qn: 6   },
+      { clk: 11, d: 12, pre: 10, clr: 13, q: 9, qn: 8 },
+    ];
+
+    for (let i = 0; i < 2; i++) {
+      const p   = FF[i];
+      const ff  = comp._ff74[i];
+      const pre = read(p.pre);
+      const clr = read(p.clr);
+
+      if (pre === false && clr !== false) {
+        ff.q = true; ff.qn = false;
+        push(p.q, true); push(p.qn, false);
+        continue;
+      }
+      if (clr === false && pre !== false) {
+        ff.q = false; ff.qn = true;
+        push(p.q, false); push(p.qn, true);
+        continue;
+      }
+      if (clr === false && pre === false) {
+        push(p.q, true); push(p.qn, true);
+        continue;
+      }
+
+      const clkNow = read(p.clk);
+      const clkOld = ff._clkPrev ?? false;
+      const d      = read(p.d);
+
+      if (clkOld === false && clkNow === true && d !== undefined) {
+        ff.q = d; ff.qn = !d;
+      }
+      ff._clkPrev = clkNow ?? false;
+
+      push(p.q,  ff.q);
+      push(p.qn, ff.qn);
+    }
+  }
+
+  static _solve73(read, push, comp) {
+    if (!comp._ff73) comp._ff73 = [
+      { q: false, qn: true, _clkPrev: false },
+      { q: false, qn: true, _clkPrev: false },
+    ];
+
+    const FF = [
+      { clk: 1, clr: 2, j: 14, k: 3,  q: 12, qn: 13 },
+      { clk: 5, clr: 6, j: 7,  k: 11, q: 10, qn: 9  },
+    ];
+
+    for (let i = 0; i < 2; i++) {
+      const p  = FF[i];
+      const ff = comp._ff73[i];
+      const clr = read(p.clr);
+
+      if (clr === false) {
+        ff.q = false; ff.qn = true;
+        push(p.q, false); push(p.qn, true);
+        ff._clkPrev = read(p.clk) ?? false;
+        continue;
+      }
+
+      const clkNow = read(p.clk);
+      const clkOld = ff._clkPrev ?? false;
+      const j      = read(p.j);
+      const k      = read(p.k);
+
+      if (clkOld === true && clkNow === false) {
+        if (j === true  && k === false) { ff.q = true;  ff.qn = false; }
+        else if (j === false && k === true)  { ff.q = false; ff.qn = true;  }
+        else if (j === true  && k === true)  { ff.q = !ff.q; ff.qn = !ff.qn; }
+      }
+      ff._clkPrev = clkNow ?? false;
+
+      push(p.q,  ff.q);
+      push(p.qn, ff.qn);
+    }
+  }
+
+  static _solve76(read, push, comp) {
+    if (!comp._ff76) comp._ff76 = [
+      { q: false, qn: true, _clkPrev: false },
+      { q: false, qn: true, _clkPrev: false },
+    ];
+
+    const FF = [
+      { clk: 1, pre: 2, clr: 3, j: 4,  k: 14, q: 15, qn: 16 },
+      { clk: 6, pre: 7, clr: 8, j: 9,  k: 11, q: 12, qn: 13 },
+    ];
+
+    for (let i = 0; i < 2; i++) {
+      const p  = FF[i];
+      const ff = comp._ff76[i];
+      const pre = read(p.pre);
+      const clr = read(p.clr);
+
+      if (pre === false && clr !== false) {
+        ff.q = true; ff.qn = false;
+        push(p.q, true); push(p.qn, false);
+        ff._clkPrev = read(p.clk) ?? false;
+        continue;
+      }
+      if (clr === false && pre !== false) {
+        ff.q = false; ff.qn = true;
+        push(p.q, false); push(p.qn, true);
+        ff._clkPrev = read(p.clk) ?? false;
+        continue;
+      }
+
+      const clkNow = read(p.clk);
+      const clkOld = ff._clkPrev ?? false;
+      const j      = read(p.j);
+      const k      = read(p.k);
+
+      if (clkOld === true && clkNow === false) {
+        if (j === true  && k === false) { ff.q = true;  ff.qn = false; }
+        else if (j === false && k === true)  { ff.q = false; ff.qn = true;  }
+        else if (j === true  && k === true)  { ff.q = !ff.q; ff.qn = !ff.qn; }
+      }
+      ff._clkPrev = clkNow ?? false;
+
+      push(p.q,  ff.q);
+      push(p.qn, ff.qn);
+    }
+  }
+
+  static reset(comp) {
+    comp.isBurned  = false;
+    comp._ff74     = null;
+    comp._ff73     = null;
+    comp._ff76     = null;
+    comp.instance?.reset?.();
   }
 }
