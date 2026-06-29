@@ -34,7 +34,8 @@
     .notif-empty{padding:24px 14px;text-align:center;color:#9ca3af;font-size:12px;}
 
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:800;backdrop-filter:blur(4px);}
-    .modal-overlay.open{display:flex;}
+    .modal-overlay{display:none;}
+.modal-overlay.open{display:flex;}
     .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
     .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
     .modal-header span{font-size:14px;font-weight:700;color:#111318;}
@@ -625,37 +626,61 @@ async function initCollab() {
     if (bell && !bell.contains(e.target)) document.getElementById("notifDropdown").classList.remove("open");
   });
 
-  document.getElementById("renameInlineBtn")?.addEventListener("click", () => {
-    document.getElementById("renameModalInput").value = document.getElementById("projectNameDisplay")?.textContent || "";
+ document.getElementById("renameInlineBtn")?.addEventListener("click", () => {
+    const currentName = document.getElementById("projectNameDisplay")?.textContent || "";
+    const input = document.getElementById("renameModalInput");
+    if (input) input.value = currentName;
     document.getElementById("renameModal").classList.add("open");
-    setTimeout(() => document.getElementById("renameModalInput").select(), 50);
+    setTimeout(() => { 
+      const inp = document.getElementById("renameModalInput");
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
   });
 
-  document.getElementById("renameModalOk")?.addEventListener("click", async () => {
-    const name = document.getElementById("renameModalInput").value.trim();
-    if (!name) return;
-    const pid = getProjectId();
-    document.getElementById("projectNameDisplay").textContent = name;
-    document.title = `${name} — SarkitLab`;
+document.getElementById("renameModalOk")?.addEventListener("click", async () => {
+    const input = document.getElementById("renameModalInput");
+    const name = input?.value?.trim();
+    
+    // Pehle modal band karo, phir baaki kaam
     document.getElementById("renameModal").classList.remove("open");
+    
+    if (!name) return;
+    
+    const pid = getProjectId();
+    const displayEl = document.getElementById("projectNameDisplay");
+    if (displayEl) displayEl.textContent = name;
+    document.title = `${name} — SarkitLab`;
     updateURL(name, pid);
     window._toast("Renamed ✓");
+    
     if (!pid) return;
+    
+    // Local storage update
     for (const key of [`sks_proj_${pid}`, `project_${pid}`]) {
-      const raw = localStorage.getItem(key); if (!raw) continue;
-      try { const d = JSON.parse(raw); d.name = name; d.slug = slugify(name); localStorage.setItem(key, JSON.stringify(d)); } catch {}
+      const raw = localStorage.getItem(key); 
+      if (!raw) continue;
+      try { 
+        const d = JSON.parse(raw); 
+        d.name = name; 
+        d.slug = slugify(name); 
+        localStorage.setItem(key, JSON.stringify(d)); 
+      } catch {}
     }
+    
     if (session?.uid) {
-      const lk   = `all_projects_${session.uid}`;
+      const lk = `all_projects_${session.uid}`;
       const list = JSON.parse(localStorage.getItem(lk) || "[]");
-      const idx  = list.findIndex(p => p.id === pid);
-      if (idx !== -1) { list[idx].name = name; list[idx].slug = slugify(name); localStorage.setItem(lk, JSON.stringify(list)); }
+      const idx = list.findIndex(p => p.id === pid);
+      if (idx !== -1) { 
+        list[idx].name = name; 
+        list[idx].slug = slugify(name); 
+        localStorage.setItem(lk, JSON.stringify(list)); 
+      }
     }
+    
     if (navigator.onLine) {
       try {
-        const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-        const { app } = await import("/src/utils/auth.js");
-        await updateDoc(doc(getFirestore(app), "projects", pid), { name, slug: slugify(name) });
+        await updateDoc(doc(db, "projects", pid), { name, slug: slugify(name) });
       } catch {}
     }
   });
