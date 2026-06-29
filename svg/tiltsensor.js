@@ -19,8 +19,8 @@ export default class VirtualTiltSensor {
     this._attachEvents();
   }
 
-  get tilted()  { return this._tilted; }
-  get active()  { return this._tilted; }
+  get tilted() { return this._tilted; }
+  get active() { return this._tilted; }
 
   set tilted(val) {
     const b = !!val;
@@ -70,13 +70,17 @@ export default class VirtualTiltSensor {
     }
     const ball = this.svg.querySelector("#ball");
     if (ball) {
+      // upright  (_tilted=false): ball at left (cx=35), grey  → circuit CLOSED
+      // tilted   (_tilted=true):  ball at right (cx=110), orange → circuit OPEN
       ball.setAttribute("fill", this._tilted ? "#f97316" : "#cfcfcf");
       ball.setAttribute("cx",   this._tilted ? "110"     : "35");
     }
     const label = this.svg.querySelector("#state-label");
     if (label) {
+      // label matches real physics
       label.textContent = this._tilted
-        ? "OPEN (tilted)" : "CLOSED (upright)";
+        ? "OPEN (tilted)"
+        : "CLOSED (upright)";
       label.setAttribute("fill", this._tilted ? "#f97316" : "#69f0ae");
     }
   }

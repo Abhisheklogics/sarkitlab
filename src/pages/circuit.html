@@ -304,6 +304,7 @@
   const projectId = new URLSearchParams(window.location.search).get("project");
 
   let collabMgr   = null;
+  window._collabMgrRef = collabMgr
   let presence    = null;
   let inviteMgr   = new InviteManager();
   let myRole      = "owner";
@@ -312,7 +313,8 @@
   let _notifUnsub = null;
   let _inviteRole = "editor";
   let _inviteLink = "";
-
+let storage=null;
+window._storage = storage;
   function slugify(n) {
     return (n || "untitled").toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 60);
@@ -451,65 +453,135 @@
     _notifUnsub?.();
   });
 
+// circuit.html ke <script type="module"> mein
+// initCollab() function ko is se replace karo:
+
 async function initCollab() {
-    if (!projectId || !session?.uid) return;
+  if (!projectId || !session?.uid) return;
 
-    const snap = await getDoc(doc(db, "projects", projectId)).catch(() => null);
+  const snap = await getDoc(doc(db, "projects", projectId)).catch(() => null);
 
-    // Agar project abhi naya hai (save nahi hua) — owner treat karo
-    if (!snap?.exists()) {
-      document.getElementById("inviteBtn").style.display = "inline-flex";
-      myRole = "owner";
-      return;
-    }
-
-    const data    = snap.data();
-    const isOwner = data.authorUid === session.uid;
-    const collabs = data.collaborators || {};
-    const myInfo  = collabs[session.uid];
-
-    // Owner nahi aur collaborator bhi nahi — bail out
-    if (!isOwner && !myInfo) return;
-
-    myRole = isOwner ? "owner" : myInfo.role;
-
-    if (myRole === "viewer") {
-      document.getElementById("viewerBanner").classList.add("show");
-      const runBtn  = document.getElementById("btn2");
-      if (runBtn)  { runBtn.disabled = true; runBtn.title = "Only the owner can run simulation"; }
-      const saveBtn = document.getElementById("saveBtn");
-      if (saveBtn) saveBtn.style.display = "none";
-    }
-
-    if (isOwner) document.getElementById("inviteBtn").style.display = "inline-flex";
-
-    presence  = new PresenceSystem(document.getElementById("svg1"), session.uid);
-    collabMgr = new CollabManager({
-      projectId,
-      uid:              session.uid,
-      displayName:      session.displayName || "User",
-      role:             myRole,
-      onRemoteOp:       op => {
-        if (op.type === "CIRCUIT_UPDATE") window._toast(`${op.name || "Someone"} ne circuit update kiya`, false, true);
-      },
-      onPresenceUpdate: users => presence.update(users),
-    });
-    await collabMgr.join();
-
-    const svg = document.getElementById("svg1");
-    svg.addEventListener("mousemove", e => {
-      const rect  = svg.getBoundingClientRect();
-      const vbStr = svg.getAttribute("viewBox");
-      let sx=1,sy=1,ox=0,oy=0;
-      if (vbStr) {
-        const [vx,vy,vw,vh] = vbStr.split(/\s+/).map(Number);
-        sx=vw/rect.width; sy=vh/rect.height; ox=vx; oy=vy;
-      }
-      collabMgr.sendCursorMove((e.clientX-rect.left)*sx+ox, (e.clientY-rect.top)*sy+oy);
-    });
-
-    CollabManager.pruneOldOps(projectId);
+  if (!snap?.exists()) {
+    // Naya unsaved project — owner treat karo
+    document.getElementById("inviteBtn").style.display = "inline-flex";
+    myRole = "owner";
+    return;
   }
+
+  const data    = snap.data();
+  const isOwner = data.authorUid === session.uid;
+  const collabs = data.collaborators || {};
+  const myInfo  = collabs[session.uid];
+
+  if (!isOwner && !myInfo) return;
+
+  myRole = isOwner ? "owner" : myInfo.role;
+
+  if (myRole === "viewer") {
+    document.getElementById("viewerBanner").classList.add("show");
+    // Viewer ke liye Run button disable
+    const runBtn = document.getElementById("btn2");
+    if (runBtn) { runBtn.disabled = true; runBtn.title = "Only the owner can run simulation"; }
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) saveBtn.style.display = "none";
+  }
+
+  if (myRole === "editor") {
+    // Editor Run/Stop nahi kar sakta — sirf owner
+    const runBtn = document.getElementById("btn2");
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.title = "Only the owner can start/stop simulation";
+      runBtn.style.opacity = "0.5";
+    }
+  }
+
+  if (isOwner) document.getElementById("inviteBtn").style.display = "inline-flex";
+
+  presence  = new PresenceSystem(document.getElementById("svg1"), session.uid);
+  collabMgr = new CollabManager({
+    projectId,
+    uid:         session.uid,
+    displayName: session.displayName || "User",
+    role:        myRole,
+
+    onRemoteOp: async (op) => {
+      if (op.type === "CIRCUIT_UPDATE") {
+        // Remote changes ko canvas pe apply karo
+        window._toast(`${op.name || "Someone"} ne circuit update kiya`, false, true);
+
+        // Canvas clear karke remote state load karo
+        if (op.payload?.components !== undefined) {
+          try {
+            // Registry clear
+            const allComps = window.registry?.getAll?.() || [];
+            for (const c of allComps) {
+              window.deleteSystem?.deleteComponent?.(c.id, true);
+            }
+            // Wires clear
+            const allWires = [...(window.wireSys?.connections || [])];
+            for (const conn of allWires) {
+              conn.wire?.remove?.();
+            }
+            if (window.wireSys) window.wireSys.connections = [];
+
+            // Remote components spawn karo
+            for (const c of (op.payload.components || [])) {
+              await window.spawnComponent?.(c.spawnType || c.type, c.x || 100, c.y || 100, c.id, true);
+            }
+
+            // Remote wires draw karo — storage ka helper use karo
+            if (window._storage) {
+              for (const w of (op.payload.wires || [])) {
+                await window._storage._reconstructWireWithRetry(w);
+              }
+            }
+          } catch (e) {
+            console.warn("[Collab] Remote update apply failed:", e);
+          }
+        }
+      }
+
+      if (op.type === "SIM_START") {
+        // Owner ne simulation start kiya — sabko dikhao
+        window._toast(`${op.name || "Owner"} ne simulation start ki`, false, true);
+        const runBtn = document.getElementById("btn2");
+        if (runBtn) {
+          runBtn.style.background = "#dc2626";
+          runBtn.title = "Owner simulation chala raha hai";
+        }
+      }
+
+      if (op.type === "SIM_STOP") {
+        window._toast(`Simulation band ho gayi`, false, true);
+        const runBtn = document.getElementById("btn2");
+        if (runBtn) {
+          runBtn.style.background = "";
+          runBtn.title = "Only the owner can start/stop simulation";
+        }
+      }
+    },
+
+    onPresenceUpdate: users => presence.update(users),
+  });
+
+  await collabMgr.join();
+
+  // Cursor tracking
+  const svg = document.getElementById("svg1");
+  svg.addEventListener("mousemove", e => {
+    const rect  = svg.getBoundingClientRect();
+    const vbStr = svg.getAttribute("viewBox");
+    let sx=1,sy=1,ox=0,oy=0;
+    if (vbStr) {
+      const [vx,vy,vw,vh] = vbStr.split(/\s+/).map(Number);
+      sx=vw/rect.width; sy=vh/rect.height; ox=vx; oy=vy;
+    }
+    collabMgr.sendCursorMove((e.clientX-rect.left)*sx+ox, (e.clientY-rect.top)*sy+oy);
+  });
+
+  CollabManager.pruneOldOps(projectId);
+}
 
   function initNotifications() {
     if (!session?.uid) return;

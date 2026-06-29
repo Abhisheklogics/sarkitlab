@@ -437,7 +437,7 @@ function lockEditor(lock) {
 
 function stopSimulation() {
   engine?.stop();
-
+window._collabMgrRef?.sendOp?.("SIM_STOP", {});
   const solver = window._simEngineRef?._circuitSolver
               ?? window._simEngineRef?.circuitSolver;
 
@@ -641,6 +641,7 @@ simulationBtn?.addEventListener("click", async () => {
 
     try {
       on = true;
+      window._collabMgrRef?.sendOp?.("SIM_START", {});
       lockEditor(true);
       tCheck.checkAllConnections();
 

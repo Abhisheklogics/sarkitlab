@@ -31,46 +31,50 @@ export default class InviteManager {
     const session = getSession();
     if (!session?.uid) return { error: "not_logged_in" };
 
+    // Step 1: Invite fetch karo
     const invSnap = await getDoc(doc(db, "invites", token));
-    if (!invSnap.exists())                     return { error: "invalid_token" };
+    if (!invSnap.exists())                 return { error: "invalid_token" };
     const inv = invSnap.data();
-    if (inv.expiresAt < Date.now())            return { error: "expired" };
-    if (inv.usedBy?.includes(session.uid))     return { error: "already_joined" };
+    if (inv.expiresAt < Date.now())        return { error: "expired" };
+    if (inv.usedBy?.includes(session.uid)) return { error: "already_joined" };
 
-    const projSnap = await getDoc(doc(db, "projects", inv.projectId));
-    if (!projSnap.exists())                    return { error: "project_not_found" };
+    const projectId   = inv.projectId;
+    const projectName = inv.projectName || "Untitled Circuit";
+    const ownerUid    = inv.createdBy;
+    if (!projectId) return { error: "project_not_found" };
 
-    const batch = writeBatch(db);
+    try {
+      // updateDoc use karo — hamesha 'update' rule trigger hoga, 'create' nahi
+      // Yeh tab bhi kaam karta hai jab collaborators field pehle exist nahi karti
+      await updateDoc(doc(db, "projects", projectId), {
+        [`collaborators.${session.uid}`]: {
+          role:    inv.role,
+          name:    session.displayName || "User",
+          addedAt: Date.now(),
+        },
+      });
 
-    batch.set(doc(db, "projects", inv.projectId), {
-      [`collaborators.${session.uid}`]: {
-        role:    inv.role,
-        name:    session.displayName || "User",
-        addedAt: Date.now(),
-      },
-    }, { merge: true });
+      // Invite ka usedBy update karo
+      await updateDoc(doc(db, "invites", token), {
+        usedBy: [...(inv.usedBy || []), session.uid],
+      });
 
-    batch.update(doc(db, "invites", token), {
-      usedBy: [...(inv.usedBy || []), session.uid],
-    });
+      // Owner ko notification
+      await this.sendNotification({
+        toUid:       ownerUid,
+        type:        "collab_joined",
+        fromUid:     session.uid,
+        fromName:    session.displayName || "Someone",
+        projectId,
+        projectName,
+      });
 
-    await batch.commit();
+      return { success: true, projectId, projectName, role: inv.role };
 
-    await this.sendNotification({
-      toUid:       projSnap.data().authorUid,
-      type:        "collab_joined",
-      fromUid:     session.uid,
-      fromName:    session.displayName || "Someone",
-      projectId:   inv.projectId,
-      projectName: inv.projectName || projSnap.data().name,
-    });
-
-    return {
-      success:     true,
-      projectId:   inv.projectId,
-      projectName: inv.projectName || projSnap.data().name,
-      role:        inv.role,
-    };
+    } catch (err) {
+      console.error("[InviteManager] acceptInvite failed:", err.code, err.message);
+      return { error: err.code || "unknown" };
+    }
   }
 
   async sendNotification({ toUid, type, fromUid, fromName, projectId, projectName }) {
