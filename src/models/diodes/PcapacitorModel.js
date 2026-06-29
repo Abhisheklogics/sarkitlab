@@ -1,6 +1,8 @@
 "use strict";
 
-const FORWARD_THRESHOLD = 0.05;
+const REVERSE_THRESHOLD = 0.15;
+const DT_MIN = 1e-4;
+const DT_MAX = 0.05;
 
 export default class PcapacitorModel {
 
@@ -15,20 +17,20 @@ export default class PcapacitorModel {
     const polarized  = inst?.polarized ?? true;
     const Vbreakdown = inst?.maxVoltage ?? 25;
 
-    const Va0   = electrical.netVoltage.get(netP) ?? 0;
-    const Vb0   = electrical.netVoltage.get(netN) ?? 0;
-    const Vest  = Va0 - Vb0;
+    const Va0  = electrical.netVoltage.get(netP) ?? 0;
+    const Vb0  = electrical.netVoltage.get(netN) ?? 0;
+    const Vest = Va0 - Vb0;
+
     const hist  = solver._capState?.get(comp.id);
-    const Vprev = hist != null ? hist.V : Vest;
+    const Vprev = hist != null ? hist.V : 0;
     const Iprev = hist != null ? hist.I : 0;
 
-    if (polarized && Vest < -FORWARD_THRESHOLD) {
+    if (polarized && hist != null && Vest < -REVERSE_THRESHOLD) {
       const Vrev = Math.abs(Vest);
 
       if (Vrev >= Vbreakdown) {
         if (!inst._damaged) {
           inst._damaged = true;
-          console.warn(`[PCap] BREAKDOWN DAMAGE ${comp.id}: ${Vrev.toFixed(2)}V >= ${Vbreakdown}V`);
           inst.onBreakdown?.();
         }
         electrical.circuits.push({
@@ -45,14 +47,13 @@ export default class PcapacitorModel {
         });
         if (!inst._reverseWarned) {
           inst._reverseWarned = true;
-          console.warn(`[PCap] REVERSE POLARITY ${comp.id}: ${Vest.toFixed(2)}V`);
           inst.onReversePolarity?.();
         }
       }
 
       if (inst) {
-        inst._nets       = { A: netP, B: netN };
-        inst._branch     = null;
+        inst._nets        = { A: netP, B: netN };
+        inst._branch      = null;
         inst._reverseMode = true;
       }
       return;
@@ -63,16 +64,15 @@ export default class PcapacitorModel {
       inst._reverseMode   = false;
     }
 
-    const dt      = Math.max(1e-6, solver._dt ?? 1e-4);
-    const Geq     = 2.0 * C / dt;
-    const Ieq     = Geq * Vprev + Iprev;
-    const Geq_eff = 1.0 / (1.0 / Geq + ESR);
-    const Ieq_eff = Ieq * (Geq_eff / Math.max(Geq, 1e-18));
+    const dt  = Math.min(Math.max(DT_MIN, solver._dt ?? DT_MIN), DT_MAX);
+    const Geq = 2.0 * C / dt;
+    const Ieq = Geq * Vprev + Iprev;
 
     const branch = {
       id: comp.id, type: "CAPACITOR",
       a: netP, b: netN, capacitance: C, ohms: ESR,
-      _companionCap: { Geq: Geq_eff, Ieq: Ieq_eff },
+      _companionCap: { Geq, Ieq },
+      _modelManaged: true,
     };
     electrical.circuits.push(branch);
 
@@ -126,7 +126,6 @@ export default class PcapacitorModel {
 
     if (Math.abs(Vc) > Vrated * 1.1 && !inst._overvoltageWarned) {
       inst._overvoltageWarned = true;
-      console.warn(`[PCap] OVERVOLTAGE ${comp.id}: ${Vc.toFixed(2)}V > ${Vrated}V`);
       inst.onOvervoltage?.();
     } else if (Math.abs(Vc) <= Vrated) {
       inst._overvoltageWarned = false;

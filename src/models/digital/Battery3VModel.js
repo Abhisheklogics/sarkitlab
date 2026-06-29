@@ -3,15 +3,16 @@
 const VOC_FRESH_3    = 3.0;
 const V_CUTOFF_3     = 2.0;
 const CAPACITY_MAH_3 = 220;
-const I_MAX_3        = 0.200;   // FIX: was 0.015 — CR2032 can pulse 200mA briefly
-const I_CONT_3       = 0.015;   // continuous rating kept separate
-const I_CRITICAL_3   = 0.005;
+const I_MAX_3        = 0.200;
+const I_CONT_3       = 0.010;
+const I_PULSE_3      = 0.040;
+const I_CRITICAL_3   = 0.100;
 const PEUKERT_K_3    = 1.45;
 const I_REF_3        = 0.0002;
 const RP_3           = 12.0;
-const CP_3           = 0.3;     // FIX: was 1.2 → tau was 14.4s, now 3.6s (realistic for CR2032)
+const CP_3           = 0.3;
 const TAU_RINT_3     = 0.10;
-const RINT_FLOOR_3   = 10.0;    // FIX: was 15 — allows fresh-battery low-rint from SOC curve
+const RINT_FLOOR_3   = 10.0;
 
 function _vocFromSOC3(soc) {
   if      (soc >= 0.75) return 2.98 + (3.00 - 2.98) * ((soc - 0.75) / 0.25);
@@ -31,11 +32,16 @@ function _rintFromSOC3(soc) {
   return 220;
 }
 
-// FIX: Peukert capacity used only for discharge rate scaling,
-// SOC is tracked via nominal capacity to avoid SOC jumps on current change.
 function _peukertFactor3(I_abs) {
   if (I_abs <= I_REF_3) return 1.0;
   return Math.pow(I_REF_3 / Math.max(I_abs, I_REF_3), PEUKERT_K_3 - 1);
+}
+
+function _warnLevel3(I) {
+  if (I >= I_CRITICAL_3) return "CRITICAL";
+  if (I >= I_PULSE_3)    return "HIGH";
+  if (I >= I_CONT_3)     return "MODERATE";
+  return null;
 }
 
 function _init3(comp) {
@@ -60,8 +66,6 @@ export default class Battery3VModel {
 
     _init3(comp);
 
-    // FIX: SOC based on nominal capacity — stable, no jumps
-    // Peukert factor only scales the effective mAh consumed per tick (in update)
     comp._soc = Math.max(0, Math.min(1,
       1 - comp._capacityUsedMAh / CAPACITY_MAH_3
     ));
@@ -75,7 +79,7 @@ export default class Battery3VModel {
       type:    "BATTERY",
       a:       POS,
       b:       NEG,
-      ohms:    Math.max(comp._rint, RINT_FLOOR_3),  // FIX: floor 10 not 15
+      ohms:    Math.max(comp._rint, RINT_FLOOR_3),
       vOffset: vTh,
     };
     electrical.circuits.push(branch);
@@ -97,12 +101,9 @@ export default class Battery3VModel {
     if (!inst?._nets || !comp._branch) return;
 
     const dt    = Math.min(Math.max(1e-9, solver._dt ?? solver.dt ?? 1e-4), 0.05);
-    // FIX: clamp to I_MAX_3 (pulse), warn separately for continuous overload
     const I_raw = Math.min(Math.abs(comp._branch.current ?? 0), I_MAX_3);
 
     if (I_raw > 1e-6) {
-      // FIX: Peukert factor scales effective consumed charge, not capacity itself
-      // This prevents SOC from jumping when current changes
       const pkFactor = _peukertFactor3(I_raw);
       comp._capacityUsedMAh += I_raw * pkFactor * (dt / 3600) * 1000;
     }
@@ -111,7 +112,6 @@ export default class Battery3VModel {
     const alphaR     = 1 - Math.exp(-dt / Math.max(TAU_RINT_3, 1e-9));
     comp._rint       = Math.max(RINT_FLOOR_3, comp._rint + alphaR * (rintTarget - comp._rint));
 
-    // FIX: tau = RP_3 * CP_3 = 12 * 0.3 = 3.6s — realistic for CR2032
     const tau    = Math.max(RP_3 * CP_3, 1e-9);
     const alpha  = 1 - Math.exp(-dt / tau);
     comp._vPolar = comp._vPolar + alpha * (RP_3 * I_raw - comp._vPolar);
@@ -121,16 +121,16 @@ export default class Battery3VModel {
     const rint      = comp._rint;
     const vterminal = Math.max(0, voc - comp._vPolar - I_raw * rint);
     const collapsed = vterminal < V_CUTOFF_3;
-    const overload  = I_raw > I_CRITICAL_3;
-    const critical  = I_raw > I_CONT_3;         // continuous rating exceeded
+    const level     = _warnLevel3(I_raw);
+    const overload  = level !== null;
     const dead      = collapsed || comp._soc <= 0;
     const capRem    = Math.max(0, CAPACITY_MAH_3 - comp._capacityUsedMAh);
 
-    if (overload || critical) {
+    if (overload) {
       const now = Date.now();
       if (!comp._lastWarn3 || now - comp._lastWarn3 > 5000) {
         comp._lastWarn3 = now;
-        console.warn(`[CR2032] ${comp.id}: ${critical ? "CONTINUOUS OVERLOAD" : "OVERLOAD"} I=${(I_raw*1000).toFixed(2)}mA Vt=${vterminal.toFixed(3)}V Rint=${rint.toFixed(1)}Ω SOC=${(comp._soc*100).toFixed(0)}%`);
+        console.warn(`[CR2032] ${comp.id}: ${level} I=${(I_raw*1000).toFixed(2)}mA Vt=${vterminal.toFixed(3)}V Rint=${rint.toFixed(1)}Ω SOC=${(comp._soc*100).toFixed(0)}%`);
       }
     }
 
@@ -170,7 +170,6 @@ export default class Battery3VModel {
     comp._lastWarn3       = undefined;
   }
 
-  // Expose constants for reset caller
   static get VOC_FRESH()  { return VOC_FRESH_3; }
   static get RINT_FRESH() { return RINT_FLOOR_3; }
 }

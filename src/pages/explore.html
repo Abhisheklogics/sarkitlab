@@ -18,22 +18,19 @@
       --border: #e8e3dc; --border-soft: #ede8e1;
       --font-display: 'Playfair Display', Georgia, serif;
       --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 22px;
+      --r-sm: 6px; --r-md: 10px; --r-lg: 16px;
       --shadow-xs: 0 1px 3px rgba(0,0,0,.06);
-      --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
       --shadow-md: 0 4px 20px rgba(0,0,0,.10);
       --ease: .18s ease;
     }
     body { font-family: var(--font-body); background: var(--bg); color: var(--ink-700); min-height: 100vh; }
-
     .nav { height: var(--nav-h); background: var(--bg-el); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; box-shadow: var(--shadow-xs); }
     .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; gap: 12px; }
     .nav-logo { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--ink-900); text-decoration: none; letter-spacing: -0.02em; flex-shrink: 0; }
     .nav-logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; }
     .nav-logo span { color: var(--accent); }
     .nav-center { flex: 1; display: flex; align-items: center; justify-content: center; }
-    .nav-search { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px; width: 320px; transition: border-color var(--ease), box-shadow var(--ease); }
+    .nav-search { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px; width: 320px; }
     .nav-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.1); }
     .nav-search input { border: none; background: transparent; font-family: var(--font-body); font-size: 13px; color: var(--ink-900); outline: none; width: 100%; }
     .nav-search input::placeholder { color: var(--ink-300); }
@@ -43,81 +40,60 @@
     .btn-ghost:hover { background: var(--bg); }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-dark); }
-
     .page-header { background: var(--bg-el); border-bottom: 1px solid var(--border-soft); padding: 32px 24px 24px; }
     .page-header-inner { max-width: 1200px; margin: 0 auto; }
-    .page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--ink-900); margin-bottom: 6px; letter-spacing: -0.4px; }
+    .page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--ink-900); margin-bottom: 6px; }
     .page-header p { font-size: 14px; color: var(--ink-400); margin-bottom: 20px; }
     .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--ink-500); transition: all var(--ease); }
     .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
     .page-body { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
-    .stats-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .stats-bar { display: flex; align-items: center; margin-bottom: 20px; }
     .stats-bar-text { font-size: 13px; color: var(--ink-400); }
     .stats-bar-text strong { color: var(--ink-700); }
-
     .index-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--r-md); padding: 12px 16px; font-size: 12.5px; color: #92400e; margin-bottom: 16px; display: none; align-items: center; gap: 10px; }
     .index-notice.show { display: flex; }
-    .index-notice a { color: var(--accent); font-weight: 600; text-decoration: underline; }
-
     .circuit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
     .circuit-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; transition: all var(--ease); display: flex; flex-direction: column; }
     .circuit-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,97,26,.07); transform: translateY(-2px); }
-    .circuit-thumb { height: 120px; background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-soft); color: var(--border); cursor: pointer; text-decoration: none; }
+    .circuit-thumb { height: 120px; background: linear-gradient(135deg, #f0ede8 0%, #e8e3db 100%); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-soft); color: var(--border); text-decoration: none; }
     .circuit-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
     .circuit-name { font-size: 14px; font-weight: 700; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
     .circuit-name:hover { color: var(--accent); }
     .circuit-author { font-size: 12px; color: var(--ink-400); display: flex; align-items: center; gap: 4px; }
     .circuit-author a { color: var(--accent); font-weight: 600; text-decoration: none; }
-    .circuit-author a:hover { text-decoration: underline; }
     .circuit-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border-soft); }
     .circuit-stats { display: flex; align-items: center; gap: 10px; }
-
     .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); border-radius: 99px; padding: 4px 10px; cursor: pointer; font-size: 12px; color: var(--ink-400); font-family: var(--font-body); transition: all .15s; user-select: none; }
-    .like-btn:hover { border-color: #e05b5b; color: #e05b5b; }
+    .like-btn:hover:not(:disabled) { border-color: #e05b5b; color: #e05b5b; }
     .like-btn.liked { border-color: #e05b5b; color: #e05b5b; background: #fff0f0; }
-    .like-btn:disabled { opacity: .6; cursor: not-allowed; }
-
+    .like-btn:disabled { opacity: .5; cursor: not-allowed; }
     .view-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-400); }
     .meta-time { font-size: 11px; color: var(--ink-300); }
-
     .shimmer { background: linear-gradient(90deg,#ede8e1 25%,#e4dfd7 50%,#ede8e1 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm); }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .skel-card { background: var(--bg-el); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
-
     .load-more-wrap { text-align: center; margin-top: 36px; }
     .load-more-btn { padding: 10px 28px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg-el); font-size: 13px; font-weight: 600; font-family: var(--font-body); color: var(--ink-700); cursor: pointer; transition: all var(--ease); }
     .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
-
     .empty-state { text-align: center; padding: 80px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .empty-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--ink-300); }
     .empty-state h3 { font-size: 15px; font-weight: 700; color: var(--ink-700); }
     .empty-state p { font-size: 13px; color: var(--ink-400); max-width: 240px; line-height: 1.6; }
-
     .toast { position: fixed; bottom: 22px; right: 22px; padding: 10px 18px; border-radius: var(--r-md); font-size: 13px; font-weight: 600; font-family: var(--font-body); opacity: 0; transform: translateY(6px); transition: all .22s; z-index: 9999; pointer-events: none; box-shadow: var(--shadow-md); }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.ok  { background: #14532d; color: #fff; }
     .toast.err { background: #7f1d1d; color: #fff; }
-
-    @media (max-width: 768px) {
-      .nav-center { display: none; }
-      .circuit-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-      .page-body { padding: 16px; }
-    }
+    @media (max-width: 768px) { .nav-center { display: none; } .circuit-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; } .page-body { padding: 16px; } }
   </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
     <a class="nav-logo" href="/">
       <div class="nav-logo-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/>
-          <path d="M8 12h8M2 12h2M20 12h2"/>
-        </svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/><path d="M8 12h8M2 12h2M20 12h2"/></svg>
       </div>
       Sarkit<span>Lab</span>
     </a>
@@ -149,7 +125,7 @@
 <div class="page-body">
   <div class="index-notice" id="indexNotice">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span>Firebase index abhi ban raha hai (2-3 min). Tab tak "Newest" use karo. <a href="https://console.firebase.google.com/project/sarkitlab/firestore/indexes" target="_blank">Status →</a></span>
+    <span>Firebase index ban raha hai (2-3 min). Tab tak "Newest" use karo.</span>
   </div>
   <div class="stats-bar">
     <div class="stats-bar-text">Showing <strong id="showingCount">—</strong> circuits</div>
@@ -164,15 +140,15 @@
     <button class="load-more-btn" id="loadMoreBtn">Load more circuits</button>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script type="module">
   import { getSession } from "/src/utils/auth.js";
   import { app }        from "/src/utils/auth.js";
+  import { toggleLike, getLikeStatus, recordView } from "/src/utils/projectsync.js";
   import {
     getFirestore, collection, query, where, orderBy, limit,
-    startAfter, getDocs, doc, getDoc, setDoc, increment, getDocFromCache,
+    startAfter, getDocs, doc, getDoc, setDoc, increment,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const db      = getFirestore(app);
@@ -248,8 +224,7 @@
   function buildCard(proj) {
     const url   = buildCircuitUrl(proj);
     const liked = likedSet.has(proj.id);
-
-    const card = document.createElement("div");
+    const card  = document.createElement("div");
     card.className  = "circuit-card";
     card.dataset.id = proj.id;
     card.innerHTML  = `
@@ -261,12 +236,10 @@
       </a>
       <div class="circuit-body">
         <a href="${url}" class="circuit-name">${esc(proj.name || "Untitled Circuit")}</a>
-        <div class="circuit-author">
-          by <a href="/explore?author=${esc(proj.authorUid || "")}">${esc(proj.author || "Anonymous")}</a>
-        </div>
+        <div class="circuit-author">by <a href="/explore?author=${esc(proj.authorUid || "")}">${esc(proj.author || "Anonymous")}</a></div>
         <div class="circuit-footer">
           <div class="circuit-stats">
-            <button class="like-btn ${liked ? "liked" : ""}" data-id="${proj.id}" data-liked="${liked}" ${!session ? "title='Login to like'" : ""}>
+            <button class="like-btn ${liked ? "liked" : ""}" data-id="${proj.id}" data-liked="${liked}" ${!session ? "disabled title='Login to like'" : ""}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="${liked ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               <span class="like-count">${proj._likes || 0}</span>
             </button>
@@ -282,17 +255,15 @@
   }
 
   function attachLikeHandlers(container) {
-    container.querySelectorAll(".like-btn").forEach(btn => {
+    container.querySelectorAll(".like-btn:not(:disabled)").forEach(btn => {
       btn.addEventListener("click", async () => {
-        if (!session?.uid) { toast("Like karne ke liye login karein", "err"); return; }
-        if (btn.disabled)  return;
+        if (btn.disabled) return;
+        btn.disabled = true;
 
         const id       = btn.dataset.id;
         const wasLiked = btn.dataset.liked === "true";
         const countEl  = btn.querySelector(".like-count");
         const cur      = parseInt(countEl.textContent) || 0;
-
-        btn.disabled = true;
 
         btn.dataset.liked = String(!wasLiked);
         btn.classList.toggle("liked", !wasLiked);
@@ -301,10 +272,14 @@
         if (!wasLiked) likedSet.add(id); else likedSet.delete(id);
 
         try {
-          await setDoc(doc(db, "projectStats", id), {
-            likes:                      increment(!wasLiked ? 1 : -1),
-            [`likedBy.${session.uid}`]: !wasLiked,
-          }, { merge: true });
+          const result = await toggleLike(id);
+          if (result) {
+            countEl.textContent = result.likes;
+            btn.dataset.liked   = String(result.liked);
+            btn.classList.toggle("liked", result.liked);
+            btn.querySelector("svg").setAttribute("fill", result.liked ? "currentColor" : "none");
+            if (result.liked) likedSet.add(id); else likedSet.delete(id);
+          }
         } catch {
           btn.dataset.liked = String(wasLiked);
           btn.classList.toggle("liked", wasLiked);
@@ -345,14 +320,11 @@
     const statsQ = lastDoc
       ? query(collection(db, "projectStats"), orderBy(field, "desc"), startAfter(lastDoc), limit(PAGE_SIZE))
       : query(collection(db, "projectStats"), orderBy(field, "desc"), limit(PAGE_SIZE));
-
     const statsSnap = await getDocs(statsQ);
     if (statsSnap.empty) return [];
-
     lastDoc = statsSnap.docs[statsSnap.docs.length - 1];
     const statsMap = {};
     statsSnap.docs.forEach(d => { statsMap[d.id] = d.data(); });
-
     const projDocs = await Promise.all(statsSnap.docs.map(d => getDoc(doc(db, "projects", d.id))));
     const out = [];
     projDocs.forEach(d => {
@@ -379,11 +351,8 @@
 
     try {
       let projects = [];
-      if (currentSort === "newest") {
-        projects = await fetchNewest();
-      } else {
-        projects = await fetchByStats(currentSort === "views" ? "views" : "likes");
-      }
+      if (currentSort === "newest") projects = await fetchNewest();
+      else projects = await fetchByStats(currentSort === "views" ? "views" : "likes");
 
       if (searchQuery) {
         projects = projects.filter(p =>
@@ -393,35 +362,22 @@
       }
 
       await fetchLikedSet(projects.map(p => p.id));
-
       allProjects = [...allProjects, ...projects];
       document.getElementById("showingCount").textContent = allProjects.length;
-
       if (reset) grid.innerHTML = "";
 
       if (!allProjects.length && reset) {
-        grid.innerHTML = `
-          <div class="empty-state" style="grid-column:1/-1">
-            <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg></div>
-            <h3>Koi circuit nahi mila</h3>
-            <p>Abhi tak koi public circuit nahi hai.</p>
-          </div>`;
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg></div><h3>Koi circuit nahi mila</h3><p>Abhi tak koi public circuit nahi hai.</p></div>`;
         loading = false; return;
       }
 
       projects.forEach(proj => grid.appendChild(buildCard(proj)));
       attachLikeHandlers(grid);
 
-      document.getElementById("loadMoreWrap").style.display =
-        projects.length >= PAGE_SIZE ? "block" : "none";
+      document.getElementById("loadMoreWrap").style.display = projects.length >= PAGE_SIZE ? "block" : "none";
 
       for (const proj of projects) {
-        if (proj.authorUid === session?.uid) continue;
-        const seenKey = `sks_viewed_${session?.uid || "anon"}_${proj.id}`;
-        if (!sessionStorage.getItem(seenKey)) {
-          sessionStorage.setItem(seenKey, "1");
-          setDoc(doc(db, "projectStats", proj.id), { views: increment(1) }, { merge: true }).catch(() => {});
-        }
+        recordView(proj.id);
       }
 
       if (authorFilter && projects.length > 0) {
@@ -440,15 +396,9 @@
         }
       }
       if (reset && !allProjects.length) {
-        grid.innerHTML = `
-          <div class="empty-state" style="grid-column:1/-1">
-            <h3>Load nahi hua</h3>
-            <p style="color:#c0392b;font-family:monospace;font-size:11px">${esc(err.message)}</p>
-            <button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600">Retry</button>
-          </div>`;
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>Load nahi hua</h3><p style="color:#c0392b;font-family:monospace;font-size:11px">${esc(err.message)}</p><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button></div>`;
       }
     }
-
     loading = false;
   }
 
@@ -478,8 +428,35 @@
   });
 
   document.getElementById("loadMoreBtn").addEventListener("click", () => loadCircuits(false));
-
   loadCircuits(true);
 </script>
 </body>
 </html>
+
+
+
+<!-- 
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /projects/{projectId} {
+      allow read: if resource.data.isPublic == true
+                  || (request.auth != null && request.auth.uid == resource.data.authorUid);
+      allow create, update: if request.auth != null
+                            && request.auth.uid == request.resource.data.authorUid;
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.authorUid;
+    }
+
+    match /projectStats/{projectId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+  }
+} -->

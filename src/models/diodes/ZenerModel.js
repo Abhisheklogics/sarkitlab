@@ -7,6 +7,7 @@ const MAX_EXP_ARG = 40;
 const GMIN        = 1e-12;
 const VF_THRESH   = 0.3;
 const T_NOM       = 300.15;
+const RS_DEFAULT  = 5.0;
 
 function _tempScaleIs(Is, N, T) {
   const ratio = T / T_NOM;
@@ -18,21 +19,34 @@ function _tempScaleVz(Vz, T) {
   return Vz + TCV * (T - T_NOM);
 }
 
-function _calcForwardCurrent(Vj, Is, N) {
-  const nVt  = N * VT;
+function _calcForwardCurrent(Vd_total, Is, N, Rs) {
+  const nVt   = N * VT;
+  const Rs_eff = Math.max(Rs, 0.1);
+  let Vj = Math.min(Vd_total, MAX_EXP_ARG * nVt);
+  for (let i = 0; i < 10; i++) {
+    const Vj_c  = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vj));
+    const Id    = Is * (Math.exp(Vj_c / nVt) - 1.0);
+    const Gd    = Is * Math.exp(Vj_c / nVt) / nVt + GMIN;
+    const Vj_new = Vd_total - Id * Rs_eff;
+    if (Math.abs(Vj_new - Vj) < 1e-9) { Vj = Vj_new; break; }
+    Vj = Vj + 0.5 * (Vj_new - Vj);
+  }
   const Vj_c = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vj));
   return Is * (Math.exp(Vj_c / nVt) - 1.0);
 }
 
-function _zenerLinearize(Vd, Is, N, Vz, Rz, Vold) {
+function _zenerLinearize(Vd, Is, N, Vz, Rz, Rs, Vold) {
   if (Vd >= 0) {
     const nVt    = N * VT;
+    const Rs_eff = Math.max(Rs, 0.1);
     const Vd_lim = limitJunctionVoltage(Vd, Vold, N, Is);
     const Vd_c   = Math.max(-10 * nVt, Math.min(MAX_EXP_ARG * nVt, Vd_lim));
     const expVal = Math.exp(Vd_c / nVt);
     const Id     = Is * (expVal - 1.0);
-    const Gd     = (Is * expVal) / nVt + GMIN;
-    return { Gd, Ieq: Id - Gd * Vd_c, Vlim: Vd_c };
+    const Gd_j   = (Is * expVal) / nVt + GMIN;
+    const Gd     = 1.0 / (1.0 / Gd_j + Rs_eff);
+    const Ieq    = (Id - Gd_j * Vd_c) * (Gd / Gd_j);
+    return { Gd, Ieq, Vlim: Vd_c };
   }
 
   const Vrev   = -Vd;
@@ -44,14 +58,15 @@ function _zenerLinearize(Vd, Is, N, Vz, Rz, Vold) {
   }
 
   if (Vrev < Vz) {
-    const t  = (Vrev - Vknee) / Math.max(Vz - Vknee, 1e-9);
-    const ts = t * t * (3 - 2 * t);
-    const Gk = ts / Rz_eff;
-    return { Gd: Gk + GMIN, Ieq: Gk * Vz * ts, Vlim: Vd };
+    const t      = (Vrev - Vknee) / Math.max(Vz - Vknee, 1e-9);
+    const ts     = t * t * (3 - 2 * t);
+    const Gk     = ts / Rz_eff;
+    const Ieq_zk = -(Gk * Vz * ts);
+    return { Gd: Gk + GMIN, Ieq: Ieq_zk, Vlim: Vd };
   }
 
   const Gd  = 1.0 / Rz_eff;
-  const Ieq = Gd * Vz;
+  const Ieq = -(Gd * Vz);
   return { Gd, Ieq, Vlim: Vd };
 }
 
@@ -68,6 +83,7 @@ export default class ZenerModel {
     const N      = inst?.N  ?? 1.0;
     const Vz_nom = Math.max(0.5, inst?.vz ?? 5.1);
     const Rz     = Math.max(0.5, inst?.rz ?? 5.0);
+    const Rs     = Math.max(0.1, inst?.rs ?? RS_DEFAULT);
     const Cj0    = Math.max(0, inst?.junctionCapacitance ?? 0);
     const Vj_pot = inst?.junctionPotential ?? 0.75;
     const M      = inst?.gradingCoeff ?? 0.5;
@@ -80,12 +96,12 @@ export default class ZenerModel {
     const Vd   = Va - Vk;
     const Vold = solver._junctionV?.get(comp.id) ?? 0;
 
-    const { Gd, Ieq, Vlim } = _zenerLinearize(Vd, Is, N, Vz, Rz, Vold);
+    const { Gd, Ieq, Vlim } = _zenerLinearize(Vd, Is, N, Vz, Rz, Rs, Vold);
     solver._junctionV?.set(comp.id, Vlim);
 
     electrical.circuits.push({
       id: comp.id, type: "ZENER",
-      a: A, b: K, Is, N, Vz, Rz, ohms: Rz,
+      a: A, b: K, Is, N, Vz, Rz, Rs, ohms: Rs,
       _diodeNR: { Gd, Ieq },
     });
 
@@ -101,34 +117,40 @@ export default class ZenerModel {
         id: capId, type: "CAPACITOR",
         a: A, b: K, capacitance: Cj, ohms: 1e-6,
         _companionCap: { Geq, Ieq: Geq * Vprev + Iprev },
+        _modelManaged: true,
       });
     }
 
-    if (inst) inst._nets = { A, K };
+    if (inst) {
+      inst._nets         = { A, K };
+      inst._solvedParams = { Vz, Rz, Rs, Is, N };
+    }
   }
 
   static update(comp, electrical, solver) {
     const inst = comp.instance;
     if (!inst?._nets) return;
 
-    const { A, K } = inst._nets;
+    const { A, K }           = inst._nets;
+    const { Vz, Rz, Rs, Is, N } = inst._solvedParams ?? {};
+
     const Va = electrical.netVoltage.get(A) ?? 0;
     const Vk = electrical.netVoltage.get(K) ?? 0;
     const Vd = Va - Vk;
 
-    const branch = electrical.circuits.find(b => b.id === comp.id);
-    const Vz     = Math.max(0.5, branch?.Vz ?? inst?.vz ?? 5.1);
-    const Rz     = Math.max(0.5, branch?.Rz ?? inst?.rz ?? 5.0);
-    const Is     = branch?.Is ?? inst?.Is ?? 1e-14;
-    const N      = branch?.N  ?? inst?.N  ?? 1.0;
+    const Vz_eff = Math.max(0.5,  Vz  ?? inst?.vz ?? 5.1);
+    const Rz_eff = Math.max(0.5,  Rz  ?? inst?.rz ?? 5.0);
+    const Rs_eff = Math.max(0.1,  Rs  ?? inst?.rs ?? RS_DEFAULT);
+    const Is_eff = Is ?? inst?.Is ?? 1e-14;
+    const N_eff  = N  ?? inst?.N  ?? 1.0;
 
     let I = 0;
-    if      (Vd >= VF_THRESH) I = _calcForwardCurrent(Vd, Is, N);
-    else if (Vd < -Vz)        I = -((Math.abs(Vd) - Vz) / Math.max(Rz, 0.5));
-    else                      I = -Is;
+    if      (Vd >= VF_THRESH) I =  _calcForwardCurrent(Vd, Is_eff, N_eff, Rs_eff);
+    else if (Vd < -Vz_eff)    I = -((-Vd - Vz_eff) / Rz_eff);
+    else                       I = -Is_eff;
 
     const capId     = `${comp.id}_cjz`;
-    const capBranch = electrical.circuits.find(b => b.id === capId);
+    const capBranch = solver._branchMap?.get(capId);
     if (capBranch) {
       const Ic = capBranch.current ?? 0;
       const Vc = Vd - Ic * (capBranch.ohms ?? 1e-6);
@@ -139,8 +161,8 @@ export default class ZenerModel {
     inst.voltage   = Vd;
     inst.current   = I;
     inst.power     = Math.abs(Vd * I);
-    inst.state     = Vd > VF_THRESH ? "FORWARD" : Vd < -Vz ? "BREAKDOWN" : "OFF";
-    inst.Vz_actual = Vz;
+    inst.state     = Vd > VF_THRESH ? "FORWARD" : Vd < -Vz_eff ? "BREAKDOWN" : "OFF";
+    inst.Vz_actual = Vz_eff;
     inst.updateVisual?.(inst.state);
 
     if (inst.power > (inst?.maxPower ?? 0.5))

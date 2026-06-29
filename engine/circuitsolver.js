@@ -1,4 +1,4 @@
-"use strict";
+
 
 import { MODEL_REGISTRY } from "../src/models/index.js";
 
@@ -229,8 +229,8 @@ export default class CircuitSolver {
   solve(electrical) {
     const now = performance.now();
     if (this._lastSolveTime != null) {
-      const elapsed = (now - this._lastSolveTime) / 1000;
-      this._dt = Math.max(1e-6, Math.min(elapsed, 0.1));
+     const elapsed = (now - this._lastSolveTime) / 1000;
+      this._dt = Math.min(Math.max(elapsed, 1e-4), 0.05);
     }
     this._lastSolveTime = now;
     const netList = this.wireSystem?.lastNetlist;
@@ -389,18 +389,26 @@ export default class CircuitSolver {
     if (st.i !== undefined) { if (ia !== undefined) B[ia] += st.i; if (ib !== undefined) B[ib] -= st.i; }
   }
 
-  _stampCapacitors(electrical) {
-    for (const branch of electrical.circuits) {
-      if (branch.type !== "CAPACITOR" || branch._companionCap) continue;
-      const C = branch.capacitance ?? 1e-6;
-      if (!Number.isFinite(C) || C <= 0) continue;
-      const hist  = this._capState.get(branch.id);
-      const Vprev = hist?.V ?? ((electrical.netVoltage.get(branch.a)??0)-(electrical.netVoltage.get(branch.b)??0));
-      const Iprev = hist?.I ?? 0;
-      const Geq = 2*C/this._dt; const Ieq = Geq*Vprev+Iprev;
-      branch._companionCap = { Geq, Ieq };
-    }
+  
+_stampCapacitors(electrical) {
+  const dt = Math.min(Math.max(1e-4, this._dt), 0.05);
+  for (const branch of electrical.circuits) {
+    if (branch.type !== "CAPACITOR") continue;
+    if (branch._companionCap)  continue;
+    if (branch._modelManaged)  continue;
+ 
+    const C = branch.capacitance ?? 1e-6;
+    if (!Number.isFinite(C) || C <= 0) continue;
+ 
+    const hist  = this._capState.get(branch.id);
+    const Vprev = hist != null ? hist.V : 0;
+    const Iprev = hist != null ? hist.I : 0;
+ 
+    const Geq = 2.0 * C / dt;
+    const Ieq = Geq * Vprev + Iprev;
+    branch._companionCap = { Geq, Ieq };
   }
+}
 
   _stampInductors(electrical) {
     for (const branch of electrical.circuits) {
@@ -497,15 +505,19 @@ export default class CircuitSolver {
     this._runUpdates(electrical);
   }
 
-  _updateCapacitorState(electrical) {
-    for (const branch of electrical.circuits) {
-      if (branch.type !== "CAPACITOR") continue;
-      const Va = electrical.netVoltage.get(branch.a)??0;
-      const Vb = electrical.netVoltage.get(branch.b)??0;
-      const Ic = branch.current??0;
-      this._capState.set(branch.id, { V: (Va-Vb) - Ic*(branch.ohms??0), I: Ic });
-    }
+_updateCapacitorState(electrical) {
+  for (const branch of electrical.circuits) {
+    if (branch.type !== "CAPACITOR") continue;
+    if (branch._modelManaged) continue;
+ 
+    const Va  = electrical.netVoltage.get(branch.a) ?? 0;
+    const Vb  = electrical.netVoltage.get(branch.b) ?? 0;
+    const Ic  = branch.current ?? 0;
+    const ESR = branch.ohms ?? 0;
+    const Vc  = (Va - Vb) - Ic * ESR;
+    this._capState.set(branch.id, { V: Vc, I: Ic });
   }
+}
 
   _updateInductorState(electrical) {
     for (const branch of electrical.circuits) {
@@ -701,6 +713,20 @@ export default class CircuitSolver {
 
     return aliases;
   }
+
+reset() {
+  this._capState.clear();
+  this._indState.clear();
+  this._junctionV.clear();
+  this._prevNetV.clear();
+  this._prevBranchI.clear();
+  this._branchMap.clear();
+  this._netCache = null;
+  this._cachedNetlist = null;
+  this._sourceScale = 1.0;
+  this._gminOverride = null;
+  this._lastSolveTime = null;
+}
 }
 
 function _clamp(v, lim) { return Math.max(-lim, Math.min(lim, v)); }

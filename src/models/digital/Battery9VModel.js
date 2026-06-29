@@ -5,21 +5,20 @@ const V_CUTOFF_9     = 6.0;
 const CAPACITY_MAH_9 = 550;
 const I_MAX_9        = 2.0;
 const PEUKERT_K_9    = 1.18;
-const I_REF_9        = 0.005;   // FIX: was 0.020 — PP3 datasheet ref is 5mA, not 20mA
-const I_MODERATE_9   = 0.100;
-const I_STRONG_9     = 0.300;
+const I_REF_9        = 0.005;
+const I_MODERATE_9   = 0.050;
+const I_STRONG_9     = 0.200;
 const I_SEVERE_9     = 0.500;
 const RP_9           = 4.0;
-const CP_9           = 3.0;     // FIX: was 8.0 → tau was 32s, now 12s (realistic ~10-15s)
+const CP_9           = 3.0;
 const TAU_RINT_9     = 0.08;
 const RINT_FLOOR_9   = 1.5;
 
 function _vocFromSOC9(soc) {
-  // FIX: boundaries made exclusive on lower end to remove discontinuity at 0.25
   if      (soc >= 0.75) return 8.80 + (9.40 - 8.80) * ((soc - 0.75) / 0.25);
   else if (soc >= 0.50) return 8.00 + (8.80 - 8.00) * ((soc - 0.50) / 0.25);
   else if (soc >= 0.25) return 7.00 + (8.00 - 7.00) * ((soc - 0.25) / 0.25);
-  else if (soc >  0.00) return 6.00 + (7.00 - 6.00) * (soc           / 0.25);  // FIX: was duplicate 0.25 boundary
+  else if (soc >  0.00) return 6.00 + (7.00 - 6.00) * (soc           / 0.25);
   return 6.00;
 }
 
@@ -31,8 +30,6 @@ function _rintFromSOC9(soc) {
   return 35.0;
 }
 
-// FIX: Peukert as a scaling factor, not a capacity divisor
-// Prevents SOC jump when I changes mid-simulation
 function _peukertFactor9(I_abs) {
   if (I_abs <= I_REF_9) return 1.0;
   return Math.pow(I_REF_9 / Math.max(I_abs, 1e-9), PEUKERT_K_9 - 1);
@@ -42,7 +39,7 @@ function _overloadLevel9(I) {
   if (I >= I_SEVERE_9)   return "SEVERE";
   if (I >= I_STRONG_9)   return "STRONG";
   if (I >= I_MODERATE_9) return "MODERATE";
-  return "NORMAL";
+  return null;
 }
 
 function _init9(comp) {
@@ -67,7 +64,6 @@ export default class Battery9VModel {
 
     _init9(comp);
 
-    // FIX: SOC on nominal capacity only — no jump when Peukert factor changes
     comp._soc = Math.max(0, Math.min(1,
       1 - comp._capacityUsedMAh / CAPACITY_MAH_9
     ));
@@ -106,7 +102,6 @@ export default class Battery9VModel {
     const I_raw = Math.min(Math.abs(comp._branch.current ?? 0), I_MAX_9);
 
     if (I_raw > 1e-6) {
-      // FIX: Peukert scales consumed charge per tick, not total capacity
       const pkFactor = _peukertFactor9(I_raw);
       comp._capacityUsedMAh += I_raw * pkFactor * (dt / 3600) * 1000;
     }
@@ -115,7 +110,6 @@ export default class Battery9VModel {
     const alphaR     = 1 - Math.exp(-dt / Math.max(TAU_RINT_9, 1e-9));
     comp._rint       = Math.max(RINT_FLOOR_9, comp._rint + alphaR * (rintTarget - comp._rint));
 
-    // FIX: tau = RP_9 * CP_9 = 4 * 3 = 12s — realistic polarization time constant
     const tau    = Math.max(RP_9 * CP_9, 1e-9);
     const alpha  = 1 - Math.exp(-dt / tau);
     comp._vPolar = comp._vPolar + alpha * (RP_9 * I_raw - comp._vPolar);
@@ -126,7 +120,7 @@ export default class Battery9VModel {
     const vterminal = Math.max(0, voc - comp._vPolar - I_raw * rint);
     const collapsed = vterminal < V_CUTOFF_9;
     const level     = _overloadLevel9(I_raw);
-    const overload  = level !== "NORMAL";
+    const overload  = level !== null;
     const dead      = collapsed || comp._soc <= 0;
     const capRem    = Math.max(0, CAPACITY_MAH_9 - comp._capacityUsedMAh);
 

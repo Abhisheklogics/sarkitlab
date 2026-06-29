@@ -1,5 +1,8 @@
 "use strict";
 
+const DT_MIN = 1e-4;
+const DT_MAX = 0.05;
+
 export default class CapacitorModel {
 
   static solve(comp, electrical, solver) {
@@ -13,23 +16,20 @@ export default class CapacitorModel {
     const C      = Math.max(1e-15, inst?.capacitance ?? 100e-6);
     const ESR    = Math.max(1e-9,  inst?.esr ?? _defaultESR(C));
     const Vrated = inst?.maxVoltage ?? 50;
-    const dt     = Math.max(1e-6, solver._dt ?? 1e-4);
+    const dt     = Math.min(Math.max(DT_MIN, solver._dt ?? DT_MIN), DT_MAX);
 
-    const Va0   = electrical.netVoltage.get(A) ?? 0;
-    const Vb0   = electrical.netVoltage.get(B) ?? 0;
     const hist  = solver._capState?.get(comp.id);
-    const Vprev = hist != null ? hist.V : (Va0 - Vb0);
+    const Vprev = hist != null ? hist.V : 0;
     const Iprev = hist != null ? hist.I : 0;
 
-    const Geq     = 2.0 * C / dt;
-    const Ieq     = Geq * Vprev + Iprev;
-    const Geq_eff = 1.0 / (1.0 / Geq + ESR);
-    const Ieq_eff = Ieq * (Geq_eff / Math.max(Geq, 1e-18));
+    const Geq = 2.0 * C / dt;
+    const Ieq = Geq * Vprev + Iprev;
 
     const branch = {
       id: comp.id, type: "CAPACITOR",
       a: A, b: B, capacitance: C, ohms: ESR,
-      _companionCap: { Geq: Geq_eff, Ieq: Ieq_eff },
+      _companionCap: { Geq, Ieq },
+      _modelManaged: true,
     };
     electrical.circuits.push(branch);
 
@@ -75,7 +75,6 @@ export default class CapacitorModel {
 
     if (Math.abs(Vc) > Vrated * 1.1 && !inst._overvoltageWarned) {
       inst._overvoltageWarned = true;
-      console.warn(`[Cap] OVERVOLTAGE ${comp.id}: ${Vc.toFixed(2)}V > ${Vrated}V`);
       inst.onOvervoltage?.();
     } else if (Math.abs(Vc) <= Vrated) {
       inst._overvoltageWarned = false;
@@ -83,7 +82,6 @@ export default class CapacitorModel {
 
     if ((inst.polarized ?? false) && Vc < -0.3 && !inst._reverseWarned) {
       inst._reverseWarned = true;
-      console.warn(`[Cap] REVERSE POLARITY ${comp.id}: ${Vc.toFixed(2)}V`);
       inst.onReversePolarity?.();
     }
   }

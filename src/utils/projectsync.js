@@ -1,22 +1,15 @@
+"use strict";
+
 import { db }        from "./auth.js";
 import { getSession } from "./auth.js";
 import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  increment,
+  collection, doc, setDoc, getDoc, getDocs,
+  deleteDoc, query, where, orderBy,
+  serverTimestamp, increment, writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const LOCAL_QUEUE_KEY     = "sks_sync_queue";
 const PROJECTS_COLLECTION = "projects";
-const STATS_COLLECTION    = "projectStats";
 
 function getQueue() {
   try { return JSON.parse(localStorage.getItem(LOCAL_QUEUE_KEY) || "[]"); }
@@ -39,7 +32,7 @@ function localKey(projectId) { return `sks_proj_${projectId}`; }
 
 function saveLocal(projectId, data) {
   try { localStorage.setItem(localKey(projectId), JSON.stringify(data)); }
-  catch (err) { console.warn("[Sync] localStorage save failed:", err.message); }
+  catch (e) { console.warn("[Sync] localStorage save failed:", e.message); }
 }
 
 function loadLocal(projectId) {
@@ -210,7 +203,6 @@ export async function deleteProjectData(projectId) {
   const session = getSession();
   try { localStorage.removeItem(localKey(projectId)); }     catch {}
   try { localStorage.removeItem(`project_${projectId}`); }  catch {}
-  try { localStorage.removeItem(`sks_stats_${projectId}`); } catch {}
   removeFromQueue(projectId);
 
   if (session?.uid) {
@@ -227,78 +219,85 @@ export async function deleteProjectData(projectId) {
   }
 }
 
-export async function toggleLikeProject(projectId) {
+export async function toggleLike(projectId) {
   const session = getSession();
   if (!session?.uid) return null;
-  const statsKey = `sks_stats_${projectId}`;
-  let stats = {};
-  try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
-  stats.likedByMe = !stats.likedByMe;
-  stats.likes     = Math.max(0, (stats.likes || 0) + (stats.likedByMe ? 1 : -1));
-  try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
-  if (navigator.onLine) {
-    try {
-      await setDoc(doc(db, STATS_COLLECTION, projectId), {
-        likes:                      increment(stats.likedByMe ? 1 : -1),
-        [`likedBy.${session.uid}`]: stats.likedByMe,
-      }, { merge: true });
-    } catch (err) { console.warn("[Sync] Like sync failed:", err.message); }
-  }
-  return stats;
+
+  const ref  = doc(db, "projectStats", projectId);
+  const snap = await getDoc(ref);
+  const data = snap.exists() ? snap.data() : {};
+
+  // Firestore se actual liked state lo — localStorage pe trust mat karo
+  const alreadyLiked = data.likedBy?.[session.uid] === true;
+  const newState     = !alreadyLiked;
+
+  await setDoc(ref, {
+    likes:                      increment(newState ? 1 : -1),
+    [`likedBy.${session.uid}`]: newState ? true : null,
+  }, { merge: true });
+
+  const newCount = Math.max(0, (data.likes || 0) + (newState ? 1 : -1));
+  return { liked: newState, likes: newCount };
 }
 
-export async function recordProjectView(projectId, viewerUid) {
+export async function getLikeStatus(projectId) {
   const session = getSession();
-  const seenKey = `sks_viewed_${viewerUid || "anon"}_${projectId}`;
-  if (sessionStorage.getItem(seenKey)) return;
+  if (!session?.uid || !projectId) return { liked: false, likes: 0 };
+  try {
+    const snap = await getDoc(doc(db, "projectStats", projectId));
+    if (!snap.exists()) return { liked: false, likes: 0 };
+    const data = snap.data();
+    return {
+      liked: data.likedBy?.[session.uid] === true,
+      likes: data.likes || 0,
+    };
+  } catch { return { liked: false, likes: 0 }; }
+}
 
-  const localData = loadLocal(projectId);
-  if (session?.uid && localData?.authorUid === session.uid) return;
+export async function recordView(projectId) {
+  const session = getSession();
 
-  if (navigator.onLine && session?.uid) {
+  // Session-scoped deduplication — tab band hone pe reset hoti hai
+  const viewerKey = `sks_viewed_${projectId}`;
+  if (sessionStorage.getItem(viewerKey)) return;
+
+  // Author apne khud ke views count nahi karein
+  if (session?.uid) {
     try {
-      const snap = await getDoc(doc(db, "projects", projectId));
+      const snap = await getDoc(doc(db, PROJECTS_COLLECTION, projectId));
       if (snap.exists() && snap.data().authorUid === session.uid) return;
     } catch {}
   }
 
-  sessionStorage.setItem(seenKey, "1");
-  const statsKey = `sks_stats_${projectId}`;
-  let stats = {};
-  try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
-  stats.views = (stats.views || 0) + 1;
-  try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
+  // localStorage mein bhi check karo — 24 ghante mein ek baar
+  const localViewKey = `sks_lview_${session?.uid || "anon"}_${projectId}`;
+  const lastViewed   = localStorage.getItem(localViewKey);
+  const DAY_MS       = 24 * 60 * 60 * 1000;
+  if (lastViewed && Date.now() - parseInt(lastViewed) < DAY_MS) return;
+
+  // Dono jagah mark karo
+  sessionStorage.setItem(viewerKey, "1");
+  try { localStorage.setItem(localViewKey, String(Date.now())); } catch {}
 
   if (navigator.onLine) {
     try {
-      await setDoc(doc(db, STATS_COLLECTION, projectId), { views: increment(1) }, { merge: true });
-    } catch (err) { console.warn("[Sync] View sync failed:", err.message); }
+      await setDoc(doc(db, "projectStats", projectId), { views: increment(1) }, { merge: true });
+    } catch (e) { console.warn("[Sync] View record failed:", e); }
   }
 }
 
 export async function getProjectStats(projectId) {
-  const session  = getSession();
-  const statsKey = `sks_stats_${projectId}`;
-  let stats = {};
-  try { stats = JSON.parse(localStorage.getItem(statsKey) || "{}"); } catch {}
-  if (navigator.onLine) {
-    try {
-      const snap = await getDoc(doc(db, STATS_COLLECTION, projectId));
-      if (snap.exists()) {
-        const d = snap.data();
-        stats = {
-          ...stats,
-          likes:     d.likes || 0,
-          views:     d.views || 0,
-          likedByMe: session?.uid ? !!(d.likedBy?.[session.uid]) : false,
-        };
-        try { localStorage.setItem(statsKey, JSON.stringify(stats)); } catch {}
-      }
-    } catch (err) { console.warn("[Sync] Stats fetch failed:", err.message); }
-  }
-  return stats;
+  const session = getSession();
+  try {
+    const snap = await getDoc(doc(db, "projectStats", projectId));
+    if (!snap.exists()) return { likes: 0, views: 0, liked: false };
+    const data = snap.data();
+    return {
+      likes: data.likes || 0,
+      views: data.views || 0,
+      liked: session?.uid ? data.likedBy?.[session.uid] === true : false,
+    };
+  } catch { return { likes: 0, views: 0, liked: false }; }
 }
 
-window.addEventListener("online", () => {
-  syncPendingProjects();
-});
+window.addEventListener("online", () => { syncPendingProjects(); });
