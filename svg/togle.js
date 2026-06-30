@@ -1,6 +1,25 @@
 "use strict";
 
 export default class ToggleSwitch {
+  static manifest = {
+  id         : "toggleSwitch",
+  label      : "Toggle Switch",
+  group      : "Sensors & Input",
+  imageSrc   : "../images/togle.png",
+  cssClasses : ["toggleSwitch"],
+  physics    : {
+    conductive         : true,
+    requiresClosedLoop : false,
+    requiresPolarity   : false,
+    allowsSeries       : false,
+  },
+  pins: [
+    { id: "T1",  x: 25, y: 130, conductive: true },
+    { id: "COM", x: 50, y: 130, conductive: true },
+    { id: "T2",  x: 75, y: 130, conductive: true },
+  ],
+  factory: (ctx) => new ToggleSwitch(ctx ?? {}),
+};
   constructor(ctx = {}) {
     this._active        = false;
     this.instance       = this;
@@ -88,3 +107,4 @@ export default class ToggleSwitch {
 
   updateVisual(state) { this.active = !!state; }
 }
+

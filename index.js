@@ -717,6 +717,16 @@ simulationBtn?.addEventListener("click", async () => {
           inst._powered      = false;
         }
 
+        if (comp.type === "pushbutton") {
+          inst.digitalInputs = digitalInputs;
+          inst._simEngine    = engine;
+          inst._powered      = false;
+        }
+         if (comp.type === "tiltSensor") {
+          inst.digitalInputs = digitalInputs;
+          inst._simEngine    = engine;
+          inst._powered      = false;
+        }
         if (comp.type === "lcd") {
           inst.initialized = false;
           inst.validated   = false;
@@ -748,12 +758,7 @@ simulationBtn?.addEventListener("click", async () => {
           }
         }
 
-        if (SWITCH_TYPES.has(comp.type)) {
-          inst._engine    = engine;
-          inst._simEngine = engine;
-          comp._simEngine = engine;
-          if (comp.svg) comp.svg._simEngine = engine;
-        }
+      
       });
 
       if (emptyCode) {

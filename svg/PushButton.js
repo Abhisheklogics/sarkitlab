@@ -1,8 +1,23 @@
 "use strict";
 
 export default class PushButtons {
-
-  constructor() {
+static manifest = {
+  id:               "pushbutton",
+  label:            "Push Button",
+  group:            "Sensors & Input",
+  imageSrc:         "../images/push.png",
+  cssClasses:       ["pushbutton"],
+  physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
+  pins: [
+    { id: "A1", x: 28, y: 110 },
+    { id: "A2", x: 28, y: 20  },
+    { id: "B1", x: 92, y: 110 },
+    { id: "B2", x: 92, y: 20  },
+  ],
+  factory: (ctx) => new PushButtons(ctx?.digitalInputs ?? {}),
+};
+  constructor(digitalInputsRef = {}) {
+    this.digitalInputs = digitalInputsRef;
     this.instance   = this;
     this._simEngine = null;
     this._engine    = null;
@@ -93,3 +108,4 @@ export default class PushButtons {
     window.removeEventListener("pointercancel", this._pointerUpHandler);
   }
 }
+

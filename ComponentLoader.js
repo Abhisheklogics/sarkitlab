@@ -314,55 +314,7 @@ I2CLcd16x2.manifest = {
   factory: () => new I2CLcd16x2(),
 };
 
-PushButtons.manifest = {
-  id:               "pushbutton",
-  label:            "Push Button",
-  group:            "Sensors & Input",
-  imageSrc:         "../images/push.png",
-  cssClasses:       ["pushbutton"],
-  physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-pins: [
-  { id: "A1", x: 28, y: 110 },  // class se match
-  { id: "A2", x: 28, y: 20  },
-  { id: "B1", x: 92, y: 110 },  // 80 → 92
-  { id: "B2", x: 92, y: 20  },
-],
-  factory: (ctx) => new PushButtons(ctx?.digitalInputs ?? {}),
-};
 
-ToggleSwitch.manifest = {
-  id         : "toggleSwitch",
-  label      : "Toggle Switch",
-  group      : "Sensors & Input",
-  imageSrc   : "../images/togle.png",
-  cssClasses : ["toggleSwitch"],
-  physics    : {
-    conductive         : true,
-    requiresClosedLoop : false,
-    requiresPolarity   : false,
-    allowsSeries       : false,
-  },
-  pins: [
-    { id: "T1",  x: 25, y: 130, conductive: true },
-    { id: "COM", x: 50, y: 130, conductive: true },
-    { id: "T2",  x: 75, y: 130, conductive: true },
-  ],
-  factory: (ctx) => new ToggleSwitch(ctx ?? {}),
-};
-
-VirtualTiltSensor.manifest = {
-  id:               "tiltSensor",
-  label:            "Tilt Sensor",
-  group:            "Sensors & Input",
-  imageSrc:         "../images/tilt.png",
-  cssClasses:       ["tiltSensor"],
-  physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  pins: [
-    { id: "OUT", x: 40, y: 65, conductive: true },
-    { id: "GND", x: 110, y: 65, conductive: true },
-  ],
-  factory: (ctx) => new VirtualTiltSensor(ctx?.digitalInputs ?? {}),
-};
 
 TouchSensor.manifest = {
   id:               "touchSensor",
@@ -426,20 +378,7 @@ pins: [
   factory: (ctx) => new FlameSensor(ctx?.digitalInputs ?? {}),
 };
 
-VirtualVibrationSensor.manifest = {
-  id:               "vibrationSensor",
-  label:            "Vibration Sensor",
-  group:            "Sensors & Input",
-  imageSrc:         "../images/vibration.png",
-  cssClasses:       ["vibration-sensor"],
-  physics:          { conductive: false, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
-  pins: [
-    { id: "VCC", x: 20, y: 10, power: "VCC" },
-    { id: "GND", x: 50, y: 10, power: "GND" },
-    { id: "OUT", x: 80, y: 10, signal: true },
-  ],
-  factory: (ctx) => new VirtualVibrationSensor(ctx?.digitalInputs ?? {}),
-};
+
 
 IRSensor.manifest = {
   id:               "ir-sensor",

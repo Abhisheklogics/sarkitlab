@@ -7,94 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="../../style.css" />
-  <style>
-    .viewer-banner{background:#fffbeb;border-bottom:1px solid #fde68a;padding:6px 16px;font-size:12px;font-weight:600;color:#92400e;text-align:center;display:none;}
-    .viewer-banner.show{display:block;}
-
-    .collab-bar{display:flex;align-items:center;gap:5px;}
-    .collab-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #e4e6ea;background:#fff2e8;color:#c4611a;border-color:#c4611a;transition:all .15s;}
-    .collab-btn:hover{background:#c4611a;color:#fff;}
-
-    .notif-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid #e4e6ea;background:#fff;cursor:pointer;color:#6b7280;transition:all .15s;flex-shrink:0;}
-    .notif-bell:hover{border-color:#c4611a;color:#c4611a;}
-    .notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;font-size:9px;font-weight:700;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
-    .notif-badge.hidden{display:none;}
-
-    .notif-dropdown{position:fixed;top:54px;right:8px;width:300px;background:#fff;border:1px solid #e4e6ea;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.12);z-index:500;display:none;}
-    .notif-dropdown.open{display:block;}
-    .notif-hdr{padding:10px 14px;border-bottom:1px solid #eceef2;display:flex;align-items:center;justify-content:space-between;}
-    .notif-hdr span{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
-    .notif-hdr button{font-size:11px;color:#c4611a;background:none;border:none;cursor:pointer;font-weight:600;font-family:'DM Sans',sans-serif;}
-    .notif-list{max-height:280px;overflow-y:auto;}
-    .notif-item{padding:10px 14px;border-bottom:1px solid #eceef2;cursor:pointer;transition:background .1s;}
-    .notif-item:hover{background:#f7f8fa;}
-    .notif-item:last-child{border-bottom:none;}
-    .notif-item-title{font-size:12.5px;font-weight:600;color:#111318;margin-bottom:2px;}
-    .notif-item-sub{font-size:11px;color:#9ca3af;}
-    .notif-empty{padding:24px 14px;text-align:center;color:#9ca3af;font-size:12px;}
-
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:800;backdrop-filter:blur(4px);}
-    .modal-overlay{display:none;}
-.modal-overlay.open{display:flex;}
-    .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
-    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-    .modal-header span{font-size:14px;font-weight:700;color:#111318;}
-    .modal-close-btn{background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:4px;}
-    .modal-close-btn:hover{color:#111318;}
-    .modal-sub{font-size:12.5px;color:#6b7280;margin-bottom:14px;line-height:1.5;}
-    .modal-input{width:100%;border:1px solid #e4e6ea;border-radius:8px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;}
-    .modal-input:focus{border-color:#c4611a;}
-    .modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;}
-    .btn-modal-ok{padding:8px 18px;background:#c4611a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-    .btn-modal-ok:hover{background:#a34f13;}
-    .btn-modal-cancel{padding:8px 14px;background:#f7f8fa;border:1px solid #e4e6ea;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:#383d47;}
-
-    .role-tabs{display:flex;gap:4px;margin-bottom:12px;}
-    .role-tab{flex:1;padding:7px;border:1px solid #e4e6ea;border-radius:6px;background:#f7f8fa;font-size:12px;font-weight:600;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;color:#6b7280;transition:all .15s;}
-    .role-tab.active{background:#c4611a;color:#fff;border-color:#c4611a;}
-
-    .invite-link-row{display:flex;gap:6px;margin-bottom:14px;}
-    .invite-link-row input{flex:1;border:1px solid #e4e6ea;border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'JetBrains Mono',monospace;background:#f7f8fa;outline:none;color:#383d47;}
-    .btn-copy-invite{padding:8px 14px;background:#c4611a;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
-    .btn-copy-invite:hover{background:#a34f13;}
-
-    .collab-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-top:10px;}
-    .collab-section-label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
-    .collab-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #eceef2;border-radius:8px;background:#f7f8fa;}
-    .collab-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;}
-    .collab-name{font-size:12px;font-weight:600;color:#111318;flex:1;}
-    .collab-role-badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;}
-    .badge-editor{background:#eff6ff;color:#1d4ed8;}
-    .badge-viewer{background:#f7f8fa;color:#6b7280;border:1px solid #e4e6ea;}
-    .btn-remove-collab{background:none;border:none;cursor:pointer;color:#9ca3af;font-size:11px;padding:2px 4px;}
-    .btn-remove-collab:hover{color:#dc2626;}
-
-    .share-link-row{display:flex;gap:6px;margin:10px 0;}
-    .share-link-row input{flex:1;border:1px solid #e4e6ea;border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'JetBrains Mono',monospace;background:#f7f8fa;outline:none;}
-    .btn-copy{padding:7px 12px;background:#c4611a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-    .share-platforms{display:flex;gap:6px;margin-bottom:10px;}
-    .share-platform-btn{flex:1;padding:7px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif;}
-    .share-platform-btn.wa{background:#25d366;}.share-platform-btn.tw{background:#1da1f2;}
-    .share-platform-btn.li{background:#0a66c2;}.share-platform-btn.tg{background:#2ca5e0;}
-    .modal-footer{padding-top:10px;border-top:1px solid #eceef2;margin-top:10px;}
-    .public-toggle-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#383d47;font-weight:500;}
-    .toggle-switch{position:relative;display:inline-block;width:36px;height:20px;}
-    .toggle-switch input{opacity:0;width:0;height:0;}
-    .toggle-slider{position:absolute;inset:0;background:#d1d5db;border-radius:20px;transition:.2s;cursor:pointer;}
-    .toggle-slider::before{content:"";position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
-    input:checked+.toggle-slider{background:#c4611a;}
-    input:checked+.toggle-slider::before{transform:translateX(16px);}
-  </style>
 </head>
 <body style="display:flex;flex-direction:column;height:100vh;overflow:hidden;">
 
-<div class="viewer-banner" id="viewerBanner">
-  👁 You are viewing this circuit — editing is disabled
-</div>
-
 <nav>
   <div class="nav-left">
-    <a class="nav-link" href="/" style="display:flex;align-items:center;gap:7px;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:var(--ink-900);letter-spacing:-0.02em;text-decoration:none;padding:5px 10px;border-radius:var(--r-md);transition:background var(--ease);flex-shrink:0;">
+    <a class="nav-link" href="/" title="SarkitLab Home" style="display:flex;align-items:center;gap:7px;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:var(--ink-900);letter-spacing:-0.02em;text-decoration:none;padding:5px 10px;border-radius:var(--r-md);transition:background var(--ease);flex-shrink:0;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="4" height="8" rx="1"/><rect x="16" y="8" width="4" height="8" rx="1"/><path d="M8 12h8M2 12h2M20 12h2"/></svg>
       Sarkit<span style="color:var(--accent)">Lab</span>
     </a>
@@ -116,24 +34,27 @@
   </div>
 
   <div class="nav-right-group">
-    <div class="save-status-pill" id="saveStatus"><span class="dot unsaved-dot"></span> Unsaved</div>
-
-    <div class="collab-bar">
-      <button class="collab-btn" id="inviteBtn" style="display:none;">
-        <i class="fas fa-user-plus"></i> Invite
-      </button>
-      <div class="notif-bell" id="notifBell" title="Notifications">
-        <i class="fas fa-bell" style="font-size:13px;"></i>
-        <span class="notif-badge hidden" id="notifBadge">0</span>
-      </div>
+    <div class="save-status-pill" id="saveStatus">
+      <span class="dot unsaved-dot"></span> Unsaved
     </div>
-
-    <button id="btn" class="btn-nav code-btn"><i class="fas fa-code"></i><span class="btn-label"> Code</span></button>
-    <button class="btn-nav start-btn" onclick="window.location.href='/codes'"><i class="fas fa-file-code"></i><span class="btn-label"> Templates</span></button>
-    <button id="shareCircuitBtn" class="btn-nav share-btn"><i class="fas fa-share-nodes"></i><span class="btn-label"> Share</span></button>
-    <button id="downloadPNGBtn" class="btn-nav download-btn"><i class="fas fa-image"></i></button>
-    <button id="deleteBtn" class="btn-nav del-btn"><i class="fas fa-trash"></i></button>
-    <button class="btn-nav" onclick="window.location.href='/explore'" style="display:flex;align-items:center;gap:5px;"><i class="fas fa-circle-user"></i><span class="btn-label"> Profile</span></button>
+    <button id="btn" class="btn-nav code-btn" title="Toggle Code Editor">
+      <i class="fas fa-code"></i><span class="btn-label"> Code</span>
+    </button>
+    <button class="btn-nav start-btn" onclick="window.location.href='/codes'">
+      <i class="fas fa-file-code"></i><span class="btn-label"> Templates</span>
+    </button>
+    <button id="shareCircuitBtn" class="btn-nav share-btn" title="Share Circuit">
+      <i class="fas fa-share-nodes"></i><span class="btn-label"> Share</span>
+    </button>
+    <button id="downloadPNGBtn" class="btn-nav download-btn" title="Download as PNG">
+      <i class="fas fa-image"></i>
+    </button>
+    <button id="deleteBtn" class="btn-nav del-btn" title="Delete selected">
+      <i class="fas fa-trash"></i>
+    </button>
+    <button class="btn-nav" onclick="window.location.href='/explore'" style="display:flex;align-items:center;gap:5px;">
+      <i class="fas fa-circle-user"></i><span class="btn-label"> Profile</span>
+    </button>
     <div class="nav-sep"></div>
     <div class="save-run-group">
       <button id="saveBtn" class="save-btn"><i class="fas fa-floppy-disk"></i> Save</button>
@@ -144,16 +65,6 @@
     </div>
   </div>
 </nav>
-
-<div class="notif-dropdown" id="notifDropdown">
-  <div class="notif-hdr">
-    <span>Notifications</span>
-    <button id="markAllReadBtn">Mark all read</button>
-  </div>
-  <div class="notif-list" id="notifList">
-    <div class="notif-empty">No notifications</div>
-  </div>
-</div>
 
 <div id="iframeWrapper" class="resizable-iframe">
   <iframe src="https://sarkitshala.com/" id="externalSite" title="Docs"></iframe>
@@ -170,7 +81,10 @@
   </svg>
   <div id="codeInput"></div>
   <div class="mainBox">
-    <h3><i class="fas fa-cubes"></i> Components<span id="compCount" style="margin-left:auto;font-size:11px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:10px;font-weight:600;">0</span></h3>
+    <h3>
+      <i class="fas fa-cubes"></i> Components
+      <span id="compCount" style="margin-left:auto;font-size:11px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:10px;font-weight:600;">0</span>
+    </h3>
     <div class="sidebar-search-wrap">
       <i class="fas fa-search sidebar-search-icon"></i>
       <input id="compSearch" type="text" placeholder="Search components…" class="sidebar-search-input" />
@@ -227,107 +141,73 @@
 </div>
 <div id="resEditor" style="display:none;"></div>
 
-<div id="inviteModal" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span><i class="fas fa-user-plus" style="color:#c4611a;margin-right:6px;"></i>Invite Collaborators</span>
-      <button class="modal-close-btn" id="inviteModalClose"><i class="fas fa-xmark"></i></button>
-    </div>
-    <p class="modal-sub">Select a role and share the link. Link is valid for 7 days.</p>
-    <div class="role-tabs">
-      <button class="role-tab active" data-role="editor">✏️ Editor</button>
-      <button class="role-tab" data-role="viewer">👁 Viewer</button>
-    </div>
-    <div class="invite-link-row">
-      <input type="text" id="inviteLinkInput" readonly placeholder="Generating…" />
-      <button class="btn-copy-invite" id="copyInviteLink"><i class="fas fa-copy"></i> Copy</button>
-    </div>
-    <div class="collab-section-label">Current Collaborators</div>
-    <div class="collab-list" id="collabList">
-      <div style="font-size:12px;color:#9ca3af;text-align:center;padding:10px;">No collaborators yet</div>
-    </div>
-  </div>
-</div>
-
-<div id="shareCircuitModal" class="modal-overlay">
+<div id="shareCircuitModal" class="modal-overlay" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
       <span><i class="fas fa-share-nodes" style="color:#4f46e5;"></i> Share Circuit</span>
-      <button class="modal-close-btn" onclick="document.getElementById('shareCircuitModal').classList.remove('open')"><i class="fas fa-xmark"></i></button>
+      <button class="modal-close-btn" onclick="document.getElementById('shareCircuitModal').style.display='none'"><i class="fas fa-xmark"></i></button>
     </div>
     <p class="modal-sub">Anyone with this link can view this circuit.</p>
     <div class="share-link-row">
       <input type="text" id="shareCircuitUrl" readonly />
-      <button class="btn-copy" id="copyCircuitLink"><i class="fas fa-copy"></i> Copy</button>
+      <button id="copyCircuitLink" class="btn-copy"><i class="fas fa-copy"></i> Copy</button>
     </div>
     <div class="share-platforms">
-      <button id="shareWA" class="share-platform-btn wa"><i class="fab fa-whatsapp"></i></button>
-      <button id="shareTW" class="share-platform-btn tw"><i class="fab fa-twitter"></i></button>
-      <button id="shareLI" class="share-platform-btn li"><i class="fab fa-linkedin-in"></i></button>
-      <button id="shareTG" class="share-platform-btn tg"><i class="fab fa-telegram"></i></button>
+      <button id="shareWA" class="share-platform-btn wa"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <button id="shareTW" class="share-platform-btn tw"><i class="fab fa-twitter"></i> Twitter</button>
+      <button id="shareLI" class="share-platform-btn li"><i class="fab fa-linkedin-in"></i> LinkedIn</button>
+      <button id="shareTG" class="share-platform-btn tg"><i class="fab fa-telegram"></i> Telegram</button>
     </div>
     <div class="modal-footer">
       <label class="public-toggle-row">
         <span>Make this circuit public</span>
-        <label class="toggle-switch"><input type="checkbox" id="publicToggleCheck" /><span class="toggle-slider"></span></label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="publicToggleCheck" />
+          <span class="toggle-slider"></span>
+        </label>
       </label>
     </div>
   </div>
 </div>
 
-<div id="renameModal" class="modal-overlay">
+<div id="renameModal" class="modal-overlay" style="display:none;">
   <div class="modal-box" style="max-width:380px;">
     <div class="modal-header">
       <span><i class="fas fa-pen" style="color:#4f46e5;"></i> Rename Circuit</span>
-      <button class="modal-close-btn" onclick="document.getElementById('renameModal').classList.remove('open')"><i class="fas fa-xmark"></i></button>
+      <button class="modal-close-btn" onclick="document.getElementById('renameModal').style.display='none'"><i class="fas fa-xmark"></i></button>
     </div>
     <input type="text" id="renameModalInput" placeholder="Circuit name…" maxlength="60" class="modal-input" />
     <div class="modal-actions">
-      <button class="btn-modal-cancel" onclick="document.getElementById('renameModal').classList.remove('open')">Cancel</button>
+      <button class="btn-modal-cancel" onclick="document.getElementById('renameModal').style.display='none'">Cancel</button>
       <button class="btn-modal-ok" id="renameModalOk">Rename</button>
     </div>
   </div>
 </div>
 
-<script type="module">
-  import { getSession }  from "/src/utils/auth.js";
-  import { app }         from "/src/utils/auth.js";
-  import CollabManager   from "/src/collab/CollabManager.js";
-  import PresenceSystem  from "/src/collab/PresenceSystem.js";
-  import InviteManager   from "/src/collab/InviteManager.js";
-  import {
-    getFirestore, doc, getDoc, updateDoc,
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
+(function () {
 
-  const db        = getFirestore(app);
-  const session   = getSession();
-  const projectId = new URLSearchParams(window.location.search).get("project");
-
-  let collabMgr   = null;
-  window._collabMgrRef = collabMgr
-  let presence    = null;
-  let inviteMgr   = new InviteManager();
-  let myRole      = "owner";
-  let _dirty      = false;
-  let _autoTimer  = null;
-  let _notifUnsub = null;
-  let _inviteRole = "editor";
-  let _inviteLink = "";
-let storage=null;
-window._storage = storage;
   function slugify(n) {
     return (n || "untitled").toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 60);
+  }
+
+  function getSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem("sks_session") || "null");
+      if (!s?.uid || Date.now() > s.expiresAt) return null;
+      return s;
+    } catch { return null; }
   }
 
   function getProjectId() {
     return new URLSearchParams(window.location.search).get("project");
   }
 
-  function updateURL(name, pid) {
+  function updateURL(name, projectId) {
     try {
       const url = new URL(window.location.href);
-      if (pid) url.searchParams.set("project", pid);
+      if (projectId) url.searchParams.set("project", projectId);
       url.searchParams.set("name", slugify(name));
       window.history.replaceState({}, "", url.toString());
     } catch {}
@@ -336,7 +216,8 @@ window._storage = storage;
   window._toast = function (msg, isError, isWarn) {
     let t = document.getElementById("_ctoast");
     if (!t) {
-      t = document.createElement("div"); t.id = "_ctoast";
+      t = document.createElement("div");
+      t.id = "_ctoast";
       Object.assign(t.style, {
         position:"fixed",bottom:"24px",right:"24px",zIndex:"99999",
         borderRadius:"10px",padding:"10px 20px",fontSize:"13px",
@@ -346,9 +227,9 @@ window._storage = storage;
       document.body.appendChild(t);
     }
     t.textContent      = msg;
-    t.style.background = isError?"#fef2f2":isWarn?"#fffbeb":"#f0fdf4";
-    t.style.color      = isError?"#dc2626":isWarn?"#b45309":"#15803d";
-    t.style.border     = `1px solid ${isError?"#fecaca":isWarn?"#fde68a":"#86efac"}`;
+    t.style.background = isError ? "#fef2f2" : isWarn ? "#fffbeb" : "#f0fdf4";
+    t.style.color      = isError ? "#dc2626"  : isWarn ? "#b45309" : "#15803d";
+    t.style.border     = `1px solid ${isError ? "#fecaca" : isWarn ? "#fde68a" : "#86efac"}`;
     t.style.opacity    = "1";
     clearTimeout(t._tid);
     t._tid = setTimeout(() => { t.style.opacity = "0"; }, 2800);
@@ -358,449 +239,212 @@ window._storage = storage;
     const pill = document.getElementById("saveStatus");
     if (!pill) return;
     const cfg = {
-      unsaved: ["#9ca3af","Unsaved"],
-      saving:  ["#b45309","Saving…"],
-      local:   ["#b45309","Saved locally"],
-      synced:  ["#16a34a","Saved ✓"],
-    }[state] || ["#9ca3af","Unsaved"];
+      unsaved: ["#9ca3af", "Unsaved"],
+      saving:  ["#b45309", "Saving…"],
+      local:   ["#b45309", "Saved locally"],
+      synced:  ["#16a34a", "Saved ✓"],
+    }[state] || ["#9ca3af", "Unsaved"];
     pill.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${cfg[0]};display:inline-block;margin-right:5px;flex-shrink:0;"></span>${cfg[1]}`;
   }
 
+  let _dirty      = false;
+  let _autoTimer  = null;
+
   function _localKey(id) { return `sks_proj_${id}`; }
 
-  function _writeLocal(pid, payload) {
+  function _writeLocal(projectId, payload) {
     try {
-      const key  = _localKey(pid);
-      const cur  = JSON.parse(localStorage.getItem(key) || "{}");
-      const data = { ...cur, ...payload, localUpdatedAt: Date.now(), _needsSync: true };
+      const key      = _localKey(projectId);
+      const existing = JSON.parse(localStorage.getItem(key) || "{}");
+      const data     = { ...existing, ...payload, localUpdatedAt: Date.now(), _needsSync: true };
       localStorage.setItem(key, JSON.stringify(data));
+
+      const session = getSession();
       if (session?.uid) {
-        const lk  = `all_projects_${session.uid}`;
-        let list  = JSON.parse(localStorage.getItem(lk) || "[]");
-        const idx = list.findIndex(p => p.id === pid);
-        const entry = { id: pid, name: data.name || "Untitled", slug: data.slug || slugify(data.name || ""), date: data.timestamp || Date.now() };
+        const lk   = `all_projects_${session.uid}`;
+        let list   = JSON.parse(localStorage.getItem(lk) || "[]");
+        const idx  = list.findIndex(p => p.id === projectId);
+        const entry = {
+          id:   projectId,
+          name: data.name || "Untitled Circuit",
+          slug: data.slug || slugify(data.name || ""),
+          date: data.timestamp || Date.now(),
+        };
         if (idx !== -1) list[idx] = entry; else list.push(entry);
         localStorage.setItem(lk, JSON.stringify(list));
       }
       return data;
-    } catch (e) { console.warn("[AutoSave]", e); return null; }
+    } catch (e) {
+      console.warn("[AutoSave] local write failed:", e);
+      return null;
+    }
   }
 
-  async function _pushFirebase(pid, data) {
+  async function _pushFirebase(projectId, data) {
     try {
-      const { getFirestore, doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const { getFirestore, doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
       const { app } = await import("/src/utils/auth.js");
-      await setDoc(doc(getFirestore(app), "projects", pid), {
+      const session  = getSession();
+      await setDoc(doc(getFirestore(app), "projects", projectId), {
         ...data,
-        authorUid:  session?.uid || data.authorUid || null,
-        author:     session?.displayName || data.author || "Anonymous",
+        authorUid:  session?.uid          || data.authorUid || null,
+        author:     session?.displayName  || data.author    || "Anonymous",
         updatedAt:  serverTimestamp(),
         _needsSync: false,
       }, { merge: true });
-      const key = _localKey(pid);
-      const cur = JSON.parse(localStorage.getItem(key) || "{}");
+
+      const key  = _localKey(projectId);
+      const cur  = JSON.parse(localStorage.getItem(key) || "{}");
       localStorage.setItem(key, JSON.stringify({ ...cur, _needsSync: false, syncedAt: Date.now() }));
-      setSaveStatus("synced");
       return true;
-    } catch (e) { console.warn("[Push]", e); return false; }
+    } catch (e) {
+      console.warn("[AutoSave] Firebase push failed:", e.code, e.message);
+      return false;
+    }
   }
 
   function _doSave() {
     if (!_dirty) return;
-    const pid = getProjectId();
-    if (!pid) return;
+    const projectId = getProjectId();
+    if (!projectId) return;
+
     const payload = window._getCircuitPayload?.();
     if (!payload) return;
+
     setSaveStatus("saving");
-    const saved = _writeLocal(pid, payload);
+    const saved = _writeLocal(projectId, payload);
     if (!saved) { setSaveStatus("unsaved"); return; }
+
     _dirty = false;
     setSaveStatus("local");
-    if (navigator.onLine) _pushFirebase(pid, saved).then(ok => { if (ok) setSaveStatus("synced"); });
+
+    if (navigator.onLine) {
+      _pushFirebase(projectId, saved).then(ok => {
+        if (ok) setSaveStatus("synced");
+      });
+    }
   }
 
   window._notifyCircuitChanged = function () {
-    if (myRole === "viewer") return;
     _dirty = true;
     setSaveStatus("unsaved");
     clearTimeout(_autoTimer);
     _autoTimer = setTimeout(_doSave, 4000);
-
-    const payload = window._getCircuitPayload?.();
-    if (payload && collabMgr) {
-      collabMgr.sendOp("CIRCUIT_UPDATE", {
-        components: payload.components || [],
-        wires:      payload.wires      || [],
-      });
-    }
   };
 
   window.addEventListener("online", async () => {
-    const pid = getProjectId(); if (!pid) return;
-    const data = JSON.parse(localStorage.getItem(_localKey(pid)) || "null");
-    if (!data?._needsSync) return;
-    setSaveStatus("saving");
-    window._toast("Back online — syncing…", false, true);
-    const ok = await _pushFirebase(pid, data);
-    if (ok) window._toast("Circuit synced ✓");
-    else    window._toast("Sync failed — will retry", false, true);
-  });
-
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") _doSave(); });
-  window.addEventListener("beforeunload", () => {
-    if (_dirty) _doSave();
-    collabMgr?.leave();
-    _notifUnsub?.();
-  });
-
-// circuit.html ke <script type="module"> mein
-// initCollab() function ko is se replace karo:
-
-async function initCollab() {
-  if (!projectId || !session?.uid) return;
-
-  const snap = await getDoc(doc(db, "projects", projectId)).catch(() => null);
-
-  if (!snap?.exists()) {
-    // Naya unsaved project — owner treat karo
-    document.getElementById("inviteBtn").style.display = "inline-flex";
-    myRole = "owner";
-    return;
-  }
-
-  const data    = snap.data();
-  const isOwner = data.authorUid === session.uid;
-  const collabs = data.collaborators || {};
-  const myInfo  = collabs[session.uid];
-
-  if (!isOwner && !myInfo) return;
-
-  myRole = isOwner ? "owner" : myInfo.role;
-
-  if (myRole === "viewer") {
-    document.getElementById("viewerBanner").classList.add("show");
-    // Viewer ke liye Run button disable
-    const runBtn = document.getElementById("btn2");
-    if (runBtn) { runBtn.disabled = true; runBtn.title = "Only the owner can run simulation"; }
-    const saveBtn = document.getElementById("saveBtn");
-    if (saveBtn) saveBtn.style.display = "none";
-  }
-
-  if (myRole === "editor") {
-    // Editor Run/Stop nahi kar sakta — sirf owner
-    const runBtn = document.getElementById("btn2");
-    if (runBtn) {
-      runBtn.disabled = true;
-      runBtn.title = "Only the owner can start/stop simulation";
-      runBtn.style.opacity = "0.5";
-    }
-  }
-
-  if (isOwner) document.getElementById("inviteBtn").style.display = "inline-flex";
-
-  presence  = new PresenceSystem(document.getElementById("svg1"), session.uid);
-  collabMgr = new CollabManager({
-    projectId,
-    uid:         session.uid,
-    displayName: session.displayName || "User",
-    role:        myRole,
-
-    onRemoteOp: async (op) => {
-      if (op.type === "CIRCUIT_UPDATE") {
-        // Remote changes ko canvas pe apply karo
-        window._toast(`${op.name || "Someone"} ne circuit update kiya`, false, true);
-
-        // Canvas clear karke remote state load karo
-        if (op.payload?.components !== undefined) {
-          try {
-            // Registry clear
-            const allComps = window.registry?.getAll?.() || [];
-            for (const c of allComps) {
-              window.deleteSystem?.deleteComponent?.(c.id, true);
-            }
-            // Wires clear
-            const allWires = [...(window.wireSys?.connections || [])];
-            for (const conn of allWires) {
-              conn.wire?.remove?.();
-            }
-            if (window.wireSys) window.wireSys.connections = [];
-
-            // Remote components spawn karo
-            for (const c of (op.payload.components || [])) {
-              await window.spawnComponent?.(c.spawnType || c.type, c.x || 100, c.y || 100, c.id, true);
-            }
-
-            // Remote wires draw karo — storage ka helper use karo
-            if (window._storage) {
-              for (const w of (op.payload.wires || [])) {
-                await window._storage._reconstructWireWithRetry(w);
-              }
-            }
-          } catch (e) {
-            console.warn("[Collab] Remote update apply failed:", e);
-          }
-        }
+    const projectId = getProjectId();
+    if (!projectId) return;
+    try {
+      const data = JSON.parse(localStorage.getItem(_localKey(projectId)) || "null");
+      if (!data?._needsSync) return;
+      setSaveStatus("saving");
+      window._toast("Back online — syncing circuit…", false, true);
+      const ok = await _pushFirebase(projectId, data);
+      if (ok) {
+        setSaveStatus("synced");
+        window._toast("Circuit synced to cloud ✓");
+      } else {
+        setSaveStatus("local");
+        window._toast("Sync failed — will retry", false, true);
       }
-
-      if (op.type === "SIM_START") {
-        // Owner ne simulation start kiya — sabko dikhao
-        window._toast(`${op.name || "Owner"} ne simulation start ki`, false, true);
-        const runBtn = document.getElementById("btn2");
-        if (runBtn) {
-          runBtn.style.background = "#dc2626";
-          runBtn.title = "Owner simulation chala raha hai";
-        }
-      }
-
-      if (op.type === "SIM_STOP") {
-        window._toast(`Simulation band ho gayi`, false, true);
-        const runBtn = document.getElementById("btn2");
-        if (runBtn) {
-          runBtn.style.background = "";
-          runBtn.title = "Only the owner can start/stop simulation";
-        }
-      }
-    },
-
-    onPresenceUpdate: users => presence.update(users),
+    } catch {}
   });
 
-  await collabMgr.join();
-
-  // Cursor tracking
-  const svg = document.getElementById("svg1");
-  svg.addEventListener("mousemove", e => {
-    const rect  = svg.getBoundingClientRect();
-    const vbStr = svg.getAttribute("viewBox");
-    let sx=1,sy=1,ox=0,oy=0;
-    if (vbStr) {
-      const [vx,vy,vw,vh] = vbStr.split(/\s+/).map(Number);
-      sx=vw/rect.width; sy=vh/rect.height; ox=vx; oy=vy;
-    }
-    collabMgr.sendCursorMove((e.clientX-rect.left)*sx+ox, (e.clientY-rect.top)*sy+oy);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") _doSave();
   });
 
-  CollabManager.pruneOldOps(projectId);
-}
+  window.addEventListener("beforeunload", () => { if (_dirty) _doSave(); });
 
-  function initNotifications() {
-    if (!session?.uid) return;
-    _notifUnsub = inviteMgr.listenNotifications(session.uid, items => {
-      const badge = document.getElementById("notifBadge");
-      const list  = document.getElementById("notifList");
-      if (!items.length) {
-        badge.classList.add("hidden");
-        list.innerHTML = `<div class="notif-empty">No new notifications</div>`;
-        return;
-      }
-      badge.classList.remove("hidden");
-      badge.textContent = items.length > 9 ? "9+" : items.length;
-      const MSGS = {
-        collab_joined: n => `<b>${n.fromName}</b> joined "<b>${n.projectName}</b>"`,
-        collab_invite: n => `<b>${n.fromName}</b> invited you`,
-      };
-      list.innerHTML = items.map(n => `
-        <div class="notif-item" data-id="${n.id}" data-project="${n.projectId || ""}">
-          <div class="notif-item-title">${(MSGS[n.type] || (() => n.type))(n)}</div>
-          <div class="notif-item-sub">${_timeAgo(n.ts)}</div>
-        </div>`).join("");
-      list.querySelectorAll(".notif-item").forEach(el => {
-        el.addEventListener("click", async () => {
-          await inviteMgr.markRead(session.uid, el.dataset.id);
-          if (el.dataset.project) window.location.href = `/create-circuit?project=${el.dataset.project}`;
-        });
-      });
-    });
-  }
-
-  function _timeAgo(ts) {
-    const ms = ts?.toMillis?.() || 0, diff = Date.now()-ms, m = Math.floor(diff/60000);
-    if(m<1) return "just now"; if(m<60) return m+"m ago";
-    const h=Math.floor(m/60); if(h<24) return h+"h ago";
-    return Math.floor(h/24)+"d ago";
-  }
-
-  const COLLAB_COLORS = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e91e63"];
-  function collabColor(uid) {
-    let h=0; for(const c of uid) h=(h*31+c.charCodeAt(0))&0xffffffff;
-    return COLLAB_COLORS[Math.abs(h)%COLLAB_COLORS.length];
-  }
-
-  async function openInviteModal() {
-    document.getElementById("inviteModal").classList.add("open");
-    await refreshInviteLink();
-    await loadCollabList();
-  }
-
-  async function refreshInviteLink() {
-    document.getElementById("inviteLinkInput").value = "Generating…";
-    const name = document.getElementById("projectNameDisplay")?.textContent || "Untitled";
-    _inviteLink = await inviteMgr.createInvite(projectId, name, _inviteRole) || "";
-    document.getElementById("inviteLinkInput").value = _inviteLink;
-  }
-
-  async function loadCollabList() {
-    const collabs  = await inviteMgr.getCollaborators(projectId);
-    const list     = document.getElementById("collabList");
-    const entries  = Object.entries(collabs);
-    if (!entries.length) {
-      list.innerHTML = `<div style="font-size:12px;color:#9ca3af;text-align:center;padding:10px;">No collaborators yet</div>`;
-      return;
-    }
-    list.innerHTML = entries.map(([uid, info]) => `
-      <div class="collab-item" data-uid="${uid}">
-        <div class="collab-av" style="background:${collabColor(uid)}">${(info.name||"?")[0].toUpperCase()}</div>
-        <div class="collab-name">${info.name || "Unknown"}</div>
-        <span class="collab-role-badge badge-${info.role}">${info.role}</span>
-        <button class="btn-remove-collab" data-uid="${uid}" title="Remove"><i class="fas fa-xmark"></i></button>
-      </div>`).join("");
-    list.querySelectorAll(".btn-remove-collab").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        await inviteMgr.removeCollaborator(projectId, btn.dataset.uid);
-        btn.closest(".collab-item").remove();
-        window._toast("Collaborator removed");
-      });
-    });
-  }
-
-  document.getElementById("inviteBtn")?.addEventListener("click", openInviteModal);
-  document.getElementById("inviteModalClose")?.addEventListener("click", () => {
-    document.getElementById("inviteModal").classList.remove("open");
-  });
-  document.querySelectorAll(".role-tab").forEach(tab => {
-    tab.addEventListener("click", async () => {
-      document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      _inviteRole = tab.dataset.role;
-      await refreshInviteLink();
-    });
-  });
-  document.getElementById("copyInviteLink")?.addEventListener("click", () => {
-    if (!_inviteLink) return;
-    navigator.clipboard.writeText(_inviteLink).then(() => {
-      const btn = document.getElementById("copyInviteLink");
-      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000);
-      window._toast("Invite link copied!");
-    });
+  document.getElementById("renameInlineBtn")?.addEventListener("click", () => {
+    document.getElementById("renameModalInput").value =
+      document.getElementById("projectNameDisplay")?.textContent || "";
+    document.getElementById("renameModal").style.display = "flex";
+    setTimeout(() => document.getElementById("renameModalInput").select(), 50);
   });
 
-  document.getElementById("notifBell")?.addEventListener("click", e => {
-    e.stopPropagation();
-    document.getElementById("notifDropdown").classList.toggle("open");
-  });
-  document.getElementById("markAllReadBtn")?.addEventListener("click", async () => {
-    if (session?.uid) await inviteMgr.markAllRead(session.uid);
-    document.getElementById("notifDropdown").classList.remove("open");
-  });
-  document.addEventListener("click", e => {
-    const bell = document.getElementById("notifBell");
-    if (bell && !bell.contains(e.target)) document.getElementById("notifDropdown").classList.remove("open");
-  });
-
- document.getElementById("renameInlineBtn")?.addEventListener("click", () => {
-    const currentName = document.getElementById("projectNameDisplay")?.textContent || "";
-    const input = document.getElementById("renameModalInput");
-    if (input) input.value = currentName;
-    document.getElementById("renameModal").classList.add("open");
-    setTimeout(() => { 
-      const inp = document.getElementById("renameModalInput");
-      if (inp) { inp.focus(); inp.select(); }
-    }, 50);
-  });
-
-document.getElementById("renameModalOk")?.addEventListener("click", async () => {
-    const input = document.getElementById("renameModalInput");
-    const name = input?.value?.trim();
-    
-    // Pehle modal band karo, phir baaki kaam
-    document.getElementById("renameModal").classList.remove("open");
-    
+  document.getElementById("renameModalOk")?.addEventListener("click", async () => {
+    const name = document.getElementById("renameModalInput").value.trim();
     if (!name) return;
-    
-    const pid = getProjectId();
-    const displayEl = document.getElementById("projectNameDisplay");
-    if (displayEl) displayEl.textContent = name;
+    const projectId = getProjectId();
+    document.getElementById("projectNameDisplay").textContent = name;
     document.title = `${name} — SarkitLab`;
-    updateURL(name, pid);
+    document.getElementById("renameModal").style.display = "none";
+    updateURL(name, projectId);
     window._toast("Renamed ✓");
-    
-    if (!pid) return;
-    
-    // Local storage update
-    for (const key of [`sks_proj_${pid}`, `project_${pid}`]) {
-      const raw = localStorage.getItem(key); 
+    if (!projectId) return;
+
+    for (const key of [`sks_proj_${projectId}`, `project_${projectId}`]) {
+      const raw = localStorage.getItem(key);
       if (!raw) continue;
-      try { 
-        const d = JSON.parse(raw); 
-        d.name = name; 
-        d.slug = slugify(name); 
-        localStorage.setItem(key, JSON.stringify(d)); 
-      } catch {}
+      try { const d = JSON.parse(raw); d.name = name; d.slug = slugify(name); localStorage.setItem(key, JSON.stringify(d)); } catch {}
     }
-    
+    const session = getSession();
     if (session?.uid) {
-      const lk = `all_projects_${session.uid}`;
+      const lk   = `all_projects_${session.uid}`;
       const list = JSON.parse(localStorage.getItem(lk) || "[]");
-      const idx = list.findIndex(p => p.id === pid);
-      if (idx !== -1) { 
-        list[idx].name = name; 
-        list[idx].slug = slugify(name); 
-        localStorage.setItem(lk, JSON.stringify(list)); 
-      }
+      const idx  = list.findIndex(p => p.id === projectId);
+      if (idx !== -1) { list[idx].name = name; list[idx].slug = slugify(name); localStorage.setItem(lk, JSON.stringify(list)); }
     }
-    
     if (navigator.onLine) {
       try {
-        await updateDoc(doc(db, "projects", pid), { name, slug: slugify(name) });
-      } catch {}
+        const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+        const { app } = await import("/src/utils/auth.js");
+        await updateDoc(doc(getFirestore(app), "projects", projectId), { name, slug: slugify(name) });
+      } catch (e) { console.warn("[Rename]", e); }
     }
   });
+
   document.getElementById("renameModalInput")?.addEventListener("keydown", e => {
     if (e.key === "Enter")  document.getElementById("renameModalOk").click();
-    if (e.key === "Escape") document.getElementById("renameModal").classList.remove("open");
+    if (e.key === "Escape") document.getElementById("renameModal").style.display = "none";
   });
 
   document.getElementById("shareCircuitBtn")?.addEventListener("click", () => {
-    const pid  = getProjectId();
-    const name = document.getElementById("projectNameDisplay")?.textContent || "circuit";
-    const url  = new URL(window.location.href);
-    if (pid) url.searchParams.set("project", pid);
+    const projectId = getProjectId();
+    const name      = document.getElementById("projectNameDisplay")?.textContent || "circuit";
+    const url       = new URL(window.location.href);
+    if (projectId) url.searchParams.set("project", projectId);
     url.searchParams.set("name", slugify(name));
     url.searchParams.set("autorun", "1");
-    const shareUrl = url.toString();
+    const shareUrl  = url.toString();
     document.getElementById("shareCircuitUrl").value = shareUrl;
     const enc = encodeURIComponent;
     document.getElementById("shareWA").onclick = () => window.open(`https://wa.me/?text=${enc(`Check out my circuit "${name}" on SarkitLab: ${shareUrl}`)}`);
     document.getElementById("shareTW").onclick = () => window.open(`https://twitter.com/intent/tweet?text=${enc(`"${name}" on SarkitLab!`)}&url=${enc(shareUrl)}`);
     document.getElementById("shareLI").onclick = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${enc(shareUrl)}`);
     document.getElementById("shareTG").onclick = () => window.open(`https://t.me/share/url?url=${enc(shareUrl)}&text=${enc(`Check out "${name}" on SarkitLab!`)}`);
-    if (pid) {
-      const raw = localStorage.getItem(`sks_proj_${pid}`) || localStorage.getItem(`project_${pid}`);
+    if (projectId) {
+      const raw = localStorage.getItem(`sks_proj_${projectId}`) || localStorage.getItem(`project_${projectId}`);
       if (raw) { try { document.getElementById("publicToggleCheck").checked = !!JSON.parse(raw).isPublic; } catch {} }
     }
-    document.getElementById("shareCircuitModal").classList.add("open");
+    document.getElementById("shareCircuitModal").style.display = "flex";
   });
 
   document.getElementById("publicToggleCheck")?.addEventListener("change", async function () {
-    const pid = getProjectId(); if (!pid) return;
+    const projectId = getProjectId();
+    if (!projectId) return;
     const isPublic = this.checked;
-    for (const key of [`sks_proj_${pid}`, `project_${pid}`]) {
-      const raw = localStorage.getItem(key); if (!raw) continue;
+    for (const key of [`sks_proj_${projectId}`, `project_${projectId}`]) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
       try { const d = JSON.parse(raw); d.isPublic = isPublic; localStorage.setItem(key, JSON.stringify(d)); } catch {}
     }
     if (navigator.onLine) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
         const { app } = await import("/src/utils/auth.js");
-        await updateDoc(doc(getFirestore(app), "projects", pid), { isPublic });
+        await updateDoc(doc(getFirestore(app), "projects", projectId), { isPublic });
       } catch {}
     }
     window._toast(isPublic ? "Circuit is now public!" : "Made private");
   });
 
   document.getElementById("copyCircuitLink")?.addEventListener("click", () => {
-    const input = document.getElementById("shareCircuitUrl"); input.select();
+    const input = document.getElementById("shareCircuitUrl");
+    input.select();
     navigator.clipboard.writeText(input.value).then(() => {
       const btn = document.getElementById("copyCircuitLink");
       btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
@@ -809,7 +453,8 @@ document.getElementById("renameModalOk")?.addEventListener("click", async () => 
   });
 
   document.getElementById("downloadPNGBtn")?.addEventListener("click", async () => {
-    const svg = document.getElementById("svg1"); if (!svg) return;
+    const svg = document.getElementById("svg1");
+    if (!svg) return;
     try {
       const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml;charset=utf-8" });
       const url  = URL.createObjectURL(blob);
@@ -817,28 +462,26 @@ document.getElementById("renameModalOk")?.addEventListener("click", async () => 
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const rect   = svg.getBoundingClientRect();
-        canvas.width = rect.width*2; canvas.height = rect.height*2;
+        canvas.width = rect.width * 2; canvas.height = rect.height * 2;
         const ctx = canvas.getContext("2d");
-        ctx.scale(2,2); ctx.fillStyle = "#edf0f7"; ctx.fillRect(0,0,rect.width,rect.height);
-        ctx.drawImage(img,0,0); URL.revokeObjectURL(url);
-        const a    = document.createElement("a");
+        ctx.scale(2, 2); ctx.fillStyle = "#edf0f7"; ctx.fillRect(0, 0, rect.width, rect.height);
+        ctx.drawImage(img, 0, 0); URL.revokeObjectURL(url);
+        const a = document.createElement("a");
         const name = document.getElementById("projectNameDisplay")?.textContent || "circuit";
-        a.download = `${name.replace(/\s+/g,"_")}.png`; a.href = canvas.toDataURL("image/png"); a.click();
+        a.download = `${name.replace(/\s+/g, "_")}.png`; a.href = canvas.toDataURL("image/png"); a.click();
         window._toast("PNG downloaded ✓");
       };
       img.src = url;
-    } catch { window._toast("PNG export failed", true); }
+    } catch (e) { window._toast("PNG export failed", true); }
   });
 
   document.querySelectorAll(".modal-overlay").forEach(o => {
-    o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); });
+    o.addEventListener("click", e => { if (e.target === o) o.style.display = "none"; });
   });
 
-  initCollab();
-  initNotifications();
+})();
 </script>
 
 <script type="module" src="../../index.js"></script>
 </body>
 </html>
-

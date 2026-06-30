@@ -1,7 +1,21 @@
 "use strict";
 
 export default class VirtualTiltSensor {
-  constructor() {
+  static manifest = {
+  id:               "tiltSensor",
+  label:            "Tilt Sensor",
+  group:            "Sensors & Input",
+  imageSrc:         "../images/tilt.png",
+  cssClasses:       ["tiltSensor"],
+  physics:          { conductive: true, requiresClosedLoop: false, requiresPolarity: false, allowsSeries: false },
+  pins: [
+    { id: "OUT", x: 40, y: 65, conductive: true },
+    { id: "GND", x: 110, y: 65, conductive: true },
+  ],
+  factory: (ctx) => new VirtualTiltSensor(ctx?.digitalInputs ?? {}),
+};
+  constructor(digitalInputsRef = {}) {
+    this.digitalInputs = digitalInputsRef;
     this._tilted     = false;
     this.instance    = this;
     this._simEngine  = null;
@@ -70,14 +84,11 @@ export default class VirtualTiltSensor {
     }
     const ball = this.svg.querySelector("#ball");
     if (ball) {
-      // upright  (_tilted=false): ball at left (cx=35), grey  → circuit CLOSED
-      // tilted   (_tilted=true):  ball at right (cx=110), orange → circuit OPEN
       ball.setAttribute("fill", this._tilted ? "#f97316" : "#cfcfcf");
       ball.setAttribute("cx",   this._tilted ? "110"     : "35");
     }
     const label = this.svg.querySelector("#state-label");
     if (label) {
-      // label matches real physics
       label.textContent = this._tilted
         ? "OPEN (tilted)"
         : "CLOSED (upright)";
@@ -91,3 +102,4 @@ export default class VirtualTiltSensor {
 
   updateVisual(state) { this.tilted = !!state; }
 }
+
