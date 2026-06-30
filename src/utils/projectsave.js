@@ -128,34 +128,32 @@ export default class ProjectStorage {
   async saveProject(projectName) {
     const session = getSession();
     if (!session) { alert("Pehle login karein!"); return null; }
- 
+
     let projectId    = this.currentProjectId;
     let existingData = {};
- 
+
     if (projectId) {
-      // Existing project — seedha save karo, rename modal mat kholo
       const raw = localStorage.getItem(`sks_proj_${projectId}`)
                || localStorage.getItem(`project_${projectId}`);
       if (raw) {
         try { existingData = JSON.parse(raw); } catch {}
       }
     } else {
-      // Naya project — naam ke liye renameModal use karo
-      const name = await this._askProjectName(projectName || "Untitled Circuit");
+      const name = prompt("Circuit ka naam daalein:", projectName || "Untitled Circuit");
       if (!name?.trim()) return null;
       projectName           = name.trim();
       projectId             = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       this.currentProjectId = projectId;
     }
- 
+
     const data   = this._buildSavePayload(projectName, existingData);
     const result = await saveProjectData(projectId, data);
- 
+
     if (result.error === "not_logged_in") {
       alert("Session expire ho gaya, pehle login karein!");
       return null;
     }
- 
+
     const storageKey = this._storageKey();
     let list = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const idx   = list.findIndex(p => p.id === projectId);
@@ -163,10 +161,10 @@ export default class ProjectStorage {
     if (idx !== -1) list[idx] = entry;
     else list.push(entry);
     localStorage.setItem(storageKey, JSON.stringify(list));
- 
+
     this._updateURL(data.slug, projectId);
     this._updatePageTitle(data.name);
- 
+
     if (result.synced) {
       this._toast("Project saved");
     } else if (result.queued) {
@@ -174,60 +172,10 @@ export default class ProjectStorage {
     } else {
       this._toast("Saved locally", false, true);
     }
- 
+
     return projectId;
   }
-  _askProjectName(defaultName = "Untitled Circuit") {
-    return new Promise((resolve) => {
-      const modal    = document.getElementById("renameModal");
-      const input    = document.getElementById("renameModalInput");
-      const okBtn    = document.getElementById("renameModalOk");
-      const cancelBtns = document.querySelectorAll("#renameModal .btn-modal-cancel, #renameModal .modal-close-btn");
- 
-      if (!modal || !input || !okBtn) {
-        // Fallback agar modal nahi mila
-        resolve(prompt("Circuit ka naam daalein:", defaultName));
-        return;
-      }
- 
-      input.value = defaultName;
-      modal.classList.add("open");
-      setTimeout(() => { input.focus(); input.select(); }, 50);
- 
-      function cleanup() {
-        modal.classList.remove("open");
-        okBtn.removeEventListener("click", onOk);
-        cancelBtns.forEach(b => b.removeEventListener("click", onCancel));
-        input.removeEventListener("keydown", onKey);
-        modal.removeEventListener("click", onOverlay);
-      }
- 
-      function onOk() {
-        const val = input.value.trim();
-        cleanup();
-        resolve(val || null);
-      }
- 
-      function onCancel() {
-        cleanup();
-        resolve(null);
-      }
- 
-      function onKey(e) {
-        if (e.key === "Enter")  { onOk(); }
-        if (e.key === "Escape") { onCancel(); }
-      }
- 
-      function onOverlay(e) {
-        if (e.target === modal) onCancel();
-      }
- 
-      okBtn.addEventListener("click", onOk);
-      cancelBtns.forEach(b => b.addEventListener("click", onCancel));
-      input.addEventListener("keydown", onKey);
-      modal.addEventListener("click", onOverlay);
-    });
-  }
+
   async renameProject(newName) {
     const session   = getSession();
     const projectId = this.currentProjectId;
