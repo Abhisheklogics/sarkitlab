@@ -3,116 +3,60 @@
 const V_CC  = 5.0;
 const V_33  = 3.3;
 
-const R_OUT_HIGH_0    = 28.0;
-const R_OUT_LOW_0     = 22.0;
-const R_OUT_HIGH_DROOP = 120.0;
-const R_OUT_LOW_DROOP  = 80.0;
-const R_OUT_CLAMP     = 300.0;
-const V_SAT_HIGH_0    = 0.05;
-const V_SAT_LOW_0     = 0.05;
-const V_SAT_HIGH_SLOPE = 0.8;
-const V_SAT_LOW_SLOPE  = 0.6;
+const R_OUT_HIGH_BASE = 25;
+const R_OUT_LOW_BASE  =  20;
+const R_OUT_CLAMP     = 200;
+const V_SAT_HIGH      = 0.06;
+const V_SAT_LOW       = 0.06;
 
-const R_PULLUP_NOM   = 32_000;
-const R_PULLUP_MIN   = 20_000;
-const R_PULLUP_MAX   = 50_000;
-const R_PULLDOWN_NOM = 32_000;
-const R_HIGH_Z       = 1.5e9;
-const R_FLOAT_ANCHOR = 2.5e12;
-const R_LEAKAGE_IN   = 200e6;
-const R_LEAKAGE_OUT  = 80e6;
+const R_PULLUP        = 35_000;
+const R_PULLDOWN      = 35_000;
+const R_HIGH_Z = 1e9;
+const R_FLOAT_ANCHOR = 1e12;
+const R_LEAKAGE = 100e6;
 
-const DIODE_IS_ESD  = 8e-13;
-const DIODE_N_ESD   = 1.0;
-const DIODE_VF_NOM  = 0.65;
+const DIODE_IS = 1e-12;
+const DIODE_N  = 1.0;
 
 const BOD_LEVELS     = { "4.3": 4.3, "2.7": 2.7, "1.8": 1.8 };
 const BOD_DEFAULT    = 2.7;
-const BOD_HYST       = 0.1;
-const POWER_ON_DELAY = 0.060;
+const BOD_HYSTERESIS = 0.1;
 
-const R_VCC_RAIL     = 0.06;
-const R_GND_RAIL     = 0.02;
-const R_MCU_IDLE     = 600;
-const R_MCU_RUNNING  = 300;
-const R_MCU_HEAVY    = 150;
-const C_DECOUPLE     = 100e-9;
+const R_MCU_IDLE    = 500;
+const R_MCU_RUNNING = 250;
+const R_MCU_HEAVY   = 125;
 
-const I_MAX_PIN      = 0.040;
-const I_WARN_PIN     = 0.020;
-const I_MAX_TOTAL    = 0.200;
-const I_WARN_TOTAL   = 0.150;
-const V_OVER_ABS     = 6.5;
-const V_LATCHUP_THR  = 6.0;
-const I_REVERSE_MAX  = 0.050;
+const I_MAX_PIN   = 0.040;
+const I_MAX_TOTAL = 0.200;
 
-const DIGITAL_HIGH_THR   = 3.0;
-const DIGITAL_LOW_THR    = 1.5;
-const FLOAT_NOISE_AMP    = 0.42;
-const FLOAT_NOISE_BIAS   = 0.5;
-const ADC_NOISE_RMS      = 1.2;
-const ADC_THERMAL_COEFF  = 0.15;
-const ADC_DNL_MAX        = 0.5;
-const ADC_FLOAT_ALPHA    = 0.65;
+const DIGITAL_HIGH_THRESHOLD = 3.0;
 
-const PWM_FREQ_MAP = { 5: 976, 6: 976, 9: 490, 10: 490, 3: 490, 11: 490 };
-const PWM_PINS     = new Set([3, 5, 6, 9, 10, 11]);
+const PWM_FREQ = { 5: 976, 6: 976, 9: 490, 10: 490, 3: 490, 11: 490 };
+const PWM_PINS = new Set([3, 5, 6, 9, 10, 11]);
 
 const DIGITAL_PINS = ["0","1","2","3","4","5","6","7","8","9","10","11","12","13"];
 const ANALOG_PINS  = ["A0","A1","A2","A3","A4","A5"];
 
-const OVERCURRENT_TICKS_WARN   = 2;
-const OVERCURRENT_TICKS_DAMAGE = 10;
-const GROUND_BOUNCE_R          = 0.08;
-
-const THETA_JA_MCU   = 60.0;
-const TAU_THERMAL_MCU = 8.0;
-const TJ_MAX_MCU      = 125.0;
-const TJ_WARN_MCU     = 100.0;
-
 const _floatPhase = new Map();
 function _floatNoise(key, t) {
-  if (!_floatPhase.has(key)) _floatPhase.set(key, Math.random() * 2000);
+  if (!_floatPhase.has(key)) _floatPhase.set(key, Math.random() * 1000);
   const ph = _floatPhase.get(key);
-  const slow = Math.sin(ph + t * 0.31 + Math.sin(t * 0.07) * 2.8);
-  const fast = Math.sin(ph * 1.73 + t * 3.7 + Math.cos(t * 0.19) * 1.4);
-  const rand = (Math.random() - 0.5) * 0.35;
-  return FLOAT_NOISE_BIAS + FLOAT_NOISE_AMP * (0.5 * slow + 0.3 * fast + 0.2 * rand);
+  return 0.5 + 0.45 * Math.sin(ph + t * 0.7 + Math.sin(t * 0.13) * 3.0);
 }
 
-function _pullupVariation(compId) {
-  let hash = 0;
-  for (let i = 0; i < compId.length; i++) hash = (hash * 31 + compId.charCodeAt(i)) >>> 0;
-  const norm = (hash % 10000) / 10000.0;
-  return R_PULLUP_MIN + norm * (R_PULLUP_MAX - R_PULLUP_MIN);
-}
-
-function _rOutHigh(I_abs, overcurrentTicks) {
-  if (overcurrentTicks >= OVERCURRENT_TICKS_DAMAGE) return R_OUT_CLAMP;
+function _rOutHigh(I_abs) {
   const x = Math.min(I_abs / I_MAX_PIN, 1.0);
-  return R_OUT_HIGH_0 + R_OUT_HIGH_DROOP * x * x;
+  return R_OUT_HIGH_BASE * (1 + 3 * x * x);
 }
-
-function _rOutLow(I_abs, overcurrentTicks) {
-  if (overcurrentTicks >= OVERCURRENT_TICKS_DAMAGE) return R_OUT_CLAMP;
+function _rOutLow(I_abs) {
   const x = Math.min(I_abs / I_MAX_PIN, 1.0);
-  return R_OUT_LOW_0 + R_OUT_LOW_DROOP * x * x;
-}
-
-function _vSatHigh(I_abs) {
-  return V_SAT_HIGH_0 + V_SAT_HIGH_SLOPE * Math.min(I_abs / I_MAX_PIN, 1.0);
-}
-
-function _vSatLow(I_abs) {
-  return V_SAT_LOW_0 + V_SAT_LOW_SLOPE * Math.min(I_abs / I_MAX_PIN, 1.0);
+  return R_OUT_LOW_BASE * (1 + 3 * x * x);
 }
 
 export default class ArduinoModel {
 
   static solve(comp, electrical, solver) {
-    const engine = solver.simEngine;
-    if (!engine) return;
-
+    const engine   = solver.simEngine;
     const gndNet   = solver.findNet(comp.id, "GND");
     const vcc5Net  = solver.findNet(comp.id, "5V");
     const vcc33Net = solver.findNet(comp.id, "3.3V");
@@ -120,35 +64,10 @@ export default class ArduinoModel {
 
     electrical.gndNets.add(gndNet);
 
-    if (!comp._pullupR) {
-      comp._pullupR = _pullupVariation(comp.id);
-    }
-
-    if (!comp._initDone) {
-      comp._initDone      = true;
-      comp._startupTimer  = 0.0;
-      comp._inStartup     = true;
-      comp._pinOvercurrent = {};
-      comp._pinOcTicks     = {};
-      comp._pinWarnings    = {};
-      comp._pinCurrents    = {};
-      comp._pinDamage      = {};
-      comp._floatT         = 0.0;
-      comp._tempRise       = 0.0;
-      comp._latchupWarn    = false;
-      comp._totalOcTicks   = 0;
-    }
-
-    const inReset = comp._resetState ?? false;
-
     if (vcc5Net) {
-      const vcc_now = electrical.netVoltage.get(vcc5Net) ?? V_CC;
-      const gndBounce = ArduinoModel._groundBounce(comp, electrical, gndNet);
       electrical.circuits.push({
         id: `${comp.id}_rail_5v`, type: "POWER_SOURCE",
-        a: vcc5Net, b: gndNet,
-        ohms: R_VCC_RAIL + gndBounce,
-        vOffset: V_CC,
+        a: vcc5Net, b: gndNet, ohms: 0.05, vOffset: V_CC,
       });
       electrical.powerNets?.add(vcc5Net);
     }
@@ -156,9 +75,7 @@ export default class ArduinoModel {
     if (vcc33Net) {
       electrical.circuits.push({
         id: `${comp.id}_rail_3v3`, type: "POWER_SOURCE",
-        a: vcc33Net, b: gndNet,
-        ohms: R_VCC_RAIL * 2,
-        vOffset: V_33,
+        a: vcc33Net, b: gndNet, ohms: 0.05, vOffset: V_33,
       });
       electrical.powerNets?.add(vcc33Net);
     }
@@ -169,22 +86,14 @@ export default class ArduinoModel {
         id: `${comp.id}_mcu_idd`, type: "RESISTOR",
         a: vcc5Net, b: gndNet, ohms: rMcu,
       });
-
-      if (C_DECOUPLE > 0 && solver.dt > 0) {
-        const capId  = `${comp.id}_decouple`;
-        const hist   = solver._capState?.get(capId);
-        const Vprev  = hist?.V ?? V_CC;
-        const Iprev  = hist?.I ?? 0.0;
-        const Geq    = (2.0 * C_DECOUPLE) / solver.dt;
-        electrical.circuits.push({
-          id: capId, type: "CAPACITOR",
-          a: vcc5Net, b: gndNet,
-          capacitance:   C_DECOUPLE,
-          _companionCap: { Geq, Ieq: Geq * Vprev + Iprev },
-        });
-      }
     }
 
+    if (!comp._pinOvercurrent) comp._pinOvercurrent = {};
+    if (!comp._pinWarnings)    comp._pinWarnings    = {};
+    if (!comp._pinCurrents)    comp._pinCurrents    = {};
+    if (!comp._floatT)         comp._floatT         = 0;
+
+    const inReset = comp._resetState ?? false;
     const tonePin = engine?.toneState?.active ? engine.toneState.pin : null;
 
     for (const pinName of DIGITAL_PINS) {
@@ -217,16 +126,6 @@ export default class ArduinoModel {
     }
   }
 
-  static _groundBounce(comp, electrical, gndNet) {
-    let totalSwitching = 0;
-    for (const b of electrical.circuits) {
-      if (b.type === "ARDUINO_PIN_OUT" && (b.a === gndNet || b.b === gndNet)) {
-        totalSwitching += Math.abs(b.current ?? 0);
-      }
-    }
-    return GROUND_BOUNCE_R * Math.min(totalSwitching / I_MAX_PIN, 1.0);
-  }
-
   static _stampPin(
     comp, electrical, engine, solver,
     pinName, pinNum, key, net, gndNet, vcc5Net,
@@ -236,32 +135,21 @@ export default class ArduinoModel {
       electrical.circuits.push({
         id: `${comp.id}_dprot_h_${pinName}`, type: "DIODE",
         a: net, b: vcc5Net,
-        ohms: 0.5, Is: DIODE_IS_ESD, N: DIODE_N_ESD,
+        ohms: 0, Is: DIODE_IS, N: DIODE_N,
       });
     }
     electrical.circuits.push({
       id: `${comp.id}_dprot_l_${pinName}`, type: "DIODE",
       a: gndNet, b: net,
-      ohms: 0.5, Is: DIODE_IS_ESD, N: DIODE_N_ESD,
+      ohms: 0, Is: DIODE_IS, N: DIODE_N,
     });
 
-    const vPin = electrical.netVoltage.get(net) ?? 0.0;
-    if (vPin > V_OVER_ABS && !comp._overvoltageWarn?.[key]) {
-      if (!comp._overvoltageWarn) comp._overvoltageWarn = {};
-      comp._overvoltageWarn[key] = true;
-      console.warn(`[Arduino] Pin ${key} overvoltage: ${vPin.toFixed(2)}V`);
-      engine.onPinOvervoltage?.(key, vPin);
-    } else if (vPin <= V_OVER_ABS && comp._overvoltageWarn?.[key]) {
-      comp._overvoltageWarn[key] = false;
+    if (mode !== "OUTPUT") {
+      electrical.circuits.push({
+        id: `${comp.id}_leak_${pinName}`, type: "RESISTOR",
+        a: net, b: gndNet, ohms: R_LEAKAGE,
+      });
     }
-
-    if (vPin > V_LATCHUP_THR && mode === "INPUT" && !comp._latchupWarn) {
-      comp._latchupWarn = true;
-      console.warn(`[Arduino] Latch-up risk on ${key}: ${vPin.toFixed(2)}V > ${V_LATCHUP_THR}V`);
-      engine.onLatchupRisk?.(key, vPin);
-    }
-
-    const isDamaged = comp._pinDamage?.[key] ?? false;
 
     if (mode === "OUTPUT" || isTone) {
       const raw = engine.digitalVoltages[key] ?? 0;
@@ -270,7 +158,7 @@ export default class ArduinoModel {
       if (isTone) {
         targetV = V_CC;
       } else if (raw === 0 || raw === false) {
-        targetV = 0.0;
+        targetV = 0;
       } else if (raw === 1 || raw === true) {
         targetV = V_CC;
       } else {
@@ -278,66 +166,46 @@ export default class ArduinoModel {
         if (PWM_PINS.has(pinNum)) {
           const pwmMode = engine.simState?.pwmMode ?? "average";
           if (pwmMode === "average") {
-            targetV = (duty / 255.0) * V_CC;
+            targetV = (duty / 255) * V_CC;
           } else {
-            const freq   = PWM_FREQ_MAP[pinNum] ?? 490;
-            const period = 1.0 / freq;
-            const simT   = engine.simState?.simTime ?? 0.0;
-            const phase  = (simT % period) / period;
-            targetV = phase < (duty / 255.0) ? V_CC : 0.0;
+            const freq   = PWM_FREQ[pinNum] ?? 490;
+            const period = 1 / freq;
+            const simTime = engine.simState?.simTime ?? 0;
+            const phase  = (simTime % period) / period;
+            targetV = phase < (duty / 255) ? V_CC : 0;
           }
         } else {
-          targetV = duty >= 128 ? V_CC : 0.0;
+          targetV = duty >= 128 ? V_CC : 0;
         }
       }
 
-      const ocTicks  = comp._pinOcTicks?.[key] ?? 0;
-      const I_prev   = Math.abs(comp._pinCurrents?.[key] ?? 0.0);
-      const vSatH    = _vSatHigh(I_prev);
-      const vSatL    = _vSatLow(I_prev);
-
-      let rEff, vEff;
-      if (isDamaged) {
+      const overcurrent = comp._pinOvercurrent?.[key] ?? false;
+      let rEff;
+      if (overcurrent) {
         rEff = R_OUT_CLAMP;
-        vEff = targetV * 0.5;
-      } else if (targetV > 2.5) {
-        rEff = _rOutHigh(I_prev, ocTicks);
-        vEff = V_CC - vSatH;
       } else {
-        rEff = _rOutLow(I_prev, ocTicks);
-        vEff = vSatL;
+        const I_prev = comp._pinCurrents?.[key] ?? 0;
+        rEff = targetV > 2.5 ? _rOutHigh(I_prev) : _rOutLow(I_prev);
       }
 
       electrical.circuits.push({
-        id:       `${comp.id}_out_${pinName}`,
-        type:     "ARDUINO_PIN_OUT",
-        a:        net,
-        b:        gndNet,
-        ohms:     rEff,
-        vOffset:  vEff,
+        id:      `${comp.id}_out_${pinName}`,
+        type:    "ARDUINO_PIN_OUT",
+        a:       net,
+        b:       gndNet,
+        ohms:    rEff,
+        vOffset: targetV > 0.5 ? (V_CC - V_SAT_HIGH) : V_SAT_LOW,
         _targetV: targetV,
         _rEff:    rEff,
-        _vSat:    targetV > 2.5 ? vSatH : vSatL,
-      });
-
-      electrical.circuits.push({
-        id: `${comp.id}_leak_out_${pinName}`, type: "RESISTOR",
-        a: net, b: gndNet, ohms: R_LEAKAGE_OUT,
       });
       return;
     }
 
-    electrical.circuits.push({
-      id: `${comp.id}_leak_${pinName}`, type: "RESISTOR",
-      a: net, b: gndNet, ohms: R_LEAKAGE_IN,
-    });
-
     if (mode === "INPUT_PULLUP") {
-      const Rpu = comp._pullupR ?? R_PULLUP_NOM;
       if (vcc5Net) {
         electrical.circuits.push({
           id: `${comp.id}_pu_${pinName}`, type: "PULLUP",
-          a: vcc5Net, b: net, ohms: Rpu,
+          a: vcc5Net, b: net, ohms: R_PULLUP,
         });
       } else {
         electrical.circuits.push({
@@ -356,7 +224,7 @@ export default class ArduinoModel {
     if (mode === "INPUT_PULLDOWN") {
       electrical.circuits.push({
         id: `${comp.id}_pd_${pinName}`, type: "PULLDOWN",
-        a: net, b: gndNet, ohms: R_PULLDOWN_NOM,
+        a: net, b: gndNet, ohms: R_PULLDOWN,
       });
       electrical.circuits.push({
         id: `${comp.id}_hz_${pinName}`, type: "INPUT_HIGH_Z",
@@ -370,80 +238,58 @@ export default class ArduinoModel {
       a: net, b: gndNet, ohms: R_HIGH_Z,
     });
 
-    const floatV = _floatNoise(key, comp._floatT ?? 0.0) * V_CC;
+    const floatV = _floatNoise(key, comp._floatT ?? 0) * V_CC;
     electrical.circuits.push({
       id: `${comp.id}_flt_${pinName}`, type: "DEFAULT",
       a: net, b: gndNet,
       ohms:    R_FLOAT_ANCHOR,
-      vOffset: floatV * 0.12,
+      vOffset: floatV * 0.15,
     });
   }
 
   static update(comp, electrical, solver) {
     const engine = solver.simEngine;
-    if (!engine) return;
-    const vRef = engine.simState?.aref ?? V_CC;
+    const vRef   = engine.simState?.aref ?? V_CC;
 
-    if (!comp._pinOvercurrent)  comp._pinOvercurrent  = {};
-    if (!comp._pinOcTicks)      comp._pinOcTicks      = {};
-    if (!comp._pinWarnings)     comp._pinWarnings     = {};
-    if (!comp._pinCurrents)     comp._pinCurrents     = {};
-    if (!comp._pinDamage)       comp._pinDamage       = {};
-    if (!engine._digitalNetV)   engine._digitalNetV   = {};
-    if (comp._floatT == null)   comp._floatT          = 0.0;
-    if (comp._tempRise == null) comp._tempRise        = 0.0;
-
-    comp._floatT += solver.dt ?? 0.016;
+    if (!comp._pinOvercurrent) comp._pinOvercurrent = {};
+    if (!comp._pinWarnings)    comp._pinWarnings    = {};
+    if (!comp._pinCurrents)    comp._pinCurrents    = {};
+    if (!engine._digitalNetV)  engine._digitalNetV  = {};
+    if (!comp._floatT)         comp._floatT         = 0;
+    comp._floatT += 0.016;
 
     const vcc5Net = solver.findNet(comp.id, "5V");
     const gndNet  = solver.findNet(comp.id, "GND");
     let   vcc     = V_CC;
     if (vcc5Net) vcc = electrical.netVoltage.get(vcc5Net) ?? V_CC;
-    let   vgnd    = 0.0;
-    if (gndNet)  vgnd = electrical.netVoltage.get(gndNet) ?? 0.0;
-
-    if (comp._inStartup) {
-      comp._startupTimer = (comp._startupTimer ?? 0.0) + (solver.dt ?? 0.016);
-      if (comp._startupTimer >= POWER_ON_DELAY) {
-        comp._inStartup = false;
-        comp._resetState = false;
-        engine.onMCURestart?.();
-      }
-    }
 
     const bodLevel   = BOD_LEVELS[String(engine.simState?.bodLevel ?? "2.7")] ?? BOD_DEFAULT;
     const wasReset   = comp._resetState ?? false;
-    const bodLow     = vcc < (bodLevel - BOD_HYST);
-    const bodRecover = vcc > (bodLevel + BOD_HYST);
+    const bodLow     = vcc < bodLevel - BOD_HYSTERESIS;
+    const bodRecover = vcc > bodLevel + BOD_HYSTERESIS;
 
-    if (!wasReset && !comp._inStartup && bodLow) {
+    if (!wasReset && bodLow) {
       comp._resetState = true;
       comp._brownout   = true;
-      console.warn(`[Arduino] BROWNOUT: VCC=${vcc.toFixed(3)}V < BOD=${bodLevel}V`);
+      console.warn(`[ArduinoModel] BROWNOUT: VCC=${vcc.toFixed(3)}V < BOD=${bodLevel}V.`);
       engine.onBrownout?.({ vcc, bodLevel });
       engine.onMCUReset?.();
-    } else if (wasReset && bodRecover && !comp._inStartup) {
-      comp._resetState  = false;
-      comp._brownout    = false;
-      comp._startupTimer = 0.0;
-      comp._inStartup   = true;
+    } else if (wasReset && bodRecover) {
+      comp._resetState = false;
+      comp._brownout   = false;
+      engine.onMCURestart?.();
     }
 
     let activeOutputs = 0;
-    let switchingPins = 0;
     for (const pinName of DIGITAL_PINS) {
       const k = `D${parseInt(pinName, 10)}`;
-      if (engine.pinStates[k] === "OUTPUT") {
-        activeOutputs++;
-        const v = engine.digitalVoltages[k] ?? 0;
-        if (v > 0 && v < 255) switchingPins++;
-      }
+      if (engine.pinStates[k] === "OUTPUT") activeOutputs++;
     }
-    if (activeOutputs > 8 || switchingPins > 4) comp._rMcu = R_MCU_HEAVY;
-    else if (activeOutputs > 2)                  comp._rMcu = R_MCU_RUNNING;
-    else                                          comp._rMcu = R_MCU_IDLE;
+    if      (activeOutputs > 8) comp._rMcu = R_MCU_HEAVY;
+    else if (activeOutputs > 2) comp._rMcu = R_MCU_RUNNING;
+    else                        comp._rMcu = R_MCU_IDLE;
 
-    let totalOutputCurrent = 0.0;
+    let totalOutputCurrent = 0;
 
     for (const pinName of DIGITAL_PINS) {
       const net = solver.findNet(comp.id, pinName);
@@ -451,102 +297,50 @@ export default class ArduinoModel {
       const pinNum = parseInt(pinName, 10);
       const key    = `D${pinNum}`;
       const mode   = engine.pinStates[key];
-      const netV   = electrical.netVoltage.get(net) ?? 0.0;
+      const netV   = electrical.netVoltage.get(net) ?? 0;
 
       if (mode === "OUTPUT") {
         const branch = electrical.circuits.find(b => b.id === `${comp.id}_out_${pinName}`);
         if (branch) {
-          const targetV = branch._targetV ?? 0.0;
-          const Vnet    = electrical.netVoltage.get(branch.a) ?? 0.0;
-          const R       = branch._rEff ?? branch.ohms ?? R_OUT_HIGH_0;
-          const vSrc    = targetV > 2.5 ? (V_CC - (branch._vSat ?? 0.05)) : (branch._vSat ?? 0.05);
-          const I       = Math.abs((vSrc - Vnet) / Math.max(R, 0.1));
+          const targetV = branch._targetV ?? 0;
+          const Vnet    = electrical.netVoltage.get(branch.a) ?? 0;
+          const R       = branch._rEff ?? branch.ohms ?? R_OUT_HIGH_BASE;
+          const I       = Math.abs((targetV - Vnet) / Math.max(R, 1));
 
-          comp._pinCurrents[key] = I;
-          totalOutputCurrent    += I;
+          comp._pinCurrents[key]  = I;
+          totalOutputCurrent     += I;
 
-          const ocTicks_prev = comp._pinOcTicks[key] ?? 0;
-          const isOver       = I > I_MAX_PIN;
-          const isWarn       = I > I_WARN_PIN;
-
-          if (isOver) {
-            comp._pinOcTicks[key] = ocTicks_prev + 1;
-          } else {
-            comp._pinOcTicks[key] = Math.max(0, ocTicks_prev - 1);
-          }
-
-          const ocTicks_new = comp._pinOcTicks[key];
+          const wasOver = comp._pinOvercurrent[key] ?? false;
+          const isOver  = I > I_MAX_PIN;
           comp._pinOvercurrent[key] = isOver;
 
-          if (isOver && ocTicks_new === OVERCURRENT_TICKS_WARN) {
+          if (isOver && !wasOver) {
             comp._pinWarnings[key] = true;
-            console.warn(`[Arduino] Pin ${key} overcurrent: ${(I*1000).toFixed(1)}mA > 40mA`);
-            engine.onPinOvercurrent?.(key, I, ocTicks_new);
-          }
-          if (ocTicks_new >= OVERCURRENT_TICKS_DAMAGE && !comp._pinDamage[key]) {
-            comp._pinDamage[key] = true;
-            console.warn(`[Arduino] Pin ${key} DAMAGED by sustained overcurrent ${(I*1000).toFixed(1)}mA`);
-            engine.onPinDamage?.(key, I);
-          }
-          if (!isOver && comp._pinWarnings[key]) {
+            console.warn(`[ArduinoModel] Pin ${key} overcurrent: ${(I*1000).toFixed(1)}mA > 40mA.`);
+            engine.onPinOvercurrent?.(key, I, 0);
+          } else if (!isOver && wasOver) {
             comp._pinWarnings[key] = false;
-          }
-
-          const reverseI = -((vSrc - Vnet) / Math.max(R, 0.1));
-          if (reverseI > I_REVERSE_MAX && !comp._reverseWarn?.[key]) {
-            if (!comp._reverseWarn) comp._reverseWarn = {};
-            comp._reverseWarn[key] = true;
-            console.warn(`[Arduino] Pin ${key} reverse current injection: ${(reverseI*1000).toFixed(1)}mA`);
-            engine.onReverseCurrentInjection?.(key, reverseI);
           }
         }
       }
 
       engine._digitalNetV[key] = netV;
       if (mode !== "OUTPUT") {
-        const isHigh = netV >= DIGITAL_HIGH_THR;
-        const isLow  = netV <= DIGITAL_LOW_THR;
-        let   dv;
-        if (isHigh)      dv = 1;
-        else if (isLow)  dv = 0;
-        else             dv = Math.random() < 0.5 ? 1 : 0;
-
-        if (engine.digitalInputs) engine.digitalInputs[key] = dv;
+        const isHigh = netV >= DIGITAL_HIGH_THRESHOLD;
+        if (engine.digitalInputs) engine.digitalInputs[key] = isHigh ? 1 : 0;
       }
     }
 
-    const mcuIdd   = vcc / Math.max(comp._rMcu ?? R_MCU_RUNNING, 1.0);
+    const mcuIdd   = vcc / Math.max(comp._rMcu ?? R_MCU_RUNNING, 1);
     const totalI   = totalOutputCurrent + mcuIdd;
-
     const wasTotal = comp._totalOver ?? false;
-    const isTotalWarn = totalI > I_WARN_TOTAL;
-    const isTotalOver = totalI > I_MAX_TOTAL;
-    comp._totalOver = isTotalOver;
-
-    if (isTotalOver) {
-      comp._totalOcTicks = (comp._totalOcTicks ?? 0) + 1;
-      if (!wasTotal) {
-        console.warn(`[Arduino] Total current ${(totalI*1000).toFixed(1)}mA > 200mA`);
-        engine.onTotalOvercurrent?.(totalI);
-      }
-    } else {
-      comp._totalOcTicks = Math.max(0, (comp._totalOcTicks ?? 0) - 1);
+    const isTotal  = totalI > I_MAX_TOTAL;
+    comp._totalOver = isTotal;
+    if (isTotal && !wasTotal) {
+      console.warn(`[ArduinoModel] Total current ${(totalI*1000).toFixed(1)}mA > 200mA.`);
+      engine.onTotalOvercurrent?.(totalI);
     }
-
-    const Pdiss_mcu = vcc * mcuIdd;
-    const dt = solver.dt ?? 0.016;
-    const alpha_t = 1.0 - Math.exp(-dt / Math.max(TAU_THERMAL_MCU, 1e-3));
-    comp._tempRise = (comp._tempRise ?? 0.0) * (1.0 - alpha_t)
-                   + Pdiss_mcu * THETA_JA_MCU * alpha_t;
-    const T_J_C = 25.0 + (comp._tempRise ?? 0.0);
-
-    if (T_J_C > TJ_WARN_MCU && !comp._thermalWarn) {
-      comp._thermalWarn = true;
-      console.warn(`[Arduino] MCU junction temp ${T_J_C.toFixed(0)}°C > ${TJ_WARN_MCU}°C`);
-      engine.onMCUThermalWarning?.(T_J_C);
-    } else if (T_J_C <= TJ_WARN_MCU - 10.0) {
-      comp._thermalWarn = false;
-    }
+    comp._totalOutputCurrent = totalI;
 
     for (const pinName of ANALOG_PINS) {
       const net  = solver.findNet(comp.id, pinName);
@@ -554,27 +348,19 @@ export default class ArduinoModel {
       const mode = engine.pinStates[pinName];
       if (mode === "OUTPUT") continue;
 
-      let voltage = electrical.netVoltage.get(net) ?? 0.0;
-      voltage = Math.max(0.0, Math.min(voltage, vRef));
+      let voltage = electrical.netVoltage.get(net) ?? 0;
+      voltage = Math.max(0, Math.min(voltage, vRef));
 
       const bits    = engine.simState?.analogResolution ?? 10;
       const maxBits = (1 << bits) - 1;
-      let   adcIdeal = (voltage / Math.max(vRef, 0.001)) * maxBits;
+      let   adcVal  = Math.round((voltage / vRef) * maxBits);
 
-      const thermalNoise = (Math.random() - 0.5) * ADC_NOISE_RMS
-                         * (1.0 + ADC_THERMAL_COEFF * ((comp._tempRise ?? 0.0) / 30.0));
-      const dnl = (Math.random() - 0.5) * ADC_DNL_MAX;
-      adcIdeal += thermalNoise + dnl;
-
-      const isFloating = !ArduinoModel._hasExternalDriver(net, electrical, comp.id, pinName);
-      let adcVal;
-      if (isFloating) {
-        const floatRaw  = _floatNoise(pinName, comp._floatT ?? 0.0) * maxBits;
-        const floatNoise = (Math.random() - 0.5) * maxBits * 0.25;
-        const prev = engine._analogCache?.[pinName] ?? floatRaw;
-        adcVal = Math.round(prev * ADC_FLOAT_ALPHA + (floatRaw + floatNoise) * (1.0 - ADC_FLOAT_ALPHA));
-      } else {
-        adcVal = Math.round(adcIdeal);
+      if (!mode || mode === "INPUT") {
+        const isFloating = !ArduinoModel._hasExternalDriver(net, electrical, comp.id, pinName);
+        if (isFloating) {
+          const noise = Math.floor(Math.random() * 1024);
+          adcVal = Math.floor(adcVal * 0.3 + noise * 0.7);
+        }
       }
       adcVal = Math.max(0, Math.min(maxBits, adcVal));
 
@@ -585,40 +371,21 @@ export default class ArduinoModel {
       engine._digitalNetV[pinName] = voltage;
 
       if (engine.digitalInputs) {
-        const dv = voltage >= DIGITAL_HIGH_THR ? 1 : 0;
+        const dv = voltage >= DIGITAL_HIGH_THRESHOLD ? 1 : 0;
         engine.digitalInputs[pinName] = dv;
         engine.digitalInputs[pinNum]  = dv;
       }
     }
 
-    const decoupleCapBranch = electrical.circuits.find(b => b.id === `${comp.id}_decouple`);
-    if (decoupleCapBranch?._companionCap) {
-      const Va   = electrical.netVoltage.get(decoupleCapBranch.a) ?? V_CC;
-      const Vb   = electrical.netVoltage.get(decoupleCapBranch.b) ?? 0.0;
-      const Icap = decoupleCapBranch.current ?? 0.0;
-      const Vc   = (Va - Vb) - Icap * (decoupleCapBranch.ohms ?? 0.0);
-      if (!solver._capState) solver._capState = new Map();
-      solver._capState.set(`${comp.id}_decouple`, { V: Vc, I: Icap });
-    }
-
     comp._diagnostics = {
       vcc,
-      vgnd,
-      supplyRailSag:    V_CC - vcc,
-      groundBounce:     vgnd,
       currentConsumption: totalI,
-      mcuQuiescentCurrent: mcuIdd,
       brownout:    comp._brownout   ?? false,
       resetState:  comp._resetState ?? false,
-      inStartup:   comp._inStartup  ?? false,
       pinCurrents: { ...comp._pinCurrents },
-      pinDamage:   { ...comp._pinDamage   },
       totalCurrent: totalI,
-      overCurrent:  isTotalOver,
-      warnCurrent:  isTotalWarn,
-      tjunction:    +T_J_C.toFixed(1),
-      adcValues:    { ...(engine._analogCache ?? {}) },
-      pullupR:      comp._pullupR,
+      overCurrent:  comp._totalOver ?? false,
+      adcValues:   { ...(engine._analogCache ?? {}) },
     };
     engine.onDiagnostics?.(comp._diagnostics);
   }
@@ -627,9 +394,237 @@ export default class ArduinoModel {
     for (const branch of electrical.circuits) {
       if (branch.a !== net && branch.b !== net) continue;
       if (branch.id?.startsWith(compId)) continue;
-      if (branch.type === "INPUT_HIGH_Z" || branch.type === "DEFAULT") continue;
       return true;
     }
     return false;
   }
 }
+
+
+
+
+
+
+// Create a SPICE-grade engineering simulation model for a generic NPN Bipolar Junction Transistor suitable for educational and engineering circuit simulation.
+
+// The transistor must behave like a real BC547 or 2N2222 rather than an ideal switch.
+
+// ### Implement
+
+// 1. Full transistor physics
+
+//    Implement Ebers–Moll / Gummel–Poon behavior with forward-active, saturation, cutoff, and reverse-active regions, including continuous transitions between regions.
+
+// 2. Base-emitter junction
+
+//    Use the exponential diode equation, with VBE typically around 0.65–0.75 V and realistic temperature dependence.
+
+// 3. Collector current
+
+//    Compute collector current from actual base current, with realistic beta variation between devices.
+
+// 4. Beta roll-off
+
+//    Reduce gain at both very low and very high collector currents to match BC547/2N2222 curves.
+
+// 5. Saturation behavior
+
+//    Model VCE(sat) ≈ 0.1–0.3 V, stored charge, and slower turn-off after deep saturation.
+
+// 6. Early effect
+
+//    Make collector current depend slightly on VCE using an Early voltage model.
+
+// 7. Leakage currents
+
+//    Include collector-emitter and base-emitter leakage with temperature dependence. Leakage may produce a tiny current but must never behave like a valid drive signal.
+
+// 8. Reverse operation
+
+//    Implement reverse beta and reverse-active behavior instead of treating reverse connection as an ideal open circuit.
+
+// 9. Junction capacitances
+
+//    Include voltage-dependent Cbe and Cbc, plus realistic switching delays.
+
+// 10. Charge storage
+
+// ```
+// Model turn-on delay, turn-off delay, and saturation storage effects.
+// ```
+
+// 11. Thermal physics
+
+// ```
+// Include power dissipation, thermal resistance, thermal capacitance, junction temperature, and thermal runaway behavior.
+// ```
+
+// 12. Breakdown effects
+
+// ```
+// Model VBE reverse breakdown (~5 V), VCEO breakdown, and avalanche behavior.
+// ```
+
+// 13. Safe operating area
+
+// ```
+// Enforce maximum collector current, power dissipation, junction temperature, and SOA warnings.
+// ```
+
+// 14. Real-circuit requirements
+
+// ```
+// *   Conduction must be determined by actual base current, not merely by checking whether VBE exceeds a threshold.
+// ```
+
+// ```
+// *   Very large base resistances (for example tens or hundreds of megaohms) must produce only leakage-level collector current.
+    
+// *   A floating base must not reliably turn the transistor on.
+    
+// *   Deep saturation must reduce switching speed.
+    
+// *   Switching and amplification must both work realistically.
+    
+// ```
+
+// Prioritize physical realism and numerical stability over simplified digital-switch approximations.
+
+
+
+
+
+
+// Create a highly realistic engineering-grade simulation model of an Arduino Uno based on the ATmega328P microcontroller.
+
+// The model must reproduce real electrical behavior rather than ideal digital behavior.
+
+// ### Implement
+
+// 1. GPIO output driver
+
+//    * Real source resistance for OUTPUT HIGH.
+
+//    * Real sink resistance for OUTPUT LOW.
+
+//    * Voltage sag under load.
+
+//    * Current-dependent output voltage drop.
+
+//    * Source/sink asymmetry matching ATmega328P behavior.
+// 2. Pin current limits
+
+//    * 20 mA recommended operating current per pin.
+
+//    * 40 mA absolute maximum per pin.
+
+//    * 200 mA total MCU current limit.
+
+//    * Overcurrent warnings and realistic clamping behavior.
+// 3. INPUT mode
+
+//    * True high-impedance behavior.
+
+//    * Input leakage below 1 µA.
+
+//    * Floating pins must not be forced to an arbitrary voltage source.
+
+//    * Floating pins may drift due to leakage, capacitance, and environmental noise.
+
+//    * Digital reads on floating pins may vary unpredictably.
+// 4. INPUT_PULLUP mode
+
+//    * Internal pull-up between 20 kΩ and 50 kΩ.
+
+//    * Process variation between instances.
+
+//    * Pin reads HIGH when left unconnected.
+// 5. Analog pins
+
+//    * 10-bit ADC.
+
+//    * AREF support.
+
+//    * Quantization error.
+
+//    * Thermal and conversion noise.
+
+//    * Floating analog inputs must produce unstable readings.
+// 6. ESD protection
+
+//    * Upper clamp diode to VCC.
+
+//    * Lower clamp diode to GND.
+
+//    * Forward conduction around 0.6–0.7 V.
+// 7. PWM behavior
+
+//    * Real ATmega328P PWM frequencies.
+
+//    * Average-voltage mode and switching-waveform mode.
+
+//    * Correct timer-based behavior.
+// 8. Brown-out and startup
+
+//    * 1.8 V, 2.7 V, and 4.3 V thresholds.
+
+//    * Hysteresis.
+
+//    * Power-on reset.
+
+//    * Bootloader delay.
+
+//    * Tri-stated pins during reset.
+// 9. Power integrity
+
+//    * Supply rail sag.
+
+//    * Decoupling capacitor interaction.
+
+//    * Ground bounce approximation.
+
+//    * Transient current spikes.
+// 10. Thermal behavior
+
+// ```
+// *   Junction temperature.
+// ```
+
+// ```
+// *   Self-heating.
+    
+// *   Thermal warnings.
+    
+// ```
+
+// 11.  Failure modes
+
+// ```
+// *   Overvoltage.
+    
+// *   Reverse-current injection.
+    
+// *   Latch-up warnings.
+    
+// *   Overcurrent damage accumulation.
+    
+// ```
+
+// 12.  Real-behavior requirements
+
+// ```
+// *   INPUT pins must not source or sink meaningful current.
+    
+// *   INPUT\_PULLUP must behave like a weak resistor to VCC.
+    
+// *   Floating digital inputs must sometimes read HIGH and sometimes LOW.
+    
+// *   Floating analog inputs must produce noisy, drifting ADC values.
+    
+// *   PWM pins must reproduce real Uno frequencies and duty-cycle behavior.
+    
+// *   Pin voltage must droop under heavy load instead of remaining ideal.
+    
+// ```
+
+// Target behavior should match a real Arduino Uno with an ATmega328P as closely as practical while remaining numerically stable in a nodal circuit solver.
